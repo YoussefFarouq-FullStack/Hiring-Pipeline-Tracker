@@ -1,0 +1,69 @@
+﻿# General
+*.log
+*.tmp
+*.temp
+*.DS_Store
+Thumbs.db
+
+# IDE settings
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Node / Angular
+HiringPipelineUI/node_modules/
+HiringPipelineUI/dist/
+HiringPipelineUI/.angular/
+HiringPipelineUI/.cache/
+HiringPipelineUI/.next/
+HiringPipelineUI/npm-debug.log*
+HiringPipelineUI/yarn-debug.log*
+HiringPipelineUI/yarn-error.log*
+HiringPipelineUI/pnpm-debug.log*
+
+# Angular cache/build outputs (generic)
+**/node_modules/
+**/dist/
+**/.angular/
+
+# .NET / ASP.NET Core
+**/bin/
+**/obj/
+**/Debug/
+**/Release/
+*.pdb
+*.cache
+*.mdb
+*.ilk
+*.meta
+*.tmp_proj
+*.exe
+*.dll
+*.appx
+*.appxsym
+*.appxupload
+*.publishsettings
+*.pubxml
+*.Publish.xml
+
+# EF Core / Migrations generated files to keep: Migrations/*.cs (do not ignore)
+!HiringPipelineAPI/Migrations/
+
+# Build output from API project
+HiringPipelineAPI/bin/
+HiringPipelineAPI/obj/
+
+# Environment files
+*.env
+.env*
+
+# Coverage / Reports
+coverage/
+TestResult*/
+
+# OS-specific
+ehthumbs.db
+Icon?
