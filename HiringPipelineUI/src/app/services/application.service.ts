@@ -7,7 +7,7 @@ import { Application } from '../models/application.model';
   providedIn: 'root'
 })
 export class ApplicationService {
-  private apiUrl = 'https://localhost:5001/api/application';
+  private apiUrl = '/api/application';
 
   constructor(private http: HttpClient) {}
 

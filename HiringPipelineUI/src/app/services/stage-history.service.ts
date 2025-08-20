@@ -7,7 +7,7 @@ import { StageHistory } from '../models/stage-history.model';
   providedIn: 'root'
 })
 export class StageHistoryService {
-  private apiUrl = 'https://localhost:5001/api/stagehistory';
+  private apiUrl = '/api/stagehistory';
 
   constructor(private http: HttpClient) {}
 

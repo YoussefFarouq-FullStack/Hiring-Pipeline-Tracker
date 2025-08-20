@@ -1,0 +1,23 @@
+<h2 mat-dialog-title>Add Requisition</h2>
+
+<form [formGroup]="requisitionForm" (ngSubmit)="save()">
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Title</mat-label>
+    <input matInput formControlName="title">
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Department</mat-label>
+    <input matInput formControlName="department">
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Status</mat-label>
+    <input matInput formControlName="status">
+  </mat-form-field>
+
+  <div class="actions">
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary" type="submit">Save</button>
+  </div>
+</form>

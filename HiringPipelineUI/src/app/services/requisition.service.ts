@@ -7,8 +7,7 @@ import { Requisition } from '../models/requisition.model';
   providedIn: 'root'
 })
 export class RequisitionService {
-  private apiUrl = 'https://localhost:5001/api/requisition';
-
+  private apiUrl = '/api/requisition';
   constructor(private http: HttpClient) {}
 
   getRequisitions(): Observable<Requisition[]> {
@@ -19,14 +18,15 @@ export class RequisitionService {
     return this.http.get<Requisition>(`${this.apiUrl}/${id}`);
   }
 
-  addRequisition(requisition: Requisition): Observable<Requisition> {
+  createRequisition(requisition: Omit<Requisition, 'requisitionId'>): Observable<Requisition> {
     return this.http.post<Requisition>(this.apiUrl, requisition);
+  }
+
+  updateRequisition(id: number, requisition: Requisition): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, requisition);
   }
 
   deleteRequisition(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }
-
-
-
