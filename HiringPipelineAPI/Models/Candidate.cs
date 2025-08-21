@@ -9,6 +9,7 @@ public class Candidate
     public string? Phone { get; set; }
     public string? LinkedInUrl { get; set; }
     public string? Source { get; set; }
+    public string Status { get; set; } = "Applied"; // Applied, Screening, Interview, TechnicalAssessment, ReferenceCheck, Offer, Hired, Rejected, Withdrawn
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

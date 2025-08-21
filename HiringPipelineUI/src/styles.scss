@@ -1,3 +1,4 @@
+@use "tailwindcss";
 
 // Include theming for Angular Material with `mat.theme()`.
 // This Sass mixin will define CSS variables that are used for styling Angular Material
@@ -33,8 +34,131 @@ body {
   // Reset the user agent margin.
   margin: 0;
 }
+
 /* You can add global styles to this file, and also import other style files */
-@import "tailwindcss";
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Snackbar Styles */
+.success-snackbar {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+.success-snackbar .mdc-snackbar__surface {
+  background-color: #10b981 !important;
+}
+
+.error-snackbar {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.error-snackbar .mdc-snackbar__surface {
+  background-color: #ef4444 !important;
+}
+
+/* Loading and Error States */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Form Validation Enhanced Styles */
+.form-field-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.form-field-error:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Error Message Styles */
+.error-message {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.error-message svg {
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* Success Message Styles */
+.success-message {
+  color: #10b981;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.success-message svg {
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* Disabled State Styles */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Retry Button Styles */
+.retry-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.retry-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Network Error Styles */
+.network-error {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+}
+
+.network-error .error-icon {
+  color: #dc2626;
+}
+
+/* Validation Error Styles */
+.validation-error {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+}
+
+.validation-error .error-icon {
+  color: #dc2626;
+}
+
+/* Server Error Styles */
+.server-error {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+}
+
+.server-error .error-icon {
+  color: #dc2626;
+}

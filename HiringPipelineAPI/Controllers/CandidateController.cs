@@ -36,6 +36,12 @@ public class CandidateController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Candidate>> CreateCandidate(Candidate candidate)
     {
+        // Check if this will be the first candidate and reset identity seed if needed
+        if (!await _context.Candidates.AnyAsync())
+        {
+            ResetIdentitySeed();
+        }
+
         _context.Candidates.Add(candidate);
         await _context.SaveChangesAsync();
 
@@ -64,6 +70,32 @@ public class CandidateController : ControllerBase
         _context.Candidates.Remove(candidate);
         await _context.SaveChangesAsync();
 
+        // Check if this was the last candidate and reset identity seed if so
+        if (!await _context.Candidates.AnyAsync())
+        {
+            ResetIdentitySeed();
+        }
+
         return NoContent();
+    }
+
+    [HttpDelete("delete-all")]
+    public async Task<IActionResult> DeleteAllCandidates()
+    {
+        var candidates = await _context.Candidates.ToListAsync();
+        if (candidates.Any())
+        {
+            _context.Candidates.RemoveRange(candidates);
+            await _context.SaveChangesAsync();
+            ResetIdentitySeed();
+        }
+
+        return NoContent();
+    }
+
+    private void ResetIdentitySeed()
+    {
+        // Reset the identity seed for Candidates table
+        _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Candidates', RESEED, 0)");
     }
 }

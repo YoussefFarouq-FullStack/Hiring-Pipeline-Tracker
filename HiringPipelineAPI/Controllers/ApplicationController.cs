@@ -42,6 +42,12 @@ public class ApplicationController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Application>> CreateApplication(Application application)
     {
+        // Check if this will be the first application and reset identity seed if needed
+        if (!await _context.Applications.AnyAsync())
+        {
+            ResetIdentitySeed();
+        }
+
         _context.Applications.Add(application);
         await _context.SaveChangesAsync();
 
@@ -70,6 +76,32 @@ public class ApplicationController : ControllerBase
         _context.Applications.Remove(application);
         await _context.SaveChangesAsync();
 
+        // Check if this was the last application and reset identity seed if so
+        if (!await _context.Applications.AnyAsync())
+        {
+            ResetIdentitySeed();
+        }
+
         return NoContent();
+    }
+
+    [HttpDelete("delete-all")]
+    public async Task<IActionResult> DeleteAllApplications()
+    {
+        var applications = await _context.Applications.ToListAsync();
+        if (applications.Any())
+        {
+            _context.Applications.RemoveRange(applications);
+            await _context.SaveChangesAsync();
+            ResetIdentitySeed();
+        }
+
+        return NoContent();
+    }
+
+    private void ResetIdentitySeed()
+    {
+        // Reset the identity seed for Applications table
+        _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Applications', RESEED, 0)");
     }
 }

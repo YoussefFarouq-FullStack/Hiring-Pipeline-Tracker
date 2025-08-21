@@ -1,0 +1,442 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+  <!-- Header Section -->
+  <div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="p-2 bg-indigo-100 rounded-lg">
+            <svg
+              class="w-6 h-6 text-indigo-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0v2a2 2 0 01-2 2H8a2 2 0 01-2-2V6m8 0V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"
+              ></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Requisitions</h1>
+            <p class="text-sm text-gray-500">Manage your job requisitions and openings</p>
+          </div>
+        </div>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="addRequisition()"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+        >
+          Add Requisition
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Loading State -->
+    <div *ngIf="isLoading && !hasError" class="mb-8">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading requisitions...</p>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="hasError" class="mb-8">
+      <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-lg font-medium text-red-800">Error Loading Requisitions</h3>
+            <p class="mt-2 text-red-700">{{ errorMessage }}</p>
+            <div class="mt-4">
+              <button
+                (click)="retryLoad()"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div *ngIf="!isLoading && !hasError" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div
+        class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-center">
+          <div class="p-3 bg-indigo-100 rounded-lg">
+            <svg
+              class="w-6 h-6 text-indigo-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0v2a2 2 0 01-2 2H8a2 2 0 01-2-2V6m8 0V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"
+              ></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Total Requisitions</p>
+            <p class="text-2xl font-bold text-gray-900">{{ totalRequisitions }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-center">
+          <div class="p-3 bg-green-100 rounded-lg">
+            <svg
+              class="w-6 h-6 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Open</p>
+            <p class="text-2xl font-bold text-gray-900">{{ openRequisitions }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-center">
+          <div class="p-3 bg-yellow-100 rounded-lg">
+            <svg
+              class="w-6 h-6 text-yellow-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">In Progress</p>
+            <p class="text-2xl font-bold text-gray-900">{{ inProgressRequisitions }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-center">
+          <div class="p-3 bg-purple-100 rounded-lg">
+            <svg
+              class="w-6 h-6 text-purple-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              ></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Closed</p>
+            <p class="text-2xl font-bold text-gray-900">{{ closedRequisitions }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Debug Info (Collapsible) -->
+    <div *ngIf="!isLoading && !hasError" class="mb-6">
+      <details class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <summary class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
+          <span class="font-medium text-gray-700">Debug Information</span>
+          <svg class="w-5 h-5 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </summary>
+        <div class="px-6 pb-4 space-y-3 text-sm">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-gray-50 rounded-lg p-3">
+              <p class="text-gray-600 font-medium">Total Requisitions</p>
+              <p class="text-lg font-bold text-gray-900">{{ totalRequisitions }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+              <p class="text-gray-600 font-medium">Data Length</p>
+              <p class="text-lg font-bold text-gray-900">{{ dataSourceLength }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+              <p class="text-gray-600 font-medium">Table Has Data</p>
+              <p class="text-lg font-bold text-gray-900">{{ hasTableData ? 'Yes' : 'No' }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+              <p class="text-gray-600 font-medium">Loading State</p>
+              <p class="text-lg font-bold text-gray-900">{{ isLoading ? 'Loading...' : 'Ready' }}</p>
+            </div>
+          </div>
+          <div *ngIf="dataSourceData.length > 0" class="bg-gray-50 rounded-lg p-3">
+            <p class="text-gray-600 font-medium mb-2">First Requisition Structure:</p>
+            <pre class="text-xs text-gray-700 bg-white p-2 rounded border overflow-x-auto">{{ dataSourceData[0] | json }}</pre>
+          </div>
+          <div *ngIf="dataSourceData.length === 0" class="bg-gray-50 rounded-lg p-3">
+            <p class="text-gray-600 font-medium">No requisitions data available</p>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <!-- Main Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-gray-900">Requisition List</h2>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">{{ totalRequisitions }} requisitions</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table mat-table [dataSource]="dataSource" class="w-full">
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"
+            >
+              ID
+            </th>
+            <td
+              mat-cell
+              *matCellDef="let r"
+              class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+            >
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+              >
+                #{{ r.requisitionId }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Title Column -->
+          <ng-container matColumnDef="title">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"
+            >
+              Title
+            </th>
+            <td mat-cell *matCellDef="let r" class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-10 w-10">
+                  <div
+                    class="h-10 w-10 rounded-lg bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center"
+                  >
+                    <svg
+                      class="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0v2a2 2 0 01-2 2H8a2 2 0 01-2-2V6m8 0V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-gray-900">{{ r?.title || 'No Title' }}</div>
+                  <div class="text-sm text-gray-500">{{ r?.department || 'No Department' }}</div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Department Column -->
+          <ng-container matColumnDef="department">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"
+            >
+              Department
+            </th>
+            <td
+              mat-cell
+              *matCellDef="let r"
+              class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+            >
+              <div class="flex items-center">
+                <svg
+                  class="w-4 h-4 text-gray-400 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  ></path>
+                </svg>
+                {{ r?.department || 'No Department' }}
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"
+            >
+              Status
+            </th>
+            <td mat-cell *matCellDef="let r" class="px-6 py-4 whitespace-nowrap">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                [ngClass]="{
+                  'bg-green-100 text-green-800': r?.status === 'Open',
+                  'bg-yellow-100 text-yellow-800': r?.status === 'In Progress',
+                  'bg-purple-100 text-purple-800': r?.status === 'Closed',
+                  'bg-gray-100 text-gray-800': !r?.status || r?.status === 'No Status'
+                }"
+              >
+                <span
+                  class="w-2 h-2 rounded-full mr-2"
+                  [ngClass]="{
+                    'bg-green-400': r?.status === 'Open',
+                    'bg-yellow-400': r?.status === 'In Progress',
+                    'bg-purple-400': r?.status === 'Closed',
+                    'bg-gray-400': !r?.status || r?.status === 'No Status'
+                  }"
+                ></span>
+                {{ r?.status || 'No Status' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"
+            >
+              Actions
+            </th>
+            <td
+              mat-cell
+              *matCellDef="let r"
+              class="px-6 py-4 whitespace-nowrap text-sm font-medium"
+            >
+              <div class="flex items-center space-x-2">
+                <button
+                  mat-button
+                  (click)="editRequisition(r)"
+                  [disabled]="!r || !r.requisitionId"
+                  class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                  Edit
+                </button>
+                <button
+                  mat-button
+                  (click)="deleteRequisition(r?.requisitionId)"
+                  [disabled]="!r || !r.requisitionId"
+                  class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    ></path>
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Rows -->
+          <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-gray-50"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            class="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+          ></tr>
+
+          <!-- No Data Row -->
+          <tr class="mat-row" *matNoDataRow>
+            <td colspan="5" class="px-6 py-12 text-center">
+              <div class="flex flex-col items-center">
+                <svg
+                  class="w-12 h-12 text-gray-400 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0v2a2 2 0 01-2 2H8a2 2 0 01-2-2V6m8 0V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"
+                  ></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No requisitions found</h3>
+                <p class="text-gray-500 mb-4">Get started by adding your first requisition.</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

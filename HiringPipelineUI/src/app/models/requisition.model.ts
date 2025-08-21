@@ -4,6 +4,3 @@ export interface Requisition {
   department: string;
   status: string;
 }
-
-
-

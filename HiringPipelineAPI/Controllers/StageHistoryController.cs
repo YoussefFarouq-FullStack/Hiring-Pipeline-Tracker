@@ -57,6 +57,12 @@ public class StageHistoryController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<StageHistory>> PostStageHistory(StageHistory stageHistory)
     {
+        // Check if this will be the first stage history and reset identity seed if needed
+        if (!await _context.StageHistories.AnyAsync())
+        {
+            ResetIdentitySeed();
+        }
+
         _context.StageHistories.Add(stageHistory);
         await _context.SaveChangesAsync();
 
@@ -75,6 +81,32 @@ public class StageHistoryController : ControllerBase
         _context.StageHistories.Remove(stageHistory);
         await _context.SaveChangesAsync();
 
+        // Check if this was the last stage history and reset identity seed if so
+        if (!await _context.StageHistories.AnyAsync())
+        {
+            ResetIdentitySeed();
+        }
+
         return NoContent();
+    }
+
+    [HttpDelete("delete-all")]
+    public async Task<IActionResult> DeleteAllStageHistories()
+    {
+        var stageHistories = await _context.StageHistories.ToListAsync();
+        if (stageHistories.Any())
+        {
+            _context.StageHistories.RemoveRange(stageHistories);
+            await _context.SaveChangesAsync();
+            ResetIdentitySeed();
+        }
+
+        return NoContent();
+    }
+
+    private void ResetIdentitySeed()
+    {
+        // Reset the identity seed for StageHistories table
+        _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('StageHistories', RESEED, 0)");
     }
 }

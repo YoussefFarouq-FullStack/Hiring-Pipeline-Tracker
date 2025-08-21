@@ -1,9 +1,8 @@
 export interface Candidate {
   candidateId: number;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
+  status: string;
 }
-
-
-

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { RequisitionsComponent } from './requisitions';
-import { RequisitionService } from '../services/requisition.service';
+import { RequisitionService } from '../../services/requisition.service';
 
 describe('RequisitionsComponent', () => {
   let component: RequisitionsComponent;

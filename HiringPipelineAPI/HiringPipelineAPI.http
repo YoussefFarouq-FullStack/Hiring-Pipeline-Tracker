@@ -1,6 +1,96 @@
-@HiringPipelineAPI_HostAddress = http://localhost:5192
+@baseUrl = http://localhost:5192
 
-GET {{HiringPipelineAPI_HostAddress}}/weatherforecast/
-Accept: application/json
+### Health Check
+GET {{baseUrl}}/health
 
-###
+### Reset All Identity Seeds
+POST {{baseUrl}}/health/reset-identity-seeds
+
+### Candidates
+GET {{baseUrl}}/api/candidate
+
+GET {{baseUrl}}/api/candidate/1
+
+POST {{baseUrl}}/api/candidate
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "phone": "1234567890",
+  "status": "Applied"
+}
+
+POST {{baseUrl}}/api/candidate
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "jane.smith@example.com",
+  "phone": "0987654321",
+  "status": "Screening"
+}
+
+DELETE {{baseUrl}}/api/candidate/1
+
+DELETE {{baseUrl}}/api/candidate/delete-all
+
+### Requisitions
+GET {{baseUrl}}/api/requisitions
+
+GET {{baseUrl}}/api/requisitions/1
+
+POST {{baseUrl}}/api/requisitions
+Content-Type: application/json
+
+{
+  "title": "Software Developer",
+  "department": "Engineering",
+  "jobLevel": "Mid-Level",
+  "status": "Open"
+}
+
+DELETE {{baseUrl}}/api/requisitions/1
+
+DELETE {{baseUrl}}/api/requisitions/delete-all
+
+### Applications
+GET {{baseUrl}}/api/application
+
+GET {{baseUrl}}/api/application/1
+
+POST {{baseUrl}}/api/application
+Content-Type: application/json
+
+{
+  "candidateId": 1,
+  "requisitionId": 1,
+  "currentStage": "Applied",
+  "status": "Active"
+}
+
+DELETE {{baseUrl}}/api/application/1
+
+DELETE {{baseUrl}}/api/application/delete-all
+
+### Stage Histories
+GET {{baseUrl}}/api/stagehistory
+
+GET {{baseUrl}}/api/stagehistory/1
+
+POST {{baseUrl}}/api/stagehistory
+Content-Type: application/json
+
+{
+  "applicationId": 1,
+  "fromStage": null,
+  "toStage": "Applied",
+  "movedBy": "System",
+  "movedAt": "2025-08-21T09:00:00Z"
+}
+
+DELETE {{baseUrl}}/api/stagehistory/1
+
+DELETE {{baseUrl}}/api/stagehistory/delete-all

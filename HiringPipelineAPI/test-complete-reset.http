@@ -1,0 +1,111 @@
+### Complete Identity Reset Test for All Entities
+
+@baseUrl = http://localhost:5192
+
+# ========================================
+# PHASE 1: Check Current State
+# ========================================
+
+### Check current candidates
+GET {{baseUrl}}/api/candidate
+
+### Check current requisitions
+GET {{baseUrl}}/api/requisitions
+
+### Check current applications
+GET {{baseUrl}}/api/application
+
+### Check current stage histories
+GET {{baseUrl}}/api/stagehistory
+
+# ========================================
+# PHASE 2: Delete All Records
+# ========================================
+
+### Delete all stage histories first (due to foreign key constraints)
+DELETE {{baseUrl}}/api/stagehistory/delete-all
+
+### Delete all applications
+DELETE {{baseUrl}}/api/application/delete-all
+
+### Delete all candidates
+DELETE {{baseUrl}}/api/candidate/delete-all
+
+### Delete all requisitions
+DELETE {{baseUrl}}/api/requisitions/delete-all
+
+# ========================================
+# PHASE 3: Create New Records (Should Start from ID 1)
+# ========================================
+
+### Create first candidate (should get ID = 1)
+POST {{baseUrl}}/api/candidate
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "phone": "1234567890",
+  "status": "Applied"
+}
+
+### Create first requisition (should get ID = 1)
+POST {{baseUrl}}/api/requisitions
+Content-Type: application/json
+
+{
+  "title": "Software Developer",
+  "department": "Engineering",
+  "jobLevel": "Mid-Level",
+  "status": "Open"
+}
+
+### Create first application (should get ID = 1)
+POST {{baseUrl}}/api/application
+Content-Type: application/json
+
+{
+  "candidateId": 1,
+  "requisitionId": 1,
+  "currentStage": "Applied",
+  "status": "Active"
+}
+
+### Create first stage history (should get ID = 1)
+POST {{baseUrl}}/api/stagehistory
+Content-Type: application/json
+
+{
+  "applicationId": 1,
+  "fromStage": null,
+  "toStage": "Applied",
+  "movedBy": "System",
+  "movedAt": "2025-08-21T09:00:00Z"
+}
+
+# ========================================
+# PHASE 4: Verify IDs Started from 1
+# ========================================
+
+### Check candidates (should show ID = 1)
+GET {{baseUrl}}/api/candidate
+
+### Check requisitions (should show ID = 1)
+GET {{baseUrl}}/api/requisitions
+
+### Check applications (should show ID = 1)
+GET {{baseUrl}}/api/application
+
+### Check stage histories (should show ID = 1)
+GET {{baseUrl}}/api/stagehistory
+
+# ========================================
+# PHASE 5: Test Manual Reset
+# ========================================
+
+### Reset all identity seeds manually
+POST {{baseUrl}}/health/reset-identity-seeds
+
+### Verify reset worked by checking health
+GET {{baseUrl}}/health

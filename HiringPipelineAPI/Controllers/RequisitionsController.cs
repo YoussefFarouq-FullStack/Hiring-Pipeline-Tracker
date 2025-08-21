@@ -38,6 +38,12 @@ namespace HiringPipelineAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Requisition>> CreateRequisition(Requisition requisition)
         {
+            // Check if this will be the first requisition and reset identity seed if needed
+            if (!await _context.Requisitions.AnyAsync())
+            {
+                ResetIdentitySeed();
+            }
+
             _context.Requisitions.Add(requisition);
             await _context.SaveChangesAsync();
 
@@ -66,7 +72,33 @@ namespace HiringPipelineAPI.Controllers
             _context.Requisitions.Remove(requisition);
             await _context.SaveChangesAsync();
 
+            // Check if this was the last requisition and reset identity seed if so
+            if (!await _context.Requisitions.AnyAsync())
+            {
+                ResetIdentitySeed();
+            }
+
             return NoContent();
+        }
+
+        [HttpDelete("delete-all")]
+        public async Task<IActionResult> DeleteAllRequisitions()
+        {
+            var requisitions = await _context.Requisitions.ToListAsync();
+            if (requisitions.Any())
+            {
+                _context.Requisitions.RemoveRange(requisitions);
+                await _context.SaveChangesAsync();
+                ResetIdentitySeed();
+            }
+
+            return NoContent();
+        }
+
+        private void ResetIdentitySeed()
+        {
+            // Reset the identity seed for Requisitions table
+            _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Requisitions', RESEED, 0)");
         }
     }
 }
