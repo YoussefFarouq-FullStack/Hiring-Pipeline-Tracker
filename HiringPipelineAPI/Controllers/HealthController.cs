@@ -26,7 +26,7 @@ public class HealthController : ControllerBase
     {
         try
         {
-            // Reset identity seeds for all tables
+            // Reset identity seeds for all tables using constant values (safe from SQL injection)
             _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Candidates', RESEED, 0)");
             _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Requisitions', RESEED, 0)");
             _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Applications', RESEED, 0)");

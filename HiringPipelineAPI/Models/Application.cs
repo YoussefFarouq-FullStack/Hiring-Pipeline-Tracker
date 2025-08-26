@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace HiringPipelineAPI.Models;
 
 public class Application
@@ -6,9 +8,11 @@ public class Application
 
     // Foreign Keys
     public int CandidateId { get; set; }
+    [JsonIgnore] // Prevents circular JSON loops
     public Candidate Candidate { get; set; } = null!;
 
     public int RequisitionId { get; set; }
+    [JsonIgnore]
     public Requisition Requisition { get; set; } = null!;
 
     public string CurrentStage { get; set; } = "Applied";
@@ -16,6 +20,6 @@ public class Application
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation
+    [JsonIgnore]
     public ICollection<StageHistory> StageHistories { get; set; } = new List<StageHistory>();
 }

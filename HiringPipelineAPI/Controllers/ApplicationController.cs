@@ -1,17 +1,19 @@
-using HiringPipelineAPI.Data;
-using HiringPipelineAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using HiringPipelineAPI.Models;
+using HiringPipelineAPI.Data;
+using HiringPipelineAPI.DTOs;
+
 
 namespace HiringPipelineAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ApplicationController : ControllerBase
+public class ApplicationsController : ControllerBase
 {
     private readonly HiringPipelineDbContext _context;
 
-    public ApplicationController(HiringPipelineDbContext context)
+    public ApplicationsController(HiringPipelineDbContext context)
     {
         _context = context;
     }
@@ -33,20 +35,22 @@ public class ApplicationController : ControllerBase
             .Include(a => a.Requisition)
             .FirstOrDefaultAsync(a => a.ApplicationId == id);
 
-        if (application == null)
-            return NotFound();
-
+        if (application == null) return NotFound();
         return application;
     }
 
     [HttpPost]
-    public async Task<ActionResult<Application>> CreateApplication(Application application)
+    public async Task<ActionResult<Application>> CreateApplication([FromBody] ApplicationDto dto)
     {
-        // Check if this will be the first application and reset identity seed if needed
-        if (!await _context.Applications.AnyAsync())
+        var application = new Application
         {
-            ResetIdentitySeed();
-        }
+            CandidateId = dto.CandidateId,
+            RequisitionId = dto.RequisitionId,
+            CurrentStage = dto.CurrentStage,
+            Status = dto.Status,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
 
         _context.Applications.Add(application);
         await _context.SaveChangesAsync();
@@ -55,53 +59,29 @@ public class ApplicationController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateApplication(int id, Application application)
+    public async Task<IActionResult> UpdateApplication(int id, [FromBody] ApplicationDto dto)
     {
-        if (id != application.ApplicationId)
-            return BadRequest();
+        var application = await _context.Applications.FindAsync(id);
+        if (application == null) return NotFound();
 
-        _context.Entry(application).State = EntityState.Modified;
+        application.CandidateId = dto.CandidateId;
+        application.RequisitionId = dto.RequisitionId;
+        application.CurrentStage = dto.CurrentStage;
+        application.Status = dto.Status;
+        application.UpdatedAt = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
-
         return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteApplication(int id)
     {
-        var application = await _context.Applications.FindAsync(id);
-        if (application == null)
-            return NotFound();
+        var app = await _context.Applications.FindAsync(id);
+        if (app == null) return NotFound();
 
-        _context.Applications.Remove(application);
+        _context.Applications.Remove(app);
         await _context.SaveChangesAsync();
-
-        // Check if this was the last application and reset identity seed if so
-        if (!await _context.Applications.AnyAsync())
-        {
-            ResetIdentitySeed();
-        }
-
         return NoContent();
-    }
-
-    [HttpDelete("delete-all")]
-    public async Task<IActionResult> DeleteAllApplications()
-    {
-        var applications = await _context.Applications.ToListAsync();
-        if (applications.Any())
-        {
-            _context.Applications.RemoveRange(applications);
-            await _context.SaveChangesAsync();
-            ResetIdentitySeed();
-        }
-
-        return NoContent();
-    }
-
-    private void ResetIdentitySeed()
-    {
-        // Reset the identity seed for Applications table
-        _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Applications', RESEED, 0)");
     }
 }

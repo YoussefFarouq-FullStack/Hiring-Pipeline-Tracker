@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace HiringPipelineAPI.Models;
 
 public class Requisition
@@ -11,5 +13,6 @@ public class Requisition
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
+    [JsonIgnore]
     public ICollection<Application> Applications { get; set; } = new List<Application>();
 }

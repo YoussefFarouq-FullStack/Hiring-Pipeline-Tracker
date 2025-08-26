@@ -1,18 +1,18 @@
 <div class="dialog-header">
   <h2 class="dialog-title">
-    {{ isEditMode ? 'Edit Candidate' : 'Add New Candidate' }}
+    {{ isEditMode ? 'Edit Application' : 'Add New Application' }}
   </h2>
   <p class="dialog-subtitle">
-    {{ isEditMode ? 'Update the candidate information below.' : 'Fill in the details to add a new candidate to your pipeline.' }}
+    {{ isEditMode ? 'Update the application information below.' : 'Fill in the details to create a new job application.' }}
   </p>
 </div>
 
-<form [formGroup]="form" (ngSubmit)="save()" class="p-6 space-y-4">
-  <!-- Candidate ID (Edit Mode Only) -->
+<form [formGroup]="applicationForm" (ngSubmit)="save()" class="p-6 space-y-4">
+  <!-- Application ID (Edit Mode Only) -->
   <div *ngIf="isEditMode" class="form-group">
-    <label class="form-label">Candidate ID</label>
+    <label class="form-label">Application ID</label>
     <input
-      formControlName="candidateId"
+      formControlName="applicationId"
       type="text"
       class="form-input-modern bg-gray-50"
       readonly
@@ -20,87 +20,78 @@
     <p class="text-xs text-gray-500 mt-1">This field cannot be modified</p>
   </div>
 
-  <!-- First Name -->
+  <!-- Candidate Selection -->
   <div class="form-group">
     <label class="form-label">
-      First Name <span class="text-red-500">*</span>
+      Candidate <span class="text-red-500">*</span>
     </label>
-    <input
-      formControlName="firstName"
-      type="text"
+    <select
+      formControlName="candidateId"
       class="form-input-modern"
-      [ngClass]="{'error': firstNameError}"
-      placeholder="Enter first name"
+      [ngClass]="{'error': candidateIdError}"
+      [disabled]="candidates.length === 0"
       required
-    />
-    <div *ngIf="firstNameError" class="form-error">
+    >
+      <option value="">{{ candidates.length === 0 ? 'Loading candidates...' : 'Select a candidate' }}</option>
+      <option *ngFor="let candidate of candidates" [value]="candidate.candidateId">
+        {{candidate.firstName}} {{candidate.lastName}} ({{candidate.email}})
+      </option>
+    </select>
+    <div *ngIf="candidateIdError" class="form-error">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
       </svg>
-      {{ firstNameError }}
+      {{ candidateIdError }}
     </div>
   </div>
 
-  <!-- Last Name -->
+  <!-- Requisition Selection -->
   <div class="form-group">
     <label class="form-label">
-      Last Name <span class="text-red-500">*</span>
+      Job Requisition <span class="text-red-500">*</span>
     </label>
-    <input
-      formControlName="lastName"
-      type="text"
+    <select
+      formControlName="requisitionId"
       class="form-input-modern"
-      [ngClass]="{'error': lastNameError}"
-      placeholder="Enter last name"
+      [ngClass]="{'error': requisitionIdError}"
+      [disabled]="requisitions.length === 0"
       required
-    />
-    <div *ngIf="lastNameError" class="form-error">
+    >
+      <option value="">{{ requisitions.length === 0 ? 'Loading requisitions...' : 'Select a job requisition' }}</option>
+      <option *ngFor="let requisition of requisitions" [value]="requisition.requisitionId">
+        {{requisition.title}} - {{requisition.department}}
+      </option>
+    </select>
+    <div *ngIf="requisitionIdError" class="form-error">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
       </svg>
-      {{ lastNameError }}
+      {{ requisitionIdError }}
     </div>
   </div>
 
-  <!-- Email -->
+  <!-- Current Stage -->
   <div class="form-group">
     <label class="form-label">
-      Email <span class="text-red-500">*</span>
+      Current Stage <span class="text-red-500">*</span>
     </label>
-    <input
-      formControlName="email"
-      type="email"
+    <select
+      formControlName="currentStage"
       class="form-input-modern"
-      [ngClass]="{'error': emailError}"
-      placeholder="Enter email address"
+      [ngClass]="{'error': currentStageError}"
       required
-    />
-    <div *ngIf="emailError" class="form-error">
+    >
+      <option value="Applied">Applied</option>
+      <option value="Screening">Screening</option>
+      <option value="Interviewing">Interviewing</option>
+      <option value="Hired">Hired</option>
+      <option value="Rejected">Rejected</option>
+    </select>
+    <div *ngIf="currentStageError" class="form-error">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
       </svg>
-      {{ emailError }}
-    </div>
-  </div>
-
-  <!-- Phone -->
-  <div class="form-group">
-    <label class="form-label">
-      Phone <span class="text-red-500">*</span>
-    </label>
-    <input
-      formControlName="phone"
-      type="tel"
-      class="form-input-modern"
-      [ngClass]="{'error': phoneError}"
-      placeholder="Enter phone number"
-      required
-    />
-    <div *ngIf="phoneError" class="form-error">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-      </svg>
-      {{ phoneError }}
+      {{ currentStageError }}
     </div>
   </div>
 
@@ -115,11 +106,10 @@
       [ngClass]="{'error': statusError}"
       required
     >
-      <option value="Applied">Applied</option>
-      <option value="Screening">Screening</option>
-      <option value="Interviewing">Interviewing</option>
-      <option value="Hired">Hired</option>
-      <option value="Rejected">Rejected</option>
+      <option value="Active">Active</option>
+      <option value="Pending">Pending</option>
+      <option value="Completed">Completed</option>
+      <option value="Cancelled">Cancelled</option>
     </select>
     <div *ngIf="statusError" class="form-error">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,7 +131,7 @@
     </button>
     <button
       type="submit"
-      [disabled]="!form.valid || isSubmitting"
+      [disabled]="!applicationForm.valid || isSubmitting || candidates.length === 0 || requisitions.length === 0"
       class="btn btn-primary"
     >
       <svg *ngIf="!isSubmitting" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +140,7 @@
       <svg *ngIf="isSubmitting" class="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
       </svg>
-      {{ isSubmitting ? 'Saving...' : (isEditMode ? 'Update Candidate' : 'Add Candidate') }}
+      {{ isSubmitting ? 'Saving...' : (isEditMode ? 'Update Application' : 'Add Application') }}
     </button>
   </div>
 </form>

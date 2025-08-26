@@ -1,5 +1,6 @@
 using HiringPipelineAPI.Data;
 using HiringPipelineAPI.Models;
+using HiringPipelineAPI.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,13 +37,23 @@ namespace HiringPipelineAPI.Controllers
 
         // POST: api/requisitions
         [HttpPost]
-        public async Task<ActionResult<Requisition>> CreateRequisition(Requisition requisition)
+        public async Task<ActionResult<Requisition>> CreateRequisition(CreateRequisitionDto createDto)
         {
             // Check if this will be the first requisition and reset identity seed if needed
             if (!await _context.Requisitions.AnyAsync())
             {
                 ResetIdentitySeed();
             }
+
+            var requisition = new Requisition
+            {
+                Title = createDto.Title,
+                Department = createDto.Department,
+                JobLevel = createDto.JobLevel,
+                Status = "Open",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
             _context.Requisitions.Add(requisition);
             await _context.SaveChangesAsync();
@@ -52,11 +63,23 @@ namespace HiringPipelineAPI.Controllers
 
         // PUT: api/requisitions/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateRequisition(int id, Requisition requisition)
+        public async Task<IActionResult> UpdateRequisition(int id, UpdateRequisitionDto updateDto)
         {
-            if (id != requisition.RequisitionId) return BadRequest();
+            var requisition = await _context.Requisitions.FindAsync(id);
+            if (requisition == null)
+                return NotFound();
 
-            _context.Entry(requisition).State = EntityState.Modified;
+            if (updateDto.Title != null)
+                requisition.Title = updateDto.Title;
+            if (updateDto.Department != null)
+                requisition.Department = updateDto.Department;
+            if (updateDto.JobLevel != null)
+                requisition.JobLevel = updateDto.JobLevel;
+            if (updateDto.Status != null)
+                requisition.Status = updateDto.Status;
+
+            requisition.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -97,7 +120,7 @@ namespace HiringPipelineAPI.Controllers
 
         private void ResetIdentitySeed()
         {
-            // Reset the identity seed for Requisitions table
+            // Reset the identity seed for Requisitions table using constant values (safe from SQL injection)
             _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Requisitions', RESEED, 0)");
         }
     }

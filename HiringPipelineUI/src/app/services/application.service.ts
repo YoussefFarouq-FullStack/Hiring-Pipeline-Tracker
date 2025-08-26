@@ -3,6 +3,8 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
 import { Application } from '../models/application.model';
+import { Candidate } from '../models/candidate.model';
+import { Requisition } from '../models/requisition.model';
 
 @Injectable({
   providedIn: 'root'
@@ -16,11 +18,9 @@ export class ApplicationService {
     let errorMessage = 'An error occurred';
     
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
       errorMessage = `Client Error: ${error.error.message}`;
       console.error('Client-side error:', error.error);
     } else {
-      // Server-side error
       errorMessage = `Server Error: ${error.status} - ${error.message}`;
       console.error('Server-side error:', error);
       
@@ -30,8 +30,6 @@ export class ApplicationService {
         errorMessage = 'Application not found.';
       } else if (error.status === 400) {
         errorMessage = 'Invalid data provided. Please check your input.';
-      } else if (error.status === 409) {
-        errorMessage = 'Application already exists.';
       } else if (error.status >= 500) {
         errorMessage = 'Server error. Please try again later.';
       }
@@ -54,13 +52,13 @@ export class ApplicationService {
     );
   }
 
-  addApplication(application: Application): Observable<Application> {
+  createApplication(application: Partial<Application>): Observable<Application> {
     return this.http.post<Application>(this.apiUrl, application).pipe(
       catchError(this.handleError)
     );
   }
 
-  updateApplication(id: number, application: Application): Observable<Application> {
+  updateApplication(id: number, application: Partial<Application>): Observable<Application> {
     return this.http.put<Application>(`${this.apiUrl}/${id}`, application).pipe(
       catchError(this.handleError)
     );
@@ -71,7 +69,17 @@ export class ApplicationService {
       catchError(this.handleError)
     );
   }
+
+  // Helpers for dropdowns
+  getCandidates(): Observable<Candidate[]> {
+    return this.http.get<Candidate[]>('/api/candidate').pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getRequisitions(): Observable<Requisition[]> {
+    return this.http.get<Requisition[]>('/api/requisitions').pipe(
+      catchError(this.handleError)
+    );
+  }
 }
-
-
-

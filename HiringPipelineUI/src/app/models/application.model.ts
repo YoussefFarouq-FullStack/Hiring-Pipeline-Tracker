@@ -1,9 +1,19 @@
 export interface Application {
   applicationId: number;
-  requisitionId: number;
   candidateId: number;
-  status: string;
+  requisitionId: number;
+  currentStage: string;
+  status?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
+export interface Candidate {
+  candidateId: number;
+  fullName: string;
+}
 
-
+export interface Requisition {
+  requisitionId: number;
+  title: string;
+}

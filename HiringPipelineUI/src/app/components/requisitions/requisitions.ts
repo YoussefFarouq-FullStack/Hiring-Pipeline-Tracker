@@ -18,7 +18,7 @@ import { RequisitionDialogComponent } from './requisition-dialog/requisition-dia
 export class RequisitionsComponent implements OnInit {
   requisitions: Requisition[] = [];
   dataSource: MatTableDataSource<Requisition>;
-  displayedColumns: string[] = ['id', 'title', 'department', 'status', 'actions'];
+  displayedColumns: string[] = ['order', 'title', 'department', 'status', 'actions'];
   
   // Loading and error states
   isLoading = false;
@@ -53,6 +53,20 @@ export class RequisitionsComponent implements OnInit {
 
   get hasTableData(): boolean {
     return this.dataSourceData.length > 0;
+  }
+
+  get firstRequisitionId(): number | string {
+    return this.dataSourceData.length > 0 ? this.dataSourceData[0]?.requisitionId || 'N/A' : 'N/A';
+  }
+
+  get lastRequisitionId(): number | string {
+    return this.dataSourceData.length > 0 ? this.dataSourceData[this.dataSourceData.length - 1]?.requisitionId || 'N/A' : 'N/A';
+  }
+
+  // Method to get display order for a requisition
+  getDisplayOrder(requisition: Requisition): number {
+    if (!this.dataSourceData || this.dataSourceData.length === 0) return 0;
+    return this.dataSourceData.findIndex(r => r.requisitionId === requisition.requisitionId) + 1;
   }
 
   constructor(

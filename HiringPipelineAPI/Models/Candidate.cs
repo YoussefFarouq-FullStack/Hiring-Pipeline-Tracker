@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace HiringPipelineAPI.Models;
 
 public class Candidate
@@ -14,5 +16,6 @@ public class Candidate
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
+    [JsonIgnore]
     public ICollection<Application> Applications { get; set; } = new List<Application>();
 }

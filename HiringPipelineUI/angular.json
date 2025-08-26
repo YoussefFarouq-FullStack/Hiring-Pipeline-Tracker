@@ -60,15 +60,14 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "proxyConfig": "proxy.conf.js"
+            "proxyConfig": "proxy.conf.json"
           },
           "configurations": {
             "production": {
               "buildTarget": "HiringPipelineUI:build:production"
             },
             "development": {
-              "buildTarget": "HiringPipelineUI:build:development",
-              "proxyConfig": "proxy.conf.json"
+              "buildTarget": "HiringPipelineUI:build:development"
             }
           },
           "defaultConfiguration": "development"

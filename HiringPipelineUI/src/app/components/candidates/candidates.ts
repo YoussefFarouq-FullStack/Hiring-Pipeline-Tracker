@@ -18,7 +18,7 @@ import { CandidateDialogComponent } from './candidate-dialog/candidate-dialog';
 export class CandidatesComponent implements OnInit {
   candidates: Candidate[] = [];
   dataSource: MatTableDataSource<Candidate>;
-  displayedColumns: string[] = ['id', 'name', 'phone', 'status', 'actions'];
+  displayedColumns: string[] = ['order', 'name', 'phone', 'status', 'actions'];
   
   // Loading and error states
   isLoading = false;
@@ -27,19 +27,27 @@ export class CandidatesComponent implements OnInit {
 
   // Computed properties for stats
   get totalCandidates(): number {
-    return this.candidates.length;
+    return this.dataSourceData.length;
   }
 
   get activeCandidates(): number {
-    return this.candidates.filter(c => c.status && (c.status === 'Applied' || c.status === 'Screening' || c.status === 'Interviewing')).length;
+    return this.dataSourceData.filter(c => c.status && (c.status === 'Applied' || c.status === 'Screening' || c.status === 'Interviewing')).length;
   }
 
   get inProgressCandidates(): number {
-    return this.candidates.filter(c => c.status && c.status === 'Interviewing').length;
+    return this.dataSourceData.filter(c => c.status && c.status === 'Interviewing').length;
   }
 
   get hiredCandidates(): number {
-    return this.candidates.filter(c => c.status && c.status === 'Hired').length;
+    return this.dataSourceData.filter(c => c.status && c.status === 'Hired').length;
+  }
+
+  get appliedCandidates(): number {
+    return this.dataSourceData.filter(c => c.status && c.status === 'Applied').length;
+  }
+
+  get interviewingCandidates(): number {
+    return this.dataSourceData.filter(c => c.status && c.status === 'Interviewing').length;
   }
 
   // Safe access to dataSource data
@@ -57,7 +65,18 @@ export class CandidatesComponent implements OnInit {
 
   // Safe access to first candidate
   get firstCandidateId(): string | number {
-    return this.candidates && this.candidates.length > 0 ? this.candidates[0].candidateId : 'None';
+    return this.dataSourceData && this.dataSourceData.length > 0 ? this.dataSourceData[0].candidateId : 'None';
+  }
+
+  // Safe access to last candidate
+  get lastCandidateId(): string | number {
+    return this.dataSourceData && this.dataSourceData.length > 0 ? this.dataSourceData[this.dataSourceData.length - 1].candidateId : 'None';
+  }
+
+  // Method to get display order for a candidate
+  getDisplayOrder(candidate: Candidate): number {
+    if (!this.dataSourceData || this.dataSourceData.length === 0) return 0;
+    return this.dataSourceData.findIndex(c => c.candidateId === candidate.candidateId) + 1;
   }
 
   constructor(

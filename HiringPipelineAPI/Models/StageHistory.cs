@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace HiringPipelineAPI.Models;
 
 public class StageHistory
@@ -6,6 +8,7 @@ public class StageHistory
 
     // Foreign Key
     public int ApplicationId { get; set; }
+    [JsonIgnore]
     public Application Application { get; set; } = null!;
 
     public string? FromStage { get; set; }
