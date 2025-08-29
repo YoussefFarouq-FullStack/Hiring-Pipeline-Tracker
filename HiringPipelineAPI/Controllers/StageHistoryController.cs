@@ -1,8 +1,7 @@
-using HiringPipelineAPI.Data;
 using HiringPipelineAPI.Models;
+using HiringPipelineAPI.Services.Interfaces;
 using HiringPipelineAPI.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace HiringPipelineAPI.Controllers;
 
@@ -10,33 +9,26 @@ namespace HiringPipelineAPI.Controllers;
 [Route("api/[controller]")]
 public class StageHistoryController : ControllerBase
 {
-    private readonly HiringPipelineDbContext _context;
+    private readonly IStageHistoryService _stageHistoryService;
+    private readonly IApplicationService _applicationService;
 
-    public StageHistoryController(HiringPipelineDbContext context)
+    public StageHistoryController(IStageHistoryService stageHistoryService, IApplicationService applicationService)
     {
-        _context = context;
+        _stageHistoryService = stageHistoryService;
+        _applicationService = applicationService;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<StageHistory>>> GetStageHistories()
     {
-        return await _context.StageHistories
-            .Include(sh => sh.Application)
-            .ThenInclude(a => a.Candidate)
-            .Include(sh => sh.Application)
-            .ThenInclude(a => a.Requisition)
-            .ToListAsync();
+        var stageHistories = await _stageHistoryService.GetAllAsync();
+        return Ok(stageHistories);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<StageHistory>> GetStageHistory(int id)
     {
-        var stageHistory = await _context.StageHistories
-            .Include(sh => sh.Application)
-            .ThenInclude(a => a.Candidate)
-            .Include(sh => sh.Application)
-            .ThenInclude(a => a.Requisition)
-            .FirstOrDefaultAsync(sh => sh.StageHistoryId == id);
+        var stageHistory = await _stageHistoryService.GetByIdAsync(id);
 
         if (stageHistory == null)
         {
@@ -50,32 +42,30 @@ public class StageHistoryController : ControllerBase
     public async Task<ActionResult<IEnumerable<StageHistory>>> GetApplicationHistory(int applicationId)
     {
         // Validate that the application exists
-        var application = await _context.Applications.FindAsync(applicationId);
+        var application = await _applicationService.GetByIdAsync(applicationId);
         if (application == null)
         {
             return NotFound($"Application with ID {applicationId} not found.");
         }
 
-        return await _context.StageHistories
-            .Where(sh => sh.ApplicationId == applicationId)
-            .OrderBy(sh => sh.MovedAt)
-            .ToListAsync();
+        var stageHistories = await _stageHistoryService.GetByApplicationIdAsync(applicationId);
+        return Ok(stageHistories);
     }
 
     [HttpPost]
     public async Task<ActionResult<StageHistory>> PostStageHistory(CreateStageHistoryDto createDto)
     {
         // Validate that the application exists
-        var application = await _context.Applications.FindAsync(createDto.ApplicationId);
+        var application = await _applicationService.GetByIdAsync(createDto.ApplicationId);
         if (application == null)
         {
             return BadRequest($"Application with ID {createDto.ApplicationId} not found.");
         }
 
         // Check if this will be the first stage history and reset identity seed if needed
-        if (!await _context.StageHistories.AnyAsync())
+        if (!await _stageHistoryService.AnyAsync())
         {
-            ResetIdentitySeed();
+            _stageHistoryService.ResetIdentitySeed();
         }
 
         var stageHistory = new StageHistory
@@ -87,10 +77,8 @@ public class StageHistoryController : ControllerBase
             MovedAt = DateTime.UtcNow
         };
 
-        _context.StageHistories.Add(stageHistory);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction("GetStageHistory", new { id = stageHistory.StageHistoryId }, stageHistory);
+        var createdStageHistory = await _stageHistoryService.AddStageAsync(stageHistory);
+        return CreatedAtAction("GetStageHistory", new { id = createdStageHistory.StageHistoryId }, createdStageHistory);
     }
 
 
@@ -98,12 +86,12 @@ public class StageHistoryController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateStageHistory(int id, CreateStageHistoryDto updateDto)
     {
-        var stageHistory = await _context.StageHistories.FindAsync(id);
+        var stageHistory = await _stageHistoryService.GetByIdAsync(id);
         if (stageHistory == null)
             return NotFound();
 
         // Validate that the application exists
-        var application = await _context.Applications.FindAsync(updateDto.ApplicationId);
+        var application = await _applicationService.GetByIdAsync(updateDto.ApplicationId);
         if (application == null)
         {
             return BadRequest($"Application with ID {updateDto.ApplicationId} not found.");
@@ -115,7 +103,8 @@ public class StageHistoryController : ControllerBase
         stageHistory.MovedBy = updateDto.MovedBy;
         stageHistory.MovedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        var updated = await _stageHistoryService.UpdateAsync(id, stageHistory);
+        if (updated == null) return NotFound();
 
         return NoContent();
     }
@@ -123,19 +112,13 @@ public class StageHistoryController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteStageHistory(int id)
     {
-        var stageHistory = await _context.StageHistories.FindAsync(id);
-        if (stageHistory == null)
-        {
-            return NotFound();
-        }
-
-        _context.StageHistories.Remove(stageHistory);
-        await _context.SaveChangesAsync();
+        var deleted = await _stageHistoryService.DeleteAsync(id);
+        if (!deleted) return NotFound();
 
         // Check if this was the last stage history and reset identity seed if so
-        if (!await _context.StageHistories.AnyAsync())
+        if (!await _stageHistoryService.AnyAsync())
         {
-            ResetIdentitySeed();
+            _stageHistoryService.ResetIdentitySeed();
         }
 
         return NoContent();
@@ -144,20 +127,8 @@ public class StageHistoryController : ControllerBase
     [HttpDelete("delete-all")]
     public async Task<IActionResult> DeleteAllStageHistories()
     {
-        var stageHistories = await _context.StageHistories.ToListAsync();
-        if (stageHistories.Any())
-        {
-            _context.StageHistories.RemoveRange(stageHistories);
-            await _context.SaveChangesAsync();
-            ResetIdentitySeed();
-        }
-
+        await _stageHistoryService.DeleteAllAsync();
+        _stageHistoryService.ResetIdentitySeed();
         return NoContent();
-    }
-
-    private void ResetIdentitySeed()
-    {
-        // Reset the identity seed for StageHistories table using constant values (safe from SQL injection)
-        _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('StageHistories', RESEED, 0)");
     }
 }

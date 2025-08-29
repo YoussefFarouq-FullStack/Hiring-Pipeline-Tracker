@@ -1,8 +1,7 @@
-using HiringPipelineAPI.Data;
 using HiringPipelineAPI.Models;
+using HiringPipelineAPI.Services.Interfaces;
 using HiringPipelineAPI.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace HiringPipelineAPI.Controllers;
 
@@ -10,23 +9,24 @@ namespace HiringPipelineAPI.Controllers;
 [Route("api/[controller]")]
 public class CandidateController : ControllerBase
 {
-    private readonly HiringPipelineDbContext _context;
+    private readonly ICandidateService _candidateService;
 
-    public CandidateController(HiringPipelineDbContext context)
+    public CandidateController(ICandidateService candidateService)
     {
-        _context = context;
+        _candidateService = candidateService;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Candidate>>> GetCandidates()
     {
-        return await _context.Candidates.ToListAsync();
+        var candidates = await _candidateService.GetAllAsync();
+        return Ok(candidates);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Candidate>> GetCandidate(int id)
     {
-        var candidate = await _context.Candidates.FindAsync(id);
+        var candidate = await _candidateService.GetByIdAsync(id);
 
         if (candidate == null)
             return NotFound();
@@ -38,9 +38,9 @@ public class CandidateController : ControllerBase
     public async Task<ActionResult<Candidate>> CreateCandidate(CreateCandidateDto createDto)
     {
         // Check if this will be the first candidate and reset identity seed if needed
-        if (!await _context.Candidates.AnyAsync())
+        if (!await _candidateService.AnyAsync())
         {
-            ResetIdentitySeed();
+            _candidateService.ResetIdentitySeed();
         }
 
         var candidate = new Candidate
@@ -56,16 +56,14 @@ public class CandidateController : ControllerBase
             UpdatedAt = DateTime.UtcNow
         };
 
-        _context.Candidates.Add(candidate);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetCandidate), new { id = candidate.CandidateId }, candidate);
+        var createdCandidate = await _candidateService.CreateAsync(candidate);
+        return CreatedAtAction(nameof(GetCandidate), new { id = createdCandidate.CandidateId }, createdCandidate);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCandidate(int id, UpdateCandidateDto updateDto)
     {
-        var candidate = await _context.Candidates.FindAsync(id);
+        var candidate = await _candidateService.GetByIdAsync(id);
         if (candidate == null)
             return NotFound();
 
@@ -86,7 +84,8 @@ public class CandidateController : ControllerBase
 
         candidate.UpdatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        var updated = await _candidateService.UpdateAsync(id, candidate);
+        if (updated == null) return NotFound();
 
         return NoContent();
     }
@@ -94,17 +93,13 @@ public class CandidateController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCandidate(int id)
     {
-        var candidate = await _context.Candidates.FindAsync(id);
-        if (candidate == null)
-            return NotFound();
-
-        _context.Candidates.Remove(candidate);
-        await _context.SaveChangesAsync();
+        var deleted = await _candidateService.DeleteAsync(id);
+        if (!deleted) return NotFound();
 
         // Check if this was the last candidate and reset identity seed if so
-        if (!await _context.Candidates.AnyAsync())
+        if (!await _candidateService.AnyAsync())
         {
-            ResetIdentitySeed();
+            _candidateService.ResetIdentitySeed();
         }
 
         return NoContent();
@@ -113,20 +108,8 @@ public class CandidateController : ControllerBase
     [HttpDelete("delete-all")]
     public async Task<IActionResult> DeleteAllCandidates()
     {
-        var candidates = await _context.Candidates.ToListAsync();
-        if (candidates.Any())
-        {
-            _context.Candidates.RemoveRange(candidates);
-            await _context.SaveChangesAsync();
-            ResetIdentitySeed();
-        }
-
+        await _candidateService.DeleteAllAsync();
+        _candidateService.ResetIdentitySeed();
         return NoContent();
-    }
-
-    private void ResetIdentitySeed()
-    {
-        // Reset the identity seed for Candidates table using constant values (safe from SQL injection)
-        _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Candidates', RESEED, 0)");
     }
 }

@@ -1,8 +1,7 @@
-using HiringPipelineAPI.Data;
 using HiringPipelineAPI.Models;
+using HiringPipelineAPI.Services.Interfaces;
 using HiringPipelineAPI.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace HiringPipelineAPI.Controllers
 {
@@ -10,25 +9,26 @@ namespace HiringPipelineAPI.Controllers
     [Route("api/[controller]")]
     public class RequisitionsController : ControllerBase
     {
-        private readonly HiringPipelineDbContext _context;
+        private readonly IRequisitionService _requisitionService;
 
-        public RequisitionsController(HiringPipelineDbContext context)
+        public RequisitionsController(IRequisitionService requisitionService)
         {
-            _context = context;
+            _requisitionService = requisitionService;
         }
 
         // GET: api/requisitions
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Requisition>>> GetRequisitions()
         {
-            return await _context.Requisitions.ToListAsync();
+            var requisitions = await _requisitionService.GetAllAsync();
+            return Ok(requisitions);
         }
 
         // GET: api/requisitions/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Requisition>> GetRequisition(int id)
         {
-            var requisition = await _context.Requisitions.FindAsync(id);
+            var requisition = await _requisitionService.GetByIdAsync(id);
 
             if (requisition == null) return NotFound();
 
@@ -40,9 +40,9 @@ namespace HiringPipelineAPI.Controllers
         public async Task<ActionResult<Requisition>> CreateRequisition(CreateRequisitionDto createDto)
         {
             // Check if this will be the first requisition and reset identity seed if needed
-            if (!await _context.Requisitions.AnyAsync())
+            if (!await _requisitionService.AnyAsync())
             {
-                ResetIdentitySeed();
+                _requisitionService.ResetIdentitySeed();
             }
 
             var requisition = new Requisition
@@ -55,17 +55,15 @@ namespace HiringPipelineAPI.Controllers
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _context.Requisitions.Add(requisition);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetRequisition), new { id = requisition.RequisitionId }, requisition);
+            var createdRequisition = await _requisitionService.CreateAsync(requisition);
+            return CreatedAtAction(nameof(GetRequisition), new { id = createdRequisition.RequisitionId }, createdRequisition);
         }
 
         // PUT: api/requisitions/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateRequisition(int id, UpdateRequisitionDto updateDto)
         {
-            var requisition = await _context.Requisitions.FindAsync(id);
+            var requisition = await _requisitionService.GetByIdAsync(id);
             if (requisition == null)
                 return NotFound();
 
@@ -80,7 +78,8 @@ namespace HiringPipelineAPI.Controllers
 
             requisition.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync();
+            var updated = await _requisitionService.UpdateAsync(id, requisition);
+            if (updated == null) return NotFound();
 
             return NoContent();
         }
@@ -89,16 +88,13 @@ namespace HiringPipelineAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRequisition(int id)
         {
-            var requisition = await _context.Requisitions.FindAsync(id);
-            if (requisition == null) return NotFound();
-
-            _context.Requisitions.Remove(requisition);
-            await _context.SaveChangesAsync();
+            var deleted = await _requisitionService.DeleteAsync(id);
+            if (!deleted) return NotFound();
 
             // Check if this was the last requisition and reset identity seed if so
-            if (!await _context.Requisitions.AnyAsync())
+            if (!await _requisitionService.AnyAsync())
             {
-                ResetIdentitySeed();
+                _requisitionService.ResetIdentitySeed();
             }
 
             return NoContent();
@@ -107,21 +103,9 @@ namespace HiringPipelineAPI.Controllers
         [HttpDelete("delete-all")]
         public async Task<IActionResult> DeleteAllRequisitions()
         {
-            var requisitions = await _context.Requisitions.ToListAsync();
-            if (requisitions.Any())
-            {
-                _context.Requisitions.RemoveRange(requisitions);
-                await _context.SaveChangesAsync();
-                ResetIdentitySeed();
-            }
-
+            await _requisitionService.DeleteAllAsync();
+            _requisitionService.ResetIdentitySeed();
             return NoContent();
-        }
-
-        private void ResetIdentitySeed()
-        {
-            // Reset the identity seed for Requisitions table using constant values (safe from SQL injection)
-            _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Requisitions', RESEED, 0)");
         }
     }
 }

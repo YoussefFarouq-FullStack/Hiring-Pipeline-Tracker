@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using HiringPipelineAPI.Models;
-using HiringPipelineAPI.Data;
+using HiringPipelineAPI.Services.Interfaces;
 using HiringPipelineAPI.DTOs;
-
 
 namespace HiringPipelineAPI.Controllers;
 
@@ -11,30 +9,24 @@ namespace HiringPipelineAPI.Controllers;
 [Route("api/[controller]")]
 public class ApplicationsController : ControllerBase
 {
-    private readonly HiringPipelineDbContext _context;
+    private readonly IApplicationService _applicationService;
 
-    public ApplicationsController(HiringPipelineDbContext context)
+    public ApplicationsController(IApplicationService applicationService)
     {
-        _context = context;
+        _applicationService = applicationService;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Application>>> GetApplications()
     {
-        return await _context.Applications
-            .Include(a => a.Candidate)
-            .Include(a => a.Requisition)
-            .ToListAsync();
+        var applications = await _applicationService.GetAllAsync();
+        return Ok(applications);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Application>> GetApplication(int id)
     {
-        var application = await _context.Applications
-            .Include(a => a.Candidate)
-            .Include(a => a.Requisition)
-            .FirstOrDefaultAsync(a => a.ApplicationId == id);
-
+        var application = await _applicationService.GetByIdAsync(id);
         if (application == null) return NotFound();
         return application;
     }
@@ -43,10 +35,10 @@ public class ApplicationsController : ControllerBase
     public async Task<ActionResult<Application>> CreateApplication([FromBody] CreateApplicationDto createDto)
     {
         // Only CandidateId & RequisitionId are required here
-        if (!_context.Candidates.Any(c => c.CandidateId == createDto.CandidateId))
+        if (!await _applicationService.CandidateExistsAsync(createDto.CandidateId))
             return BadRequest("Invalid CandidateId");
 
-        if (!_context.Requisitions.Any(r => r.RequisitionId == createDto.RequisitionId))
+        if (!await _applicationService.RequisitionExistsAsync(createDto.RequisitionId))
             return BadRequest("Invalid RequisitionId");
 
         var application = new Application
@@ -59,16 +51,14 @@ public class ApplicationsController : ControllerBase
             UpdatedAt = DateTime.UtcNow
         };
 
-        _context.Applications.Add(application);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetApplication), new { id = application.ApplicationId }, application);
+        var createdApplication = await _applicationService.CreateAsync(application);
+        return CreatedAtAction(nameof(GetApplication), new { id = createdApplication.ApplicationId }, createdApplication);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateApplication(int id, [FromBody] UpdateApplicationDto updateDto)
     {
-        var existing = await _context.Applications.FindAsync(id);
+        var existing = await _applicationService.GetByIdAsync(id);
         if (existing == null) return NotFound();
 
         if (updateDto.CurrentStage != null)
@@ -78,18 +68,17 @@ public class ApplicationsController : ControllerBase
 
         existing.UpdatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        var updated = await _applicationService.UpdateAsync(id, existing);
+        if (updated == null) return NotFound();
+        
         return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteApplication(int id)
     {
-        var app = await _context.Applications.FindAsync(id);
-        if (app == null) return NotFound();
-
-        _context.Applications.Remove(app);
-        await _context.SaveChangesAsync();
+        var deleted = await _applicationService.DeleteAsync(id);
+        if (!deleted) return NotFound();
         return NoContent();
     }
 }
