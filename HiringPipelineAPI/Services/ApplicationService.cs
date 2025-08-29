@@ -1,86 +1,98 @@
-using HiringPipelineAPI.Data;
 using HiringPipelineAPI.Models;
 using HiringPipelineAPI.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using HiringPipelineAPI.Repositories.Interfaces;
+using HiringPipelineAPI.DTOs;
+using HiringPipelineAPI.Exceptions;
+using AutoMapper;
 
 namespace HiringPipelineAPI.Services.Implementations
 {
     public class ApplicationService : IApplicationService
     {
-        private readonly HiringPipelineDbContext _context;
+        private readonly IApplicationRepository _applicationRepository;
+        private readonly IMapper _mapper;
 
-        public ApplicationService(HiringPipelineDbContext context)
+        public ApplicationService(IApplicationRepository applicationRepository, IMapper mapper)
         {
-            _context = context;
+            _applicationRepository = applicationRepository;
+            _mapper = mapper;
         }
 
-        public async Task<IEnumerable<Application>> GetAllAsync()
+        public async Task<IEnumerable<ApplicationDto>> GetAllAsync()
         {
-            return await _context.Applications
-                .Include(a => a.Candidate)
-                .Include(a => a.Requisition)
-                .ToListAsync();
+            var applications = await _applicationRepository.GetAllAsync();
+            return _mapper.Map<IEnumerable<ApplicationDto>>(applications);
         }
 
-        public async Task<Application?> GetByIdAsync(int id)
+        public async Task<ApplicationDetailDto> GetByIdAsync(int id)
         {
-            return await _context.Applications
-                .Include(a => a.Candidate)
-                .Include(a => a.Requisition)
-                .FirstOrDefaultAsync(a => a.ApplicationId == id);
+            var application = await _applicationRepository.GetByIdAsync(id);
+            if (application == null)
+                throw new NotFoundException("Application", id);
+            
+            return _mapper.Map<ApplicationDetailDto>(application);
         }
 
-        public async Task<Application> CreateAsync(Application application)
+        public async Task<ApplicationDto> CreateAsync(CreateApplicationDto createDto)
         {
-            _context.Applications.Add(application);
-            await _context.SaveChangesAsync();
-            return application;
+            // Validate that candidate and requisition exist
+            if (!await _applicationRepository.CandidateExistsAsync(createDto.CandidateId))
+                throw new NotFoundException("Candidate", createDto.CandidateId);
+
+            if (!await _applicationRepository.RequisitionExistsAsync(createDto.RequisitionId))
+                throw new NotFoundException("Requisition", createDto.RequisitionId);
+
+            var application = _mapper.Map<Application>(createDto);
+            var createdApplication = await _applicationRepository.AddAsync(application);
+            return _mapper.Map<ApplicationDto>(createdApplication);
         }
 
-        public async Task<Application?> UpdateAsync(int id, Application application)
+        public async Task<ApplicationDto> UpdateAsync(int id, UpdateApplicationDto updateDto)
         {
-            var existing = await _context.Applications.FindAsync(id);
-            if (existing == null) return null;
+            var existingApplication = await _applicationRepository.GetByIdAsync(id);
+            if (existingApplication == null)
+                throw new NotFoundException("Application", id);
 
-            _context.Entry(existing).CurrentValues.SetValues(application);
-            await _context.SaveChangesAsync();
-            return existing;
+            _mapper.Map(updateDto, existingApplication);
+            var updatedApplication = await _applicationRepository.UpdateAsync(existingApplication);
+            return _mapper.Map<ApplicationDto>(updatedApplication);
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var existing = await _context.Applications.FindAsync(id);
-            if (existing == null) return false;
+            var existingApplication = await _applicationRepository.GetByIdAsync(id);
+            if (existingApplication == null)
+                throw new NotFoundException("Application", id);
 
-            _context.Applications.Remove(existing);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _applicationRepository.DeleteAsync(id);
         }
 
-        public async Task<IEnumerable<Application>> GetByCandidateIdAsync(int candidateId)
+        public async Task<IEnumerable<ApplicationDto>> GetByCandidateIdAsync(int candidateId)
         {
-            return await _context.Applications
-                .Where(a => a.CandidateId == candidateId)
-                .Include(a => a.Requisition)
-                .ToListAsync();
+            if (!await _applicationRepository.CandidateExistsAsync(candidateId))
+                throw new NotFoundException("Candidate", candidateId);
+
+            var applications = await _applicationRepository.GetByCandidateIdAsync(candidateId);
+            return _mapper.Map<IEnumerable<ApplicationDto>>(applications);
         }
 
-        public async Task<IEnumerable<Application>> GetByRequisitionIdAsync(int requisitionId)
+        public async Task<IEnumerable<ApplicationDto>> GetByRequisitionIdAsync(int requisitionId)
         {
-            return await _context.Applications
-                .Where(a => a.RequisitionId == requisitionId)
-                .Include(a => a.Candidate)
-                .ToListAsync();
+            if (!await _applicationRepository.RequisitionExistsAsync(requisitionId))
+                throw new NotFoundException("Requisition", requisitionId);
+
+            var applications = await _applicationRepository.GetByRequisitionIdAsync(requisitionId);
+            return _mapper.Map<IEnumerable<ApplicationDto>>(applications);
         }
 
         public async Task<bool> CandidateExistsAsync(int candidateId)
         {
-            return await _context.Candidates.AnyAsync(c => c.CandidateId == candidateId);
+            return await _applicationRepository.CandidateExistsAsync(candidateId);
         }
 
         public async Task<bool> RequisitionExistsAsync(int requisitionId)
         {
-            return await _context.Requisitions.AnyAsync(r => r.RequisitionId == requisitionId);
+            return await _applicationRepository.RequisitionExistsAsync(requisitionId);
         }
     }
 }

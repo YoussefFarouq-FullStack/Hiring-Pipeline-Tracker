@@ -1,14 +1,14 @@
-using HiringPipelineAPI.Models;
+using HiringPipelineAPI.DTOs;
 
 namespace HiringPipelineAPI.Services.Interfaces
 {
     public interface IStageHistoryService
     {
-        Task<IEnumerable<StageHistory>> GetByApplicationIdAsync(int applicationId);
-        Task<StageHistory> AddStageAsync(StageHistory history);
-        Task<IEnumerable<StageHistory>> GetAllAsync();
-        Task<StageHistory?> GetByIdAsync(int id);
-        Task<StageHistory?> UpdateAsync(int id, StageHistory history);
+        Task<IEnumerable<StageHistoryDto>> GetByApplicationIdAsync(int applicationId);
+        Task<StageHistoryDto> AddStageAsync(CreateStageHistoryDto createDto);
+        Task<IEnumerable<StageHistoryDto>> GetAllAsync();
+        Task<StageHistoryDetailDto> GetByIdAsync(int id);
+        Task<StageHistoryDto> UpdateAsync(int id, CreateStageHistoryDto updateDto);
         Task<bool> DeleteAsync(int id);
         Task<bool> AnyAsync();
         Task DeleteAllAsync();

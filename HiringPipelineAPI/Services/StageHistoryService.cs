@@ -1,92 +1,87 @@
-using HiringPipelineAPI.Data;
 using HiringPipelineAPI.Models;
 using HiringPipelineAPI.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using HiringPipelineAPI.Repositories.Interfaces;
+using HiringPipelineAPI.DTOs;
+using HiringPipelineAPI.Exceptions;
+using AutoMapper;
 
 namespace HiringPipelineAPI.Services.Implementations
 {
     public class StageHistoryService : IStageHistoryService
     {
-        private readonly HiringPipelineDbContext _context;
+        private readonly IStageHistoryRepository _stageHistoryRepository;
+        private readonly IMapper _mapper;
 
-        public StageHistoryService(HiringPipelineDbContext context)
+        public StageHistoryService(IStageHistoryRepository stageHistoryRepository, IMapper mapper)
         {
-            _context = context;
+            _stageHistoryRepository = stageHistoryRepository;
+            _mapper = mapper;
         }
 
-        public async Task<IEnumerable<StageHistory>> GetByApplicationIdAsync(int applicationId)
+        public async Task<IEnumerable<StageHistoryDto>> GetByApplicationIdAsync(int applicationId)
         {
-            return await _context.StageHistories
-                .Where(h => h.ApplicationId == applicationId)
-                .OrderByDescending(h => h.MovedAt)
-                .ToListAsync();
+            var stageHistories = await _stageHistoryRepository.GetByApplicationIdAsync(applicationId);
+            return _mapper.Map<IEnumerable<StageHistoryDto>>(stageHistories);
         }
 
-        public async Task<StageHistory> AddStageAsync(StageHistory history)
+        public async Task<StageHistoryDto> AddStageAsync(CreateStageHistoryDto createDto)
         {
-            _context.StageHistories.Add(history);
-            await _context.SaveChangesAsync();
-            return history;
+            var stageHistory = _mapper.Map<StageHistory>(createDto);
+            var createdStageHistory = await _stageHistoryRepository.AddAsync(stageHistory);
+            return _mapper.Map<StageHistoryDto>(createdStageHistory);
         }
 
-        public async Task<IEnumerable<StageHistory>> GetAllAsync()
+        public async Task<IEnumerable<StageHistoryDto>> GetAllAsync()
         {
-            return await _context.StageHistories
-                .Include(sh => sh.Application)
-                .ThenInclude(a => a.Candidate)
-                .Include(sh => sh.Application)
-                .ThenInclude(a => a.Requisition)
-                .ToListAsync();
+            var stageHistories = await _stageHistoryRepository.GetAllAsync();
+            return _mapper.Map<IEnumerable<StageHistoryDto>>(stageHistories);
         }
 
-        public async Task<StageHistory?> GetByIdAsync(int id)
+        public async Task<StageHistoryDetailDto> GetByIdAsync(int id)
         {
-            return await _context.StageHistories
-                .Include(sh => sh.Application)
-                .ThenInclude(a => a.Candidate)
-                .Include(sh => sh.Application)
-                .ThenInclude(a => a.Requisition)
-                .FirstOrDefaultAsync(sh => sh.StageHistoryId == id);
+            var stageHistory = await _stageHistoryRepository.GetByIdAsync(id);
+            if (stageHistory == null)
+                throw new NotFoundException("StageHistory", id);
+            
+            return _mapper.Map<StageHistoryDetailDto>(stageHistory);
         }
 
-        public async Task<StageHistory?> UpdateAsync(int id, StageHistory history)
+        public async Task<StageHistoryDto> UpdateAsync(int id, CreateStageHistoryDto updateDto)
         {
-            var existing = await _context.StageHistories.FindAsync(id);
-            if (existing == null) return null;
+            var existingStageHistory = await _stageHistoryRepository.GetByIdAsync(id);
+            if (existingStageHistory == null)
+                throw new NotFoundException("StageHistory", id);
 
-            _context.Entry(existing).CurrentValues.SetValues(history);
-            await _context.SaveChangesAsync();
-            return existing;
+            var stageHistory = _mapper.Map<StageHistory>(updateDto);
+            var updatedStageHistory = await _stageHistoryRepository.UpdateAsync(id, stageHistory);
+            if (updatedStageHistory == null)
+                throw new NotFoundException("StageHistory", id);
+            
+            return _mapper.Map<StageHistoryDto>(updatedStageHistory);
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var existing = await _context.StageHistories.FindAsync(id);
-            if (existing == null) return false;
+            var existingStageHistory = await _stageHistoryRepository.GetByIdAsync(id);
+            if (existingStageHistory == null)
+                throw new NotFoundException("StageHistory", id);
 
-            _context.StageHistories.Remove(existing);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _stageHistoryRepository.DeleteAsync(id);
         }
 
         public async Task<bool> AnyAsync()
         {
-            return await _context.StageHistories.AnyAsync();
+            return await _stageHistoryRepository.AnyAsync();
         }
 
         public async Task DeleteAllAsync()
         {
-            var stageHistories = await _context.StageHistories.ToListAsync();
-            if (stageHistories.Any())
-            {
-                _context.StageHistories.RemoveRange(stageHistories);
-                await _context.SaveChangesAsync();
-            }
+            await _stageHistoryRepository.DeleteAllAsync();
         }
 
         public void ResetIdentitySeed()
         {
-            _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('StageHistories', RESEED, 0)");
+            _stageHistoryRepository.ResetIdentitySeed();
         }
     }
 }

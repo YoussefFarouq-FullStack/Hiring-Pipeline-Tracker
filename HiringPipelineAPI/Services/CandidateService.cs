@@ -1,74 +1,78 @@
-using HiringPipelineAPI.Data;
 using HiringPipelineAPI.Models;
 using HiringPipelineAPI.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using HiringPipelineAPI.Repositories.Interfaces;
+using HiringPipelineAPI.DTOs;
+using HiringPipelineAPI.Exceptions;
+using AutoMapper;
 
 namespace HiringPipelineAPI.Services.Implementations
 {
     public class CandidateService : ICandidateService
     {
-        private readonly HiringPipelineDbContext _context;
+        private readonly ICandidateRepository _candidateRepository;
+        private readonly IMapper _mapper;
 
-        public CandidateService(HiringPipelineDbContext context)
+        public CandidateService(ICandidateRepository candidateRepository, IMapper mapper)
         {
-            _context = context;
+            _candidateRepository = candidateRepository;
+            _mapper = mapper;
         }
 
-        public async Task<IEnumerable<Candidate>> GetAllAsync()
+        public async Task<IEnumerable<CandidateDto>> GetAllAsync()
         {
-            return await _context.Candidates.ToListAsync();
+            var candidates = await _candidateRepository.GetAllAsync();
+            return _mapper.Map<IEnumerable<CandidateDto>>(candidates);
         }
 
-        public async Task<Candidate?> GetByIdAsync(int id)
+        public async Task<CandidateDetailDto> GetByIdAsync(int id)
         {
-            return await _context.Candidates.FindAsync(id);
+            var candidate = await _candidateRepository.GetByIdAsync(id);
+            if (candidate == null)
+                throw new NotFoundException("Candidate", id);
+            
+            return _mapper.Map<CandidateDetailDto>(candidate);
         }
 
-        public async Task<Candidate> CreateAsync(Candidate candidate)
+        public async Task<CandidateDto> CreateAsync(CreateCandidateDto createDto)
         {
-            _context.Candidates.Add(candidate);
-            await _context.SaveChangesAsync();
-            return candidate;
+            var candidate = _mapper.Map<Candidate>(createDto);
+            var createdCandidate = await _candidateRepository.AddAsync(candidate);
+            return _mapper.Map<CandidateDto>(createdCandidate);
         }
 
-        public async Task<Candidate?> UpdateAsync(int id, Candidate candidate)
+        public async Task<CandidateDto> UpdateAsync(int id, UpdateCandidateDto updateDto)
         {
-            var existing = await _context.Candidates.FindAsync(id);
-            if (existing == null) return null;
+            var existingCandidate = await _candidateRepository.GetByIdAsync(id);
+            if (existingCandidate == null)
+                throw new NotFoundException("Candidate", id);
 
-            _context.Entry(existing).CurrentValues.SetValues(candidate);
-            await _context.SaveChangesAsync();
-            return existing;
+            _mapper.Map(updateDto, existingCandidate);
+            var updatedCandidate = await _candidateRepository.UpdateAsync(existingCandidate);
+            return _mapper.Map<CandidateDto>(updatedCandidate);
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var existing = await _context.Candidates.FindAsync(id);
-            if (existing == null) return false;
+            var existingCandidate = await _candidateRepository.GetByIdAsync(id);
+            if (existingCandidate == null)
+                throw new NotFoundException("Candidate", id);
 
-            _context.Candidates.Remove(existing);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _candidateRepository.DeleteAsync(id);
         }
 
         public async Task<bool> AnyAsync()
         {
-            return await _context.Candidates.AnyAsync();
+            return await _candidateRepository.AnyAsync();
         }
 
         public async Task DeleteAllAsync()
         {
-            var candidates = await _context.Candidates.ToListAsync();
-            if (candidates.Any())
-            {
-                _context.Candidates.RemoveRange(candidates);
-                await _context.SaveChangesAsync();
-            }
+            await _candidateRepository.DeleteAllAsync();
         }
 
         public void ResetIdentitySeed()
         {
-            _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Candidates', RESEED, 0)");
+            _candidateRepository.ResetIdentitySeed();
         }
     }
 }

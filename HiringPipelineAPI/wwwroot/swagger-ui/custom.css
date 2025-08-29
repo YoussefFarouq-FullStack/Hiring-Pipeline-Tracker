@@ -1,0 +1,224 @@
+/* Custom Swagger UI Styling */
+
+/* Header styling */
+.swagger-ui .topbar {
+    background-color: #2c3e50;
+    padding: 20px 0;
+}
+
+.swagger-ui .topbar .download-url-wrapper .select-label {
+    color: #ecf0f1;
+}
+
+.swagger-ui .topbar .download-url-wrapper input[type=text] {
+    border: 2px solid #3498db;
+    border-radius: 4px;
+    padding: 8px 12px;
+}
+
+.swagger-ui .topbar .download-url-wrapper .btn {
+    background-color: #3498db;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    color: white;
+    font-weight: 600;
+}
+
+.swagger-ui .topbar .download-url-wrapper .btn:hover {
+    background-color: #2980b9;
+}
+
+/* Operation styling */
+.swagger-ui .opblock {
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.swagger-ui .opblock.opblock-get {
+    border-color: #61affe;
+    background: rgba(97, 175, 254, 0.1);
+}
+
+.swagger-ui .opblock.opblock-post {
+    border-color: #49cc90;
+    background: rgba(73, 204, 144, 0.1);
+}
+
+.swagger-ui .opblock.opblock-put {
+    border-color: #fca130;
+    background: rgba(252, 161, 48, 0.1);
+}
+
+.swagger-ui .opblock.opblock-delete {
+    border-color: #f93e3e;
+    background: rgba(249, 62, 62, 0.1);
+}
+
+/* Operation header */
+.swagger-ui .opblock .opblock-summary {
+    padding: 16px;
+}
+
+.swagger-ui .opblock .opblock-summary-description {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+/* Try it out button */
+.swagger-ui .opblock .try-out__btn {
+    background-color: #27ae60;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    padding: 8px 16px;
+}
+
+.swagger-ui .opblock .try-out__btn:hover {
+    background-color: #229954;
+}
+
+.swagger-ui .opblock .try-out__btn.cancel {
+    background-color: #e74c3c;
+}
+
+.swagger-ui .opblock .try-out__btn.cancel:hover {
+    background-color: #c0392b;
+}
+
+/* Execute button */
+.swagger-ui .opblock .execute-wrapper .btn.execute {
+    background-color: #3498db;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    padding: 10px 20px;
+}
+
+.swagger-ui .opblock .execute-wrapper .btn.execute:hover {
+    background-color: #2980b9;
+}
+
+/* Parameter styling */
+.swagger-ui .opblock .parameters-container .parameter__name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.swagger-ui .opblock .parameters-container .parameter__type {
+    color: #7f8c8d;
+    font-size: 12px;
+}
+
+.swagger-ui .opblock .parameters-container .parameter__required {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+/* Response styling */
+.swagger-ui .responses-wrapper .response {
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.swagger-ui .responses-wrapper .response .response-col_status {
+    font-weight: 600;
+}
+
+.swagger-ui .responses-wrapper .response .response-col_status.response-200 {
+    color: #27ae60;
+}
+
+.swagger-ui .responses-wrapper .response .response-col_status.response-400 {
+    color: #e74c3c;
+}
+
+.swagger-ui .responses-wrapper .response .response-col_status.response-404 {
+    color: #f39c12;
+}
+
+.swagger-ui .responses-wrapper .response .response-col_status.response-500 {
+    color: #e74c3c;
+}
+
+/* Model styling */
+.swagger-ui .model {
+    border-radius: 4px;
+    border: 1px solid #bdc3c7;
+}
+
+.swagger-ui .model .model-title {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+/* Schema styling */
+.swagger-ui .scheme-container {
+    background-color: #ecf0f1;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.swagger-ui .scheme-container .schemes-title {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+/* Info section */
+.swagger-ui .info {
+    margin-bottom: 30px;
+}
+
+.swagger-ui .info .title {
+    color: #2c3e50;
+    font-size: 36px;
+    font-weight: 700;
+}
+
+.swagger-ui .info .description {
+    color: #7f8c8d;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Contact and license */
+.swagger-ui .info .contact,
+.swagger-ui .info .license {
+    margin-top: 16px;
+}
+
+.swagger-ui .info .contact a,
+.swagger-ui .info .license a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.swagger-ui .info .contact a:hover,
+.swagger-ui .info .license a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .swagger-ui .topbar .download-url-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .swagger-ui .topbar .download-url-wrapper input[type=text] {
+        margin-bottom: 8px;
+    }
+    
+    .swagger-ui .opblock .opblock-summary {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .swagger-ui .opblock .opblock-summary-method {
+        margin-bottom: 8px;
+    }
+}

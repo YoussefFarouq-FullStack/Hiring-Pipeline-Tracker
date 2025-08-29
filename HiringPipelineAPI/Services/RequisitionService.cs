@@ -1,74 +1,78 @@
-using HiringPipelineAPI.Data;
 using HiringPipelineAPI.Models;
 using HiringPipelineAPI.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using HiringPipelineAPI.Repositories.Interfaces;
+using HiringPipelineAPI.DTOs;
+using HiringPipelineAPI.Exceptions;
+using AutoMapper;
 
 namespace HiringPipelineAPI.Services.Implementations
 {
     public class RequisitionService : IRequisitionService
     {
-        private readonly HiringPipelineDbContext _context;
+        private readonly IRequisitionRepository _requisitionRepository;
+        private readonly IMapper _mapper;
 
-        public RequisitionService(HiringPipelineDbContext context)
+        public RequisitionService(IRequisitionRepository requisitionRepository, IMapper mapper)
         {
-            _context = context;
+            _requisitionRepository = requisitionRepository;
+            _mapper = mapper;
         }
 
-        public async Task<IEnumerable<Requisition>> GetAllAsync()
+        public async Task<IEnumerable<RequisitionDto>> GetAllAsync()
         {
-            return await _context.Requisitions.ToListAsync();
+            var requisitions = await _requisitionRepository.GetAllAsync();
+            return _mapper.Map<IEnumerable<RequisitionDto>>(requisitions);
         }
 
-        public async Task<Requisition?> GetByIdAsync(int id)
+        public async Task<RequisitionDetailDto> GetByIdAsync(int id)
         {
-            return await _context.Requisitions.FindAsync(id);
+            var requisition = await _requisitionRepository.GetByIdAsync(id);
+            if (requisition == null)
+                throw new NotFoundException("Requisition", id);
+            
+            return _mapper.Map<RequisitionDetailDto>(requisition);
         }
 
-        public async Task<Requisition> CreateAsync(Requisition requisition)
+        public async Task<RequisitionDto> CreateAsync(CreateRequisitionDto createDto)
         {
-            _context.Requisitions.Add(requisition);
-            await _context.SaveChangesAsync();
-            return requisition;
+            var requisition = _mapper.Map<Requisition>(createDto);
+            var createdRequisition = await _requisitionRepository.AddAsync(requisition);
+            return _mapper.Map<RequisitionDto>(createdRequisition);
         }
 
-        public async Task<Requisition?> UpdateAsync(int id, Requisition requisition)
+        public async Task<RequisitionDto> UpdateAsync(int id, UpdateRequisitionDto updateDto)
         {
-            var existing = await _context.Requisitions.FindAsync(id);
-            if (existing == null) return null;
+            var existingRequisition = await _requisitionRepository.GetByIdAsync(id);
+            if (existingRequisition == null)
+                throw new NotFoundException("Requisition", id);
 
-            _context.Entry(existing).CurrentValues.SetValues(requisition);
-            await _context.SaveChangesAsync();
-            return existing;
+            _mapper.Map(updateDto, existingRequisition);
+            var updatedRequisition = await _requisitionRepository.UpdateAsync(existingRequisition);
+            return _mapper.Map<RequisitionDto>(updatedRequisition);
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var existing = await _context.Requisitions.FindAsync(id);
-            if (existing == null) return false;
+            var existingRequisition = await _requisitionRepository.GetByIdAsync(id);
+            if (existingRequisition == null)
+                throw new NotFoundException("Requisition", id);
 
-            _context.Requisitions.Remove(existing);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _requisitionRepository.DeleteAsync(id);
         }
 
         public async Task<bool> AnyAsync()
         {
-            return await _context.Requisitions.AnyAsync();
+            return await _requisitionRepository.AnyAsync();
         }
 
         public async Task DeleteAllAsync()
         {
-            var requisitions = await _context.Requisitions.ToListAsync();
-            if (requisitions.Any())
-            {
-                _context.Requisitions.RemoveRange(requisitions);
-                await _context.SaveChangesAsync();
-            }
+            await _requisitionRepository.DeleteAllAsync();
         }
 
         public void ResetIdentitySeed()
         {
-            _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Requisitions', RESEED, 0)");
+            _requisitionRepository.ResetIdentitySeed();
         }
     }
 }

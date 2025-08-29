@@ -1,13 +1,13 @@
-using HiringPipelineAPI.Models;
+using HiringPipelineAPI.DTOs;
 
 namespace HiringPipelineAPI.Services.Interfaces
 {
     public interface ICandidateService
     {
-        Task<IEnumerable<Candidate>> GetAllAsync();
-        Task<Candidate?> GetByIdAsync(int id);
-        Task<Candidate> CreateAsync(Candidate candidate);
-        Task<Candidate?> UpdateAsync(int id, Candidate candidate);
+        Task<IEnumerable<CandidateDto>> GetAllAsync();
+        Task<CandidateDetailDto> GetByIdAsync(int id);
+        Task<CandidateDto> CreateAsync(CreateCandidateDto createDto);
+        Task<CandidateDto> UpdateAsync(int id, UpdateCandidateDto updateDto);
         Task<bool> DeleteAsync(int id);
         Task<bool> AnyAsync();
         Task DeleteAllAsync();
