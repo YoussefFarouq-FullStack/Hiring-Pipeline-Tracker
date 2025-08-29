@@ -1,0 +1,194 @@
+<div class="min-h-screen bg-gray-50 p-4">
+  <!-- Header -->
+  <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 mb-1">Stage History</h1>
+      <p class="text-sm text-gray-600">Track candidate movement across hiring stages</p>
+    </div>
+    <div class="flex gap-2">
+      <button 
+        (click)="openAddDialog()"
+        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg shadow hover:bg-blue-700 transition"
+      >
+        + Add Stage History
+      </button>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="bg-white rounded-xl shadow mb-4 p-4">
+    <div class="relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type="text"
+        placeholder="Search by stage, user, or notes..."
+        class="pl-9 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 text-sm"
+        [(ngModel)]="searchTerm"
+        (input)="onSearch($event)"
+      />
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="bg-white rounded-xl shadow p-8 text-center">
+    <div class="animate-spin h-6 w-6 border-2 border-gray-300 border-t-transparent rounded-full mx-auto mb-3"></div>
+    <p class="text-sm text-gray-600">Loading stage history...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="hasError" class="bg-white rounded-xl shadow p-6 text-center">
+    <div class="mx-auto mb-2 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+      <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M12 9v2m0 4h.01M5 19h14c1 0 2-1 1-2L13 5a2 2 0 00-2 0L4 17c-1 1 0 2 1 2z"/>
+      </svg>
+    </div>
+    <h3 class="text-sm font-semibold text-gray-900 mb-1">Unable to load stage history</h3>
+    <p class="text-sm text-gray-600 mb-3">{{ errorMessage }}</p>
+    <button (click)="retryLoad()" class="px-3 py-1.5 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-900">
+      Try again
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading && !hasError" class="bg-white rounded-xl shadow overflow-hidden">
+    <!-- Empty State -->
+    <div *ngIf="paginatedHistories.length === 0" class="text-center py-12">
+      <svg class="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <h3 class="text-base font-medium text-gray-900 mb-1">No stage history found</h3>
+      <p class="text-sm text-gray-500 mb-4">
+        {{ searchTerm ? 'No entries match your search.' : 'Start by adding stage history entries.' }}
+      </p>
+      <button *ngIf="!searchTerm" (click)="openAddDialog()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+        Add First Entry
+      </button>
+    </div>
+
+    <!-- Timeline View -->
+    <div *ngIf="paginatedHistories.length > 0" class="p-6">
+      <div class="space-y-6">
+        <div *ngFor="let history of paginatedHistories; let i = index; let last = last" class="flex items-start group">
+          <!-- Timeline Line & Dot -->
+          <div class="flex flex-col items-center mr-4">
+            <!-- Stage Dot -->
+            <div class="w-4 h-4 rounded-full border-2 border-white shadow-sm z-10"
+                 [ngClass]="getStageDotClass(history.toStage)"></div>
+            
+            <!-- Connecting Line -->
+            <div *ngIf="!last" class="w-0.5 h-16 bg-gray-200 mt-2"></div>
+          </div>
+
+          <!-- Content Card -->
+          <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all duration-200 group-hover:border-gray-300">
+            <!-- Header Row -->
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <!-- Stage Badge -->
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium"
+                      [ngClass]="getStageBadgeClass(history.toStage)">
+                  <span class="w-2 h-2 rounded-full mr-2"
+                        [ngClass]="getStageDotClass(history.toStage)"></span>
+                  {{ history.toStage }}
+                </span>
+                
+                <!-- From Stage (if exists) -->
+                <span *ngIf="history.fromStage" class="text-sm text-gray-500">
+                  from 
+                  <span class="font-medium text-gray-700">{{ history.fromStage }}</span>
+                </span>
+              </div>
+              
+              <!-- Date & Time -->
+              <div class="text-right">
+                <div class="text-sm font-medium text-gray-900">{{ formatDate(history.movedAt) }}</div>
+                <div class="text-xs text-gray-500">{{ formatTime(history.movedAt) }}</div>
+              </div>
+            </div>
+
+            <!-- Details Row -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <!-- Moved By -->
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                  </svg>
+                  <span class="text-sm text-gray-700">{{ history.movedBy }}</span>
+                </div>
+
+                <!-- Notes -->
+                <div *ngIf="history.notes" class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  <span class="text-sm text-gray-700">{{ history.notes }}</span>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button (click)="openEditDialog(history)" 
+                        class="p-2 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors"
+                        title="Edit Stage History">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button (click)="deleteHistory(history)" 
+                        class="p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
+                        title="Delete Stage History">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="paginatedHistories.length > 0" class="bg-gray-50 px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-2 text-sm text-gray-700">
+        <span>Showing {{ getTotalItems() }} results</span>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <button
+          (click)="previousPage()"
+          [disabled]="currentPage === 1"
+          class="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+        
+        <div class="flex items-center gap-1">
+          <button
+            *ngFor="let page of getPageNumbers()"
+            (click)="goToPage(page)"
+            [class]="page === currentPage ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+            class="px-3 py-1 text-sm border border-gray-300 rounded min-w-[32px]"
+          >
+            {{ page }}
+          </button>
+        </div>
+        
+        <button
+          (click)="nextPage()"
+          [disabled]="currentPage >= totalPages"
+          class="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

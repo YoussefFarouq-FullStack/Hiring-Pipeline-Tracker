@@ -1,81 +1,61 @@
-import { Requisition } from './../../models/requisition.model';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { FormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { take } from 'rxjs/operators';
+
+import { Requisition } from '../../models/requisition.model';
 import { RequisitionService } from '../../services/requisition.service';
 import { RequisitionDialogComponent } from './requisition-dialog/requisition-dialog';
 
 @Component({
   selector: 'app-requisitions',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatButtonModule, MatDialogModule, MatSnackBarModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatSnackBarModule,
+    MatTooltipModule,
+    MatSelectModule,
+    MatPaginatorModule
+  ],
   templateUrl: './requisitions.html',
-  styleUrl: './requisitions.scss'
+  styleUrls: ['./requisitions.scss']
 })
 export class RequisitionsComponent implements OnInit {
   requisitions: Requisition[] = [];
-  dataSource: MatTableDataSource<Requisition>;
-  displayedColumns: string[] = ['order', 'title', 'department', 'status', 'actions'];
-  
-  // Loading and error states
+  filteredRequisitions: Requisition[] = [];
+  paginatedRequisitions: Requisition[] = [];
+
+  // Filters
+  searchTerm: string = '';
+  selectedDepartment: string = '';
+  selectedStatus: string = '';
+  departments: string[] = ['Engineering', 'HR', 'Finance', 'Marketing'];
+
+  // UI states
   isLoading = false;
   hasError = false;
   errorMessage = '';
 
-  // Computed properties for stats
-  get totalRequisitions(): number {
-    return this.requisitions.length;
-  }
-
-  get openRequisitions(): number {
-    return this.requisitions.filter(r => r.status === 'Open').length;
-  }
-
-  get inProgressRequisitions(): number {
-    return this.requisitions.filter(r => r.status === 'In Progress').length;
-  }
-
-  get closedRequisitions(): number {
-    return this.requisitions.filter(r => r.status === 'Closed').length;
-  }
-
-  // Safe access to dataSource data
-  get dataSourceData(): Requisition[] {
-    return this.dataSource?.data || [];
-  }
-
-  get dataSourceLength(): number {
-    return this.dataSourceData.length;
-  }
-
-  get hasTableData(): boolean {
-    return this.dataSourceData.length > 0;
-  }
-
-  get firstRequisitionId(): number | string {
-    return this.dataSourceData.length > 0 ? this.dataSourceData[0]?.requisitionId || 'N/A' : 'N/A';
-  }
-
-  get lastRequisitionId(): number | string {
-    return this.dataSourceData.length > 0 ? this.dataSourceData[this.dataSourceData.length - 1]?.requisitionId || 'N/A' : 'N/A';
-  }
-
-  // Method to get display order for a requisition
-  getDisplayOrder(requisition: Requisition): number {
-    if (!this.dataSourceData || this.dataSourceData.length === 0) return 0;
-    return this.dataSourceData.findIndex(r => r.requisitionId === requisition.requisitionId) + 1;
-  }
+  // Pagination
+  pageSize = 5;
+  currentPage = 0;
+  totalItems = 0;
 
   constructor(
-    private requisitionService: RequisitionService, 
-    public dialog: MatDialog,
+    private requisitionService: RequisitionService,
+    private dialog: MatDialog,
     private snackBar: MatSnackBar
-  ) {
-    this.dataSource = new MatTableDataSource<Requisition>([]);
-  }
+  ) {}
 
   ngOnInit(): void {
     this.loadRequisitions();
@@ -85,125 +65,197 @@ export class RequisitionsComponent implements OnInit {
     this.isLoading = true;
     this.hasError = false;
     this.errorMessage = '';
-    
-    this.requisitionService.getRequisitions().subscribe({
-      next: (data: Requisition[]) => {
-        // Ensure data is an array and handle potential null/undefined
-        if (Array.isArray(data)) {
+
+    this.requisitionService.getRequisitions()
+      .pipe(take(1))
+      .subscribe({
+        next: (data: Requisition[]) => {
           this.requisitions = data;
-          this.dataSource.data = this.requisitions;
-        } else {
-          console.warn('Expected array but received:', data);
-          this.requisitions = [];
-          this.dataSource.data = [];
+          this.applyFilters();
+          this.isLoading = false;
+        },
+        error: (error: any) => {
+          console.error('Error loading requisitions:', error);
+          this.hasError = true;
+          this.errorMessage = error?.message || 'Unexpected error occurred while loading requisitions';
+          this.isLoading = false;
+          this.showError(this.errorMessage);
         }
-        this.isLoading = false;
-      },
-      error: (error: Error) => {
-        console.error('Error loading requisitions:', error);
-        this.hasError = true;
-        this.errorMessage = error.message || 'Failed to load requisitions. Please try again.';
-        this.isLoading = false;
-        this.showError(this.errorMessage);
-      }
-    });
+      });
   }
 
-  addRequisition(): void {
-    const dialogRef = this.dialog.open(RequisitionDialogComponent, {
-      width: '500px',
-      maxWidth: '90vw',
-      maxHeight: '90vh',
-      data: { mode: 'create' }
+  applyFilters(): void {
+    this.filteredRequisitions = this.requisitions.filter(req => {
+      const term = this.searchTerm.trim().toLowerCase();
+
+      const matchesSearch =
+        !term ||
+        req.title.toLowerCase().includes(term) ||
+        (req.department?.toLowerCase().includes(term)) ||
+        (req.status?.toLowerCase().includes(term));
+
+      const matchesStatus = this.selectedStatus ? req.status === this.selectedStatus : true;
+      const matchesDepartment = this.selectedDepartment ? req.department === this.selectedDepartment : true;
+
+      return matchesSearch && matchesStatus && matchesDepartment;
     });
 
-    dialogRef.afterClosed().subscribe((result: Partial<Requisition> | undefined) => {
-      if (result) {
-        this.isLoading = true;
-        this.requisitionService.createRequisition(result as Omit<Requisition, 'requisitionId'>).subscribe({
-          next: () => {
-            this.showSuccess('Requisition created successfully!');
-            this.loadRequisitions();
-          },
-          error: (error: Error) => {
-            console.error('Failed to create requisition:', error);
-            this.showError(error.message || 'Failed to create requisition. Please try again.');
-            this.isLoading = false;
-          }
-        });
-      }
-    });
+    this.totalItems = this.filteredRequisitions.length;
+    this.currentPage = 0; // reset page when filters change
+    this.updatePagination();
   }
 
-  editRequisition(requisition: Requisition): void {
-    if (!requisition || !requisition.requisitionId) {
-      console.error('Invalid requisition data for editing:', requisition);
-      this.showError('Invalid requisition data. Please try again.');
-      return;
-    }
+  filterRequisitions(): void {
+    this.applyFilters();
+  }
 
-    console.log('Editing requisition:', requisition);
+  updatePagination(): void {
+    const startIndex = this.currentPage * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedRequisitions = this.filteredRequisitions.slice(startIndex, endIndex);
+  }
 
+  onPageChange(event: PageEvent): void {
+    this.pageSize = event.pageSize;
+    this.currentPage = event.pageIndex;
+    this.updatePagination();
+  }
+
+  openDialog(requisition?: Requisition): void {
     const dialogRef = this.dialog.open(RequisitionDialogComponent, {
       width: '500px',
-      maxWidth: '90vw',
-      maxHeight: '90vh',
-      data: { mode: 'edit', requisition }
+      data: {
+        mode: requisition ? 'edit' : 'create',
+        requisition: requisition
+      }
     });
 
-    dialogRef.afterClosed().subscribe((result: Partial<Requisition> | undefined) => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        console.log('Updating requisition with data:', result);
-        this.isLoading = true;
-        
-        // Merge the existing requisition with the updated data
-        const updatedRequisition: Requisition = {
-          ...requisition,
-          ...result
-        };
-        
-        this.requisitionService.updateRequisition(requisition.requisitionId, updatedRequisition).subscribe({
-          next: () => {
-            this.showSuccess('Requisition updated successfully!');
-            this.loadRequisitions();
-          },
-          error: (error: Error) => {
-            console.error('Failed to update requisition:', error);
-            this.showError(error.message || 'Failed to update requisition. Please try again.');
-            this.isLoading = false;
-          }
-        });
+        if (requisition) {
+          // Update existing requisition
+          this.requisitionService.updateRequisition(requisition.requisitionId, result)
+            .pipe(take(1))
+            .subscribe({
+              next: () => {
+                this.loadRequisitions();
+                this.showSuccess('Requisition updated successfully!');
+              },
+              error: (error: any) => {
+                console.error('Error updating requisition:', error);
+                this.showError('Failed to update requisition. Please try again.');
+              }
+            });
+        } else {
+          // Create new requisition
+          this.requisitionService.createRequisition(result)
+            .pipe(take(1))
+            .subscribe({
+              next: () => {
+                this.loadRequisitions();
+                this.showSuccess('Requisition created successfully!');
+              },
+              error: (error: any) => {
+                console.error('Error creating requisition:', error);
+                this.showError('Failed to create requisition. Please try again.');
+              }
+            });
+        }
       }
     });
   }
 
   deleteRequisition(id: number): void {
-    if (!id || isNaN(id)) {
-      console.error('Invalid requisition ID for deletion:', id);
-      this.showError('Invalid requisition ID. Please try again.');
-      return;
+    if (confirm('Are you sure you want to delete this requisition?')) {
+      this.requisitionService.deleteRequisition(id)
+        .pipe(take(1))
+        .subscribe({
+          next: () => {
+            this.loadRequisitions();
+            this.showSuccess('Requisition deleted successfully!');
+          },
+          error: (error: any) => {
+            console.error('Error deleting requisition:', error);
+            this.showError('Failed to delete requisition. Please try again.');
+          }
+        });
     }
+  }
 
-    if (confirm("Are you sure you want to delete this requisition? This action cannot be undone.")) {
-      this.isLoading = true;
-      this.requisitionService.deleteRequisition(id).subscribe({
-        next: () => {
-          this.showSuccess('Requisition deleted successfully!');
-          this.loadRequisitions();
-        },
-        error: (error: Error) => {
-          console.error('Failed to delete requisition:', error);
-          this.showError(error.message || 'Failed to delete requisition. Please try again.');
-          this.isLoading = false;
-        }
-      });
-    }
+  getStatusBadgeClass(status: string): string {
+    if (!status) return 'bg-gray-100 text-gray-800';
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('open')) return 'bg-green-100 text-green-800';
+    if (statusLower.includes('in progress')) return 'bg-purple-100 text-purple-800';
+    if (statusLower.includes('closed')) return 'bg-red-100 text-red-800';
+    if (statusLower.includes('on hold')) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-gray-100 text-gray-800';
+  }
+
+  getStatusDotClass(status: string): string {
+    if (!status) return 'bg-gray-400';
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('open')) return 'bg-green-500';
+    if (statusLower.includes('in progress')) return 'bg-purple-500';
+    if (statusLower.includes('closed')) return 'bg-red-500';
+    if (statusLower.includes('on hold')) return 'bg-yellow-500';
+    return 'bg-gray-400';
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+  }
+
+  // TODO: Replace with actual backend application count
+  getApplicationCount(requisitionId: number): number {
+    return Math.floor(Math.random() * 10) + 1;
   }
 
   retryLoad(): void {
     this.loadRequisitions();
   }
 
+  exportRequisitions(): void {
+    const headers = ['Title', 'Department', 'Status', 'Applications'];
+    const csvContent = [
+      headers.join(','),
+      ...this.filteredRequisitions.map(req =>
+        [
+          `"${req.title.replace(/"/g, '""')}"`,
+          `"${(req.department || '').replace(/"/g, '""')}"`,
+          `"${(req.status || '').replace(/"/g, '""')}"`,
+          this.getApplicationCount(req.requisitionId)
+        ].join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `requisitions-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    this.showSuccess('Requisitions exported successfully!');
+  }
+
+  // --- Stats getters ---
+  get totalRequisitions(): number {
+    return this.requisitions.length;
+  }
+  get openRequisitions(): number {
+    return this.requisitions.filter(r => r.status?.toLowerCase().includes('open')).length;
+  }
+  get inProgressRequisitions(): number {
+    return this.requisitions.filter(r => r.status?.toLowerCase().includes('in progress')).length;
+  }
+  get closedRequisitions(): number {
+    return this.requisitions.filter(r => r.status?.toLowerCase().includes('closed')).length;
+  }
+
+  // --- Snackbar helpers ---
   private showSuccess(message: string): void {
     this.snackBar.open(message, 'Close', {
       duration: 3000,
@@ -221,4 +273,49 @@ export class RequisitionsComponent implements OnInit {
       panelClass: ['error-snackbar']
     });
   }
+
+  // Pagination methods
+  getTotalPages(): number {
+    return Math.ceil(this.totalItems / this.pageSize);
+  }
+
+  getPageNumbers(): number[] {
+    const totalPages = this.getTotalPages();
+    const current = this.currentPage;
+    const pages: number[] = [];
+    
+    // Show up to 5 page numbers around current page
+    const start = Math.max(0, current - 2);
+    const end = Math.min(totalPages - 1, current + 2);
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.updatePagination();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.getTotalPages() - 1) {
+      this.currentPage++;
+      this.updatePagination();
+    }
+  }
+
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.getTotalPages()) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+
+  // Make Math available in template
+  readonly Math = Math;
 }

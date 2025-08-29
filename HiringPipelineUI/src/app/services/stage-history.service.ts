@@ -2,13 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
-import { StageHistory } from '../models/stage-history.model';
+import { StageHistory, CreateStageHistoryDto } from '../models/stage-history.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StageHistoryService {
-  private apiUrl = '/api/stage-history';
+  private apiUrl = '/api/stagehistory';
   
   constructor(private http: HttpClient) {}
 
@@ -52,7 +52,14 @@ export class StageHistoryService {
     );
   }
 
-  addStageHistory(stageHistory: StageHistory): Observable<StageHistory> {
+  getStageHistoryByApplication(applicationId: number): Observable<StageHistory[]> {
+    return this.http.get<StageHistory[]>(`${this.apiUrl}/application/${applicationId}`).pipe(
+      retry(1),
+      catchError(this.handleError)
+    );
+  }
+
+  addStageHistory(stageHistory: CreateStageHistoryDto): Observable<StageHistory> {
     return this.http.post<StageHistory>(this.apiUrl, stageHistory).pipe(
       catchError(this.handleError)
     );

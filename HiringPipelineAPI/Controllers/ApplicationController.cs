@@ -40,14 +40,21 @@ public class ApplicationsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Application>> CreateApplication([FromBody] ApplicationDto dto)
+    public async Task<ActionResult<Application>> CreateApplication([FromBody] CreateApplicationDto createDto)
     {
+        // Only CandidateId & RequisitionId are required here
+        if (!_context.Candidates.Any(c => c.CandidateId == createDto.CandidateId))
+            return BadRequest("Invalid CandidateId");
+
+        if (!_context.Requisitions.Any(r => r.RequisitionId == createDto.RequisitionId))
+            return BadRequest("Invalid RequisitionId");
+
         var application = new Application
         {
-            CandidateId = dto.CandidateId,
-            RequisitionId = dto.RequisitionId,
-            CurrentStage = dto.CurrentStage,
-            Status = dto.Status,
+            CandidateId = createDto.CandidateId,
+            RequisitionId = createDto.RequisitionId,
+            CurrentStage = createDto.CurrentStage ?? "Applied",
+            Status = createDto.Status,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -59,16 +66,17 @@ public class ApplicationsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateApplication(int id, [FromBody] ApplicationDto dto)
+    public async Task<IActionResult> UpdateApplication(int id, [FromBody] UpdateApplicationDto updateDto)
     {
-        var application = await _context.Applications.FindAsync(id);
-        if (application == null) return NotFound();
+        var existing = await _context.Applications.FindAsync(id);
+        if (existing == null) return NotFound();
 
-        application.CandidateId = dto.CandidateId;
-        application.RequisitionId = dto.RequisitionId;
-        application.CurrentStage = dto.CurrentStage;
-        application.Status = dto.Status;
-        application.UpdatedAt = DateTime.UtcNow;
+        if (updateDto.CurrentStage != null)
+            existing.CurrentStage = updateDto.CurrentStage;
+        if (updateDto.Status != null)
+            existing.Status = updateDto.Status;
+
+        existing.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
         return NoContent();

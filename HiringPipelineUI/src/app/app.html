@@ -1,150 +1,102 @@
-<div class="min-h-screen bg-gray-50">
-  <!-- Navigation -->
-  <nav class="nav-container sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-16">
-        <!-- Logo and Brand -->
-        <div class="flex items-center space-x-4">
-          <div class="flex-shrink-0">
-            <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.605-9-1.7M21 13.255A23.931 23.931 0 0012 15c-3.183 0-6.22-.605-9-1.7M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.605-9-1.7M21 13.255A23.931 23.931 0 0012 15c-3.183 0-6.22-.605-9-1.7"></path>
-                </svg>
-              </div>
-              <div>
-                <h1 class="text-xl font-bold text-gray-900">
-                  Hiring Pipeline
-                </h1>
-                <p class="text-xs text-gray-500">Talent Management System</p>
-              </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Hiring Pipeline Tracker</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header Bar -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="app-brand">
+            <div class="brand-icon">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <div class="brand-text">
+              <div class="brand-title">Hiring Tracker</div>
+              <div class="brand-subtitle">HR Dashboard</div>
             </div>
           </div>
         </div>
-        <!-- Navigation Links -->
-        <div class="hidden md:block">
-          <div class="ml-10 flex items-baseline space-x-1">
-            <a
-              routerLink="/candidates"
-              routerLinkActive="active"
-              class="nav-link group relative px-4 py-2 rounded-lg transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
-            >
-              <div class="flex items-center space-x-2">
-                <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                </svg>
-                <span>Candidates</span>
-              </div>
-            </a>
-            <a
-              routerLink="/requisitions"
-              routerLinkActive="active"
-              class="nav-link group relative px-4 py-2 rounded-lg transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
-            >
-              <div class="flex items-center space-x-2">
-                <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                <span>Requisitions</span>
-              </div>
-            </a>
-            <a
-              routerLink="/applications"
-              routerLinkActive="active"
-              class="nav-link group relative px-4 py-2 rounded-lg transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
-            >
-              <div class="flex items-center space-x-2">
-                <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                </svg>
-                <span>Applications</span>
-              </div>
-            </a>
-          </div>
-        </div>
-        <!-- Mobile menu button -->
-        <div class="md:hidden">
-          <button
-            type="button"
-            class="bg-white p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all duration-200"
-            aria-controls="mobile-menu"
-            aria-expanded="false"
-          >
-            <span class="sr-only">Open main menu</span>
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
       </div>
-    </div>
-    <!-- Mobile menu -->
-    <div class="md:hidden" id="mobile-menu">
-      <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
-        <a
-          routerLink="/candidates"
-          routerLinkActive="active"
-          class="nav-link block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
-        >
-          <div class="flex items-center space-x-3">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-            </svg>
-            <span>Candidates</span>
+    </header>
+
+    <div class="app-main">
+      <!-- Left Sidebar Navigation -->
+      <nav class="sidebar">
+        <div class="sidebar-content">
+          <div class="nav-section">
+            <h3 class="nav-heading">Navigation</h3>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a routerLink="/requisitions" routerLinkActive="active" class="nav-link">
+                  <div class="nav-icon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                  </div>
+                  <div class="nav-text">
+                    <span class="nav-title">Requisitions</span>
+                    <span class="nav-subtitle">Manage job openings</span>
+                  </div>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a routerLink="/candidates" routerLinkActive="active" class="nav-link">
+                  <div class="nav-icon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                  </div>
+                  <div class="nav-text">
+                    <span class="nav-title">Candidates</span>
+                    <span class="nav-subtitle">Manage candidate profiles</span>
+                  </div>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a routerLink="/applications" routerLinkActive="active" class="nav-link">
+                  <div class="nav-icon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                  </div>
+                  <div class="nav-text">
+                    <span class="nav-title">Applications</span>
+                    <span class="nav-subtitle">View applications</span>
+                  </div>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a routerLink="/stage-history" routerLinkActive="active" class="nav-link">
+                  <div class="nav-icon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <div class="nav-text">
+                    <span class="nav-title">Stage History</span>
+                    <span class="nav-subtitle">Track hiring stages</span>
+                  </div>
+                </a>
+              </li>
+            </ul>
           </div>
-        </a>
-        <a
-          routerLink="/requisitions"
-          routerLinkActive="active"
-          class="nav-link block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
-        >
-          <div class="flex items-center space-x-3">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            <span>Requisitions</span>
-          </div>
-        </a>
-        <a
-          routerLink="/applications"
-          routerLinkActive="active"
-          class="nav-link block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
-        >
-          <div class="flex items-center space-x-3">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-            </svg>
-            <span>Applications</span>
-          </div>
-        </a>
-      </div>
-    </div>
-  </nav>
-  <!-- Main Content Area -->
-  <main class="min-h-screen bg-gray-50">
-    <router-outlet></router-outlet>
-  </main>
-  <!-- Footer -->
-  <footer class="bg-white border-t border-gray-200 mt-auto">
-    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div class="text-center">
-        <div class="flex justify-center items-center space-x-2 mb-4">
-          <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.605-9-1.7M21 13.255A23.931 23.931 0 0012 15c-3.183 0-6.22-.605-9-1.7M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.605-9-1.7M21 13.255A23.931 23.931 0 0012 15c-3.183 0-6.22-.605-9-1.7"></path>
-            </svg>
-          </div>
-          <span class="text-lg font-semibold text-gray-900">Hiring Pipeline Tracker</span>
         </div>
-        <p class="text-gray-600 text-sm">
-          Streamlining talent acquisition and management processes
-        </p>
-        <div class="mt-4 flex justify-center space-x-6">
-          <span class="text-gray-400 text-xs">© 2024 All rights reserved</span>
-          <span class="text-gray-400 text-xs">•</span>
-          <span class="text-gray-400 text-xs">Built with Angular & Tailwind CSS</span>
-        </div>
-      </div>
+      </nav>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <router-outlet></router-outlet>
+      </main>
     </div>
-  </footer>
-</div>
+  </div>
+</body>
+</html>

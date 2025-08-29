@@ -45,6 +45,13 @@ export class ApplicationService {
     );
   }
 
+  getApplicationsWithDetails(): Observable<Application[]> {
+    return this.http.get<Application[]>(this.apiUrl).pipe(
+      retry(1),
+      catchError(this.handleError)
+    );
+  }
+
   getApplication(id: number): Observable<Application> {
     return this.http.get<Application>(`${this.apiUrl}/${id}`).pipe(
       retry(1),

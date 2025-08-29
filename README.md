@@ -22,22 +22,25 @@ A comprehensive web application for managing the entire hiring process, from job
 
 ## 🏗️ Architecture
 
-### Frontend (Angular 17)
+### Frontend (Angular 20.1.6)
 - **Framework**: Angular with standalone components
 - **Styling**: Tailwind CSS for modern, responsive design
 - **UI Components**: Angular Material for consistent interface
 - **State Management**: Reactive services with RxJS
+- **Proxy Configuration**: Properly configured for API routing
 
 ### Backend (ASP.NET Core 8)
 - **Framework**: .NET 8 Web API
 - **Database**: Entity Framework Core with SQL Server
 - **Architecture**: Clean, RESTful API design
 - **CORS**: Configured for secure frontend-backend communication
+- **DTOs**: Structured data transfer objects for API communication
 
 ### Database
 - **SQL Server**: Robust relational database
 - **Schema**: Normalized design with proper relationships
 - **Migrations**: Code-first approach with Entity Framework
+- **Identity Management**: Automatic seed reset for optimal ID management
 
 ## 📋 Prerequisites
 
@@ -105,11 +108,13 @@ The application will automatically create the database and tables on first run. 
 - **Database Connection**: Update `appsettings.json` with your SQL Server details
 - **CORS**: Configured for `http://localhost:4200` (Angular dev server)
 - **Environment**: Development/Production settings in `appsettings.Development.json`
+- **Identity Management**: Automatic seed reset for optimal database performance
 
 ### Frontend Configuration
-- **API Proxy**: Configured to route `/api` requests to backend
+- **API Proxy**: Configured to route `/api` requests to backend via `proxy.conf.json`
 - **Build Settings**: Optimized for development and production
 - **Tailwind CSS**: Custom configuration for consistent design system
+- **Angular Configuration**: Properly configured serve options for development
 
 ## 📱 Usage
 
@@ -155,6 +160,11 @@ The application will automatically create the database and tables on first run. 
 - Each application tracks current stage and status
 - Stage history maintains complete progression timeline
 
+### Recent Database Updates
+- **New Migrations**: Added initial database setup migration
+- **Identity Management**: Automatic seed reset for optimal ID management
+- **Data Integrity**: Enhanced foreign key constraints and validation
+
 ## 🔌 API Endpoints
 
 ### Candidates
@@ -164,6 +174,7 @@ The application will automatically create the database and tables on first run. 
 - `PUT /api/candidate/{id}` - Update candidate
 - `DELETE /api/candidate/{id}` - Delete candidate
 - `GET /api/candidate/next-id` - Get next available ID
+- `DELETE /api/candidate/delete-all` - Delete all candidates and reset seed
 
 ### Requisitions
 - `GET /api/requisitions` - List all requisitions
@@ -172,9 +183,27 @@ The application will automatically create the database and tables on first run. 
 - `PUT /api/requisitions/{id}` - Update requisition
 - `DELETE /api/requisitions/{id}` - Delete requisition
 - `GET /api/requisitions/next-id` - Get next available ID
+- `DELETE /api/requisitions/delete-all` - Delete all requisitions and reset seed
+
+### Applications
+- `GET /api/applications` - List all applications
+- `GET /api/applications/{id}` - Get specific application
+- `POST /api/applications` - Create new application
+- `PUT /api/applications/{id}` - Update application
+- `DELETE /api/applications/{id}` - Delete application
+- `DELETE /api/applications/delete-all` - Delete all applications and reset seed
+
+### Stage Histories
+- `GET /api/stagehistory` - List all stage histories
+- `GET /api/stagehistory/{id}` - Get specific stage history
+- `GET /api/stagehistory/application/{applicationId}` - Get history for specific application
+- `POST /api/stagehistory` - Create new stage history
+- `DELETE /api/stagehistory/{id}` - Delete stage history
+- `DELETE /api/stagehistory/delete-all` - Delete all stage histories and reset seed
 
 ### Health Check
 - `GET /api/health` - API health status
+- `POST /api/health/reset-identity-seeds` - Reset all identity seeds
 
 ## 🎨 UI Components
 
@@ -191,6 +220,11 @@ The application will automatically create the database and tables on first run. 
 - **Touch-friendly** interface elements
 - **Accessible** design patterns
 
+### New Components
+- **Applications Component**: Complete application management interface
+- **Application Dialog**: Modal for creating and editing applications
+- **Enhanced Navigation**: Improved routing and component organization
+
 ## 🚀 Development
 
 ### Project Structure
@@ -199,11 +233,15 @@ HiringPipelineTracker/
 ├── HiringPipelineAPI/          # Backend API
 │   ├── Controllers/            # API endpoints
 │   ├── Models/                 # Data models
+│   ├── DTOs/                   # Data transfer objects
 │   ├── Data/                   # Database context
 │   └── Migrations/             # Database migrations
 ├── HiringPipelineUI/           # Frontend application
 │   ├── src/app/                # Angular components
 │   ├── src/app/components/     # Feature components
+│   │   ├── applications/       # Applications management
+│   │   ├── candidates/         # Candidate management
+│   │   └── requisitions/       # Requisition management
 │   ├── src/app/services/       # API services
 │   └── src/app/models/         # TypeScript interfaces
 └── Database/                   # Database schema and scripts
@@ -271,6 +309,7 @@ npm run lint
 - **Database Indexing**: Optimized query performance
 - **Caching**: Strategic data caching strategies
 - **Compression**: Response compression for faster loading
+- **Identity Management**: Automatic database seed optimization
 
 ### Monitoring
 - **Health Checks**: API availability monitoring
@@ -326,6 +365,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Database Connection**: Verify SQL Server is running and accessible
 - **Port Conflicts**: Ensure ports 4200 and 5192 are available
 - **Dependencies**: Run `npm install` and `dotnet restore` if needed
+- **Proxy Issues**: Ensure Angular proxy configuration is correct
+
+### Recent Fixes
+- **Proxy Configuration**: Fixed Angular proxy configuration conflicts
+- **API Routing**: Resolved 404 errors for application endpoints
+- **Component Organization**: Improved frontend component structure
 
 ## 🔮 Roadmap
 
@@ -341,9 +386,30 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Advanced Search**: Full-text search and filtering
 - **API Versioning**: Proper API version management
 - **Performance Monitoring**: Application performance insights
+- **Enhanced Identity Management**: Further database optimization
 
 ---
 
-**Built with ❤️ using Angular, .NET Core, and SQL Server**
+**Built with ❤️ using Angular 20.1.6, .NET Core 8, and SQL Server**
 
 *For more information, visit the project repository or contact the development team.*
+
+## 📋 Recent Updates (Latest)
+
+### Latest Technical Improvements
+- **Fixed Angular Proxy Configuration**: Resolved conflicting proxy settings causing 404 errors
+- **Added Applications Component**: Complete frontend interface for application management
+- **Enhanced DTOs**: Added structured data transfer objects for better API communication
+- **Database Migrations**: Added initial database setup and identity management improvements
+- **Component Organization**: Improved frontend component structure and routing
+
+### Bug Fixes
+- **API Routing Issues**: Fixed 404 errors when calling application endpoints
+- **Proxy Configuration**: Resolved Angular development server proxy conflicts
+- **Component Loading**: Improved component initialization and error handling
+
+### New Features
+- **Applications Management**: Full CRUD operations for job applications
+- **Enhanced Identity Management**: Automatic database seed reset for optimal performance
+- **Improved Error Handling**: Better error messages and user feedback
+- **Component Testing**: Added comprehensive test coverage for new components

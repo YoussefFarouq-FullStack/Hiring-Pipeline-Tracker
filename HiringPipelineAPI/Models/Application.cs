@@ -8,11 +8,9 @@ public class Application
 
     // Foreign Keys
     public int CandidateId { get; set; }
-    [JsonIgnore] // Prevents circular JSON loops
     public Candidate Candidate { get; set; } = null!;
 
     public int RequisitionId { get; set; }
-    [JsonIgnore]
     public Requisition Requisition { get; set; } = null!;
 
     public string CurrentStage { get; set; } = "Applied";

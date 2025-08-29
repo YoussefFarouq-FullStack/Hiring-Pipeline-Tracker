@@ -28,6 +28,8 @@ export class CandidateDialogComponent {
   isEditMode: boolean;
   isSubmitting = false;
 
+
+
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CandidateDialogComponent>,
@@ -41,10 +43,12 @@ export class CandidateDialogComponent {
       firstName: [this.isEditMode ? data?.candidate?.firstName : '', [Validators.required, Validators.minLength(2)]],
       lastName: [this.isEditMode ? data?.candidate?.lastName : '', [Validators.required, Validators.minLength(2)]],
       email: [this.isEditMode ? data?.candidate?.email : '', [Validators.required, Validators.email]],
-      phone: [this.isEditMode ? data?.candidate?.phone : '', [Validators.pattern(/^[\+]?[1-9][\d]{0,15}$/)]],
-      status: [this.isEditMode ? (data?.candidate?.status || 'Applied') : 'Applied', Validators.required]
+      phone: [this.isEditMode ? data?.candidate?.phone : '', [Validators.required, Validators.pattern(/^[\+]?[0-9]{8,15}$/)]],
+      status: [this.isEditMode ? (data?.candidate?.status || 'Applied') : '', Validators.required]
     });
   }
+
+
 
   save() {
     if (this.form.valid && !this.isSubmitting) {
@@ -61,9 +65,13 @@ export class CandidateDialogComponent {
 
         // Ensure status is always set
         if (!formData.status || formData.status === '') {
-          formData.status = 'Applied';
-          console.log('Setting default status to Applied');
+          console.log('Status is required but not provided');
+          this.showError('Please select a status for the candidate.');
+          this.isSubmitting = false;
+          return;
         }
+
+
 
         // Validate email format
         if (formData.email && !this.isValidEmail(formData.email)) {
@@ -129,6 +137,15 @@ export class CandidateDialogComponent {
     return '';
   }
 
+  get phoneError(): string {
+    const control = this.form.get('phone');
+    if (control?.errors && control.touched) {
+      if (control.errors['required']) return 'Phone number is required';
+      if (control.errors['pattern']) return 'Please enter a valid phone number';
+    }
+    return '';
+  }
+
   get lastNameError(): string {
     const control = this.form.get('lastName');
     if (control?.errors && control.touched) {
@@ -147,13 +164,7 @@ export class CandidateDialogComponent {
     return '';
   }
 
-  get phoneError(): string {
-    const control = this.form.get('phone');
-    if (control?.errors && control.touched) {
-      if (control.errors['pattern']) return 'Please enter a valid phone number';
-    }
-    return '';
-  }
+
 
   get statusError(): string {
     const control = this.form.get('status');

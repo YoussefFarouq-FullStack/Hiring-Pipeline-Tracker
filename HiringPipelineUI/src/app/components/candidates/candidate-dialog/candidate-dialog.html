@@ -83,7 +83,7 @@
     </div>
   </div>
 
-  <!-- Phone -->
+    <!-- Phone -->
   <div class="form-group">
     <label class="form-label">
       Phone <span class="text-red-500">*</span>
@@ -115,11 +115,12 @@
       [ngClass]="{'error': statusError}"
       required
     >
+      <option value="">Please select a status</option>
       <option value="Applied">Applied</option>
-      <option value="Screening">Screening</option>
       <option value="Interviewing">Interviewing</option>
       <option value="Hired">Hired</option>
       <option value="Rejected">Rejected</option>
+      <option value="Withdrawn">Withdrawn</option>
     </select>
     <div *ngIf="statusError" class="form-error">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

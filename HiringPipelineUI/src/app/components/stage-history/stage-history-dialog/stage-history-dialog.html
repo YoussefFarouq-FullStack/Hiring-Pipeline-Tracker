@@ -1,0 +1,114 @@
+<div class="stage-dialog-container bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-auto">
+  <!-- Dialog Header -->
+  <div class="flex items-center gap-3 p-6 border-b border-gray-200">
+    <div class="p-3 bg-blue-100 rounded-xl">
+      <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+      </svg>
+    </div>
+    <div>
+      <h2 class="text-lg font-semibold text-gray-800">Track Stage Progression</h2>
+      <p class="text-sm text-gray-500">Update the application's current stage and add notes</p>
+    </div>
+  </div>
+
+  <!-- Dialog Form -->
+  <form [formGroup]="stageForm" (ngSubmit)="onSave()" class="p-6 space-y-6">
+    <!-- Stage Transition -->
+    <div>
+      <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
+        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+        </svg>
+        Stage Transition
+      </h3>
+
+      <div class="grid grid-cols-3 gap-4 items-center">
+        <!-- From Stage -->
+        <mat-form-field appearance="outline" class="w-full col-span-1">
+          <mat-label>Current Stage</mat-label>
+          <mat-select formControlName="fromStage" required>
+            <mat-option *ngFor="let stage of HIRING_STAGES" [value]="stage">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full" [ngClass]="getStageDotClass(stage)"></div>
+                <span>{{stage}}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+          <mat-hint>{{getStageDescription(stageForm.get('fromStage')?.value)}}</mat-hint>
+        </mat-form-field>
+
+        <!-- Arrow -->
+        <div class="flex justify-center text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </div>
+
+        <!-- To Stage -->
+        <mat-form-field appearance="outline" class="w-full col-span-1">
+          <mat-label>Next Stage</mat-label>
+          <mat-select formControlName="toStage" required>
+            <mat-option *ngFor="let stage of availableStages" [value]="stage">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full" [ngClass]="getStageDotClass(stage)"></div>
+                <span>{{stage}}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+          <mat-hint>{{getStageDescription(stageForm.get('toStage')?.value)}}</mat-hint>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Additional Details -->
+    <div class="space-y-4">
+      <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-700">
+        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        Additional Details
+      </h3>
+
+      <!-- Moved By -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Moved By</mat-label>
+        <input matInput formControlName="movedBy" placeholder="e.g. John Doe, Recruiter" required>
+        <mat-icon matSuffix>person</mat-icon>
+      </mat-form-field>
+
+      <!-- Reason -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Reason for Stage Change</mat-label>
+        <input matInput formControlName="reason" placeholder="e.g. Passed assessment">
+        <mat-icon matSuffix>info</mat-icon>
+        <mat-hint>Optional</mat-hint>
+      </mat-form-field>
+
+      <!-- Notes -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Additional Notes</mat-label>
+        <textarea matInput rows="3" formControlName="notes"
+          placeholder="Any additional context or feedback"></textarea>
+        <mat-icon matSuffix>edit</mat-icon>
+        <mat-hint>Optional</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+      <button mat-stroked-button type="button" (click)="onCancel()" class="px-6 py-2 rounded-lg">
+        Cancel
+      </button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="stageForm.invalid"
+        class="px-6 py-2 rounded-lg">
+        <span *ngIf="!isLoading">Add Stage History</span>
+        <span *ngIf="isLoading">Updating...</span>
+      </button>
+    </div>
+  </form>
+</div>
