@@ -21,17 +21,38 @@ export class StageHistoryService {
       console.error('Client-side error:', error.error);
     } else {
       // Server-side error
-      errorMessage = `Server Error: ${error.status} - ${error.message}`;
       console.error('Server-side error:', error);
+      console.error('Error status:', error.status);
+      console.error('Error message:', error.message);
+      console.error('Error body:', error.error);
       
       if (error.status === 0) {
         errorMessage = 'Unable to connect to server. Please check your internet connection.';
       } else if (error.status === 404) {
         errorMessage = 'Stage history not found.';
       } else if (error.status === 400) {
-        errorMessage = 'Invalid data provided. Please check your input.';
+        // Try to extract more specific error message from response
+        if (error.error && typeof error.error === 'object') {
+          if (error.error.message) {
+            errorMessage = error.error.message;
+          } else if (error.error.errors) {
+            errorMessage = `Validation errors: ${JSON.stringify(error.error.errors)}`;
+          } else {
+            errorMessage = `Bad Request: ${JSON.stringify(error.error)}`;
+          }
+        } else if (error.error && typeof error.error === 'string') {
+          errorMessage = error.error;
+        } else {
+          errorMessage = 'Invalid data provided. Please check your input.';
+        }
+      } else if (error.status === 401) {
+        errorMessage = 'Unauthorized. Please log in again.';
+      } else if (error.status === 403) {
+        errorMessage = 'Access denied. You do not have permission to perform this action.';
       } else if (error.status >= 500) {
         errorMessage = 'Server error. Please try again later.';
+      } else {
+        errorMessage = `Server Error: ${error.status} - ${error.message}`;
       }
     }
     
@@ -60,6 +81,33 @@ export class StageHistoryService {
   }
 
   addStageHistory(stageHistory: CreateStageHistoryDto): Observable<StageHistory> {
+    console.log('StageHistoryService.addStageHistory called with:', stageHistory);
+    console.log('Request URL:', this.apiUrl);
+    console.log('Request method: POST');
+    
+    // Validate the data before sending
+    if (!stageHistory.applicationId || stageHistory.applicationId <= 0) {
+      console.error('Invalid applicationId:', stageHistory.applicationId);
+      return throwError(() => new Error('Invalid application ID'));
+    }
+    
+    if (!stageHistory.toStage || stageHistory.toStage.trim() === '') {
+      console.error('Invalid toStage:', stageHistory.toStage);
+      return throwError(() => new Error('To stage is required'));
+    }
+    
+    if (!stageHistory.movedBy || stageHistory.movedBy.trim() === '') {
+      console.error('Invalid movedBy:', stageHistory.movedBy);
+      return throwError(() => new Error('Moved by is required'));
+    }
+    
+    // Validate movedBy format (only letters, spaces, hyphens, and periods)
+    const movedByPattern = /^[a-zA-Z\s\-\.]+$/;
+    if (!movedByPattern.test(stageHistory.movedBy.trim())) {
+      console.error('Invalid movedBy format:', stageHistory.movedBy);
+      return throwError(() => new Error('Moved by can only contain letters, spaces, hyphens, and periods'));
+    }
+    
     return this.http.post<StageHistory>(this.apiUrl, stageHistory).pipe(
       catchError(this.handleError)
     );

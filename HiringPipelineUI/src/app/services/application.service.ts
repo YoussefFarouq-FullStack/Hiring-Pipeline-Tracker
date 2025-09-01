@@ -79,7 +79,7 @@ export class ApplicationService {
 
   // Helpers for dropdowns
   getCandidates(): Observable<Candidate[]> {
-    return this.http.get<Candidate[]>('/api/candidate').pipe(
+    return this.http.get<Candidate[]>('/api/candidates').pipe(
       catchError(this.handleError)
     );
   }

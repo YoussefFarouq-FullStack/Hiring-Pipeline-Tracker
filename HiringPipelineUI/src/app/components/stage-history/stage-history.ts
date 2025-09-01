@@ -8,6 +8,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { StageHistory, HIRING_STAGES } from '../../models/stage-history.model';
 import { StageHistoryService } from '../../services/stage-history.service';
+import { ApplicationService } from '../../services/application.service';
+import { CandidateService } from '../../services/candidate.service';
+import { Application } from '../../models/application.model';
+import { Candidate } from '../../models/candidate.model';
 import { StageHistoryDialogComponent } from './stage-history-dialog/stage-history-dialog';
 
 @Component({
@@ -31,13 +35,15 @@ export class StageHistoryComponent implements OnInit, OnChanges {
   
   histories: StageHistory[] = [];
   paginatedHistories: StageHistory[] = [];
+  applications: Application[] = [];
+  candidates: Candidate[] = [];
   isLoading = false;
   hasError = false;
   errorMessage = '';
 
   // 🔹 Pagination
   currentPage = 1;
-  pageSize = 5;
+  pageSize = 4;
   totalPages = 1;
 
   // 🔹 Search
@@ -45,18 +51,24 @@ export class StageHistoryComponent implements OnInit, OnChanges {
 
   constructor(
     private stageHistoryService: StageHistoryService,
+    private applicationService: ApplicationService,
+    private candidateService: CandidateService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     this.loadData();
+    this.loadRelatedData();
 
     // Debounced refresh when tab becomes visible
     let debounceTimer: any;
     const refresh = () => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => this.loadData(), 300);
+      debounceTimer = setTimeout(() => {
+        this.loadData();
+        this.loadRelatedData();
+      }, 300);
     };
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', () => {
@@ -76,6 +88,8 @@ export class StageHistoryComponent implements OnInit, OnChanges {
     } else {
       this.loadAllStageHistory();
     }
+    // Also refresh related data to ensure candidate names are up to date
+    this.loadRelatedData();
   }
 
   private loadAllStageHistory() {
@@ -90,6 +104,27 @@ export class StageHistoryComponent implements OnInit, OnChanges {
         this.isLoading = false;
       },
       error: (err: Error) => this.handleError(err, 'Failed to load stage history')
+    });
+  }
+
+  private loadRelatedData() {
+    // Load applications and candidates for candidate name lookup
+    this.applicationService.getApplications().subscribe({
+      next: (data: Application[]) => {
+        this.applications = data;
+      },
+      error: (err: Error) => {
+        console.error('Failed to load applications:', err);
+      }
+    });
+
+    this.candidateService.getCandidates().subscribe({
+      next: (data: Candidate[]) => {
+        this.candidates = data;
+      },
+      error: (err: Error) => {
+        console.error('Failed to load candidates:', err);
+      }
     });
   }
 
@@ -153,6 +188,21 @@ export class StageHistoryComponent implements OnInit, OnChanges {
   onSearch(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.searchTerm = target.value;
+    
+    if (!this.searchTerm.trim()) {
+      this.paginatedHistories = this.histories;
+    } else {
+      const searchLower = this.searchTerm.toLowerCase();
+      this.paginatedHistories = this.histories.filter(history =>
+        history.toStage.toLowerCase().includes(searchLower) ||
+        history.fromStage?.toLowerCase().includes(searchLower) ||
+        history.movedBy.toLowerCase().includes(searchLower) ||
+        history.notes?.toLowerCase().includes(searchLower) ||
+        history.reason?.toLowerCase().includes(searchLower) ||
+        this.getCandidateName(history.applicationId).toLowerCase().includes(searchLower)
+      );
+    }
+    
     this.currentPage = 1;
     this.updatePagination();
   }
@@ -211,6 +261,18 @@ export class StageHistoryComponent implements OnInit, OnChanges {
     return 'bg-blue-500';
   }
 
+  getCandidateName(applicationId: number): string {
+    // Find the application for this stage history entry
+    const application = this.applications.find(app => app.applicationId === applicationId);
+    if (!application) return `Application #${applicationId}`;
+
+    // Find the candidate for this application
+    const candidate = this.candidates.find(c => c.candidateId === application.candidateId);
+    if (!candidate) return `Candidate #${application.candidateId}`;
+
+    return `${candidate.firstName} ${candidate.lastName}`;
+  }
+
   // 🔹 Date and time formatting
   formatDate(dateString: string): string {
     if (!dateString) return '';
@@ -234,8 +296,8 @@ export class StageHistoryComponent implements OnInit, OnChanges {
   // 🔹 Dialog methods
   openAddDialog(): void {
     const dialogRef = this.dialog.open(StageHistoryDialogComponent, {
-      width: '600px',
-      maxWidth: '90vw',
+      width: '900px',
+      maxWidth: '95vw',
       data: { 
         applicationId: this.applicationId,
         currentStage: this.currentStage 
@@ -252,8 +314,8 @@ export class StageHistoryComponent implements OnInit, OnChanges {
 
   openEditDialog(history: StageHistory): void {
     const dialogRef = this.dialog.open(StageHistoryDialogComponent, {
-      width: '600px',
-      maxWidth: '90vw',
+      width: '900px',
+      maxWidth: '95vw',
       data: { 
         mode: 'edit',
         history: history,

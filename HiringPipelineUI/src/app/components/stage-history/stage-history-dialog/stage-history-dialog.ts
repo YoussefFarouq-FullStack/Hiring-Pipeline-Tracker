@@ -58,7 +58,11 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
     this.stageForm = this.fb.group({
       fromStage: ['', [Validators.required]],
       toStage: ['', [Validators.required]],
-      movedBy: ['', [Validators.required, Validators.minLength(2)]],
+      movedBy: ['', [
+        Validators.required, 
+        Validators.minLength(2),
+        Validators.pattern(/^[a-zA-Z\s\-\.]+$/)
+      ]],
       reason: ['', [Validators.maxLength(200)]],
       notes: ['', [Validators.maxLength(500)]]
     });
@@ -100,6 +104,17 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.validateStageProgression();
       });
+
+    // Log form state after initialization
+    setTimeout(() => {
+      console.log('Form state after initialization:');
+      console.log('Form valid:', this.stageForm.valid);
+      console.log('Form value:', this.stageForm.value);
+      console.log('Form errors:', this.stageForm.errors);
+      console.log('From stage:', this.stageForm.get('fromStage')?.value);
+      console.log('To stage:', this.stageForm.get('toStage')?.value);
+      console.log('Moved by:', this.stageForm.get('movedBy')?.value);
+    }, 100);
   }
 
   ngOnDestroy(): void {
@@ -109,6 +124,11 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
 
   private cleanStageName(stageName: string): string {
     console.log('Cleaning stage name:', stageName);
+    
+    if (!stageName) {
+      console.warn('Stage name is null or undefined, defaulting to "Applied"');
+      return 'Applied';
+    }
     
     // Handle common malformed cases
     if (stageName.includes('assignment')) {
@@ -172,6 +192,32 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
     return 'Applied';
   }
 
+  // Normalize stage names for backend compatibility
+  private normalizeStageName(stageName: string): string {
+    if (!stageName) return 'Applied';
+    
+    // Map common variations to standard names
+    const stageMap: { [key: string]: string } = {
+      'interviewing': 'Technical Interview',
+      'phone screen': 'Phone Screen',
+      'onsite': 'Onsite Interview',
+      'reference': 'Reference Check',
+      'offer': 'Offer',
+      'hired': 'Hired',
+      'rejected': 'Rejected',
+      'withdrawn': 'Withdrawn',
+      'applied': 'Applied'
+    };
+    
+    const normalized = stageMap[stageName.toLowerCase()];
+    if (normalized) {
+      console.log(`Normalized stage name: "${stageName}" -> "${normalized}"`);
+      return normalized;
+    }
+    
+    return stageName;
+  }
+
   updateAvailableStages(): void {
     const fromStage = this.stageForm.get('fromStage')?.value;
     console.log('updateAvailableStages called with fromStage:', fromStage);
@@ -225,6 +271,13 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
       this.stageForm.patchValue({ toStage: defaultToStage });
     }
     
+    // Ensure movedBy has a default value if empty
+    const movedBy = this.stageForm.get('movedBy')?.value;
+    if (!movedBy || movedBy.trim() === '') {
+      console.warn('movedBy is empty, setting to default');
+      this.stageForm.patchValue({ movedBy: 'System User' });
+    }
+    
     console.log('Form validity check complete');
   }
 
@@ -250,18 +303,52 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
   }
 
   onSave(): void {
+    console.log('Form validity:', this.stageForm.valid);
+    console.log('Form errors:', this.stageForm.errors);
+    console.log('Form value:', this.stageForm.value);
+    
+    // Ensure form is properly populated before submission
+    this.ensureFormValidity();
+    
+    // Validate required fields manually
+    const formValue = this.stageForm.value;
+    const validationErrors: string[] = [];
+    
+    if (!formValue.fromStage || formValue.fromStage.trim() === '') {
+      validationErrors.push('Current Stage is required');
+    }
+    
+    if (!formValue.toStage || formValue.toStage.trim() === '') {
+      validationErrors.push('Next Stage is required');
+    }
+    
+    if (!formValue.movedBy || formValue.movedBy.trim() === '') {
+      validationErrors.push('Moved By is required');
+    }
+    
+    if (validationErrors.length > 0) {
+      this.showError(`Please fix the following errors: ${validationErrors.join(', ')}`);
+      this.stageForm.markAllAsTouched();
+      return;
+    }
+    
     if (this.stageForm.valid && !this.isLoading) {
       this.isLoading = true;
       
-      const formValue = this.stageForm.value;
       const newHistory: CreateStageHistoryDto = {
         applicationId: this.data.applicationId,
-        fromStage: formValue.fromStage || undefined,
-        toStage: formValue.toStage,
+        fromStage: this.normalizeStageName(formValue.fromStage.trim()),
+        toStage: this.normalizeStageName(formValue.toStage.trim()),
         movedBy: formValue.movedBy.trim(),
         reason: formValue.reason?.trim() || undefined,
         notes: formValue.notes?.trim() || undefined
       };
+
+      console.log('Sending stage history data:', newHistory);
+      console.log('Application ID:', this.data.applicationId);
+      console.log('From Stage:', formValue.fromStage);
+      console.log('To Stage:', formValue.toStage);
+      console.log('Moved By:', formValue.movedBy);
 
       this.stageHistoryService.addStageHistory(newHistory)
         .pipe(takeUntil(this.destroy$))
@@ -278,8 +365,39 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
           }
         });
     } else {
+      console.log('Form is invalid, marking as touched');
       this.stageForm.markAllAsTouched();
+      
+      // Show validation errors
+      const errors = this.getFormErrors();
+      if (errors.length > 0) {
+        this.showError(`Please fix the following errors: ${errors.join(', ')}`);
+      }
     }
+  }
+
+  private getFormErrors(): string[] {
+    const errors: string[] = [];
+    
+    Object.keys(this.stageForm.controls).forEach(key => {
+      const control = this.stageForm.get(key);
+      if (control?.errors && control.touched) {
+        if (control.errors['required']) {
+          errors.push(`${this.getFieldLabel(key)} is required`);
+        }
+        if (control.errors['minlength']) {
+          errors.push(`${this.getFieldLabel(key)} must be at least ${control.errors['minlength'].requiredLength} characters`);
+        }
+        if (control.errors['maxlength']) {
+          errors.push(`${this.getFieldLabel(key)} must not exceed ${control.errors['maxlength'].requiredLength} characters`);
+        }
+        if (control.errors['sameStage']) {
+          errors.push('From and To stages cannot be the same');
+        }
+      }
+    });
+    
+    return errors;
   }
 
   getStageDescription(stage: string): string {
@@ -349,6 +467,12 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
       }
       if (control.errors['maxlength']) {
         return `${this.getFieldLabel(controlName)} must not exceed ${control.errors['maxlength'].requiredLength} characters`;
+      }
+      if (control.errors['pattern']) {
+        if (controlName === 'movedBy') {
+          return 'Moved By can only contain letters, spaces, hyphens, and periods';
+        }
+        return `${this.getFieldLabel(controlName)} contains invalid characters`;
       }
       if (control.errors['sameStage']) {
         return 'From and To stages cannot be the same';

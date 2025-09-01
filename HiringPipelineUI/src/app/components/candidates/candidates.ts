@@ -49,6 +49,7 @@ export class CandidatesComponent implements OnInit {
   searchTerm: string = '';
   selectedStatus: string = '';
   selectedRequisition: string = '';
+  selectedStat: string = 'all'; // New property for stats filtering
   statuses: string[] = ['Applied', 'Interviewing', 'Hired', 'Rejected', 'Withdrawn'];
   requisitions: Requisition[] = [];
   isLoading = false;
@@ -56,12 +57,12 @@ export class CandidatesComponent implements OnInit {
   errorMessage = '';
 
   // Pagination
-  pageSize = 5;
+  pageSize = 6;
   currentPage = 0;
   totalItems = 0;
 
   constructor(
-    private candidateService: CandidateService,
+    private candidateService: CandidateService, 
     private applicationService: ApplicationService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
@@ -77,10 +78,10 @@ export class CandidatesComponent implements OnInit {
     this.isLoading = true;
     this.hasError = false;
     this.errorMessage = '';
-
+    
     this.candidateService.getCandidates().subscribe({
       next: (data: Candidate[]) => {
-        this.candidates = data;
+          this.candidates = data;
         this.applyFilters();
         this.isLoading = false;
       },
@@ -141,6 +142,20 @@ export class CandidatesComponent implements OnInit {
   }
 
   filterCandidates(): void {
+    this.applyFilters();
+  }
+
+  filterByStat(stat: string): void {
+    this.selectedStat = stat;
+    
+    // Clear other filters when selecting a stat
+    if (stat === 'all') {
+      this.selectedStatus = '';
+      this.selectedRequisition = '';
+    } else {
+      this.selectedStatus = stat;
+    }
+    
     this.applyFilters();
   }
 
@@ -259,9 +274,9 @@ export class CandidatesComponent implements OnInit {
         if (candidate) {
           // Update existing candidate
           this.candidateService.updateCandidate(candidate.candidateId, result).subscribe({
-            next: () => {
+          next: () => {
               this.loadCandidates();
-              this.showSuccess('Candidate updated successfully!');
+            this.showSuccess('Candidate updated successfully!');
             },
             error: (error: Error) => {
               console.error('Error updating candidate:', error);
@@ -272,7 +287,7 @@ export class CandidatesComponent implements OnInit {
           // Create new candidate
           this.candidateService.createCandidate(result).subscribe({
             next: () => {
-              this.loadCandidates();
+            this.loadCandidates();
               this.showSuccess('Candidate created successfully!');
             },
             error: (error: Error) => {

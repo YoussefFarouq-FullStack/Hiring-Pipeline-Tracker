@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using HiringPipelineAPI.Services.Interfaces;
 using HiringPipelineAPI.DTOs;
-using HiringPipelineAPI.Models;
-using System.ComponentModel;
 
 namespace HiringPipelineAPI.Controllers;
 
@@ -12,8 +10,6 @@ namespace HiringPipelineAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
-[ProducesResponseType(typeof(ValidationErrorResponse), 400)]
-[ProducesResponseType(typeof(ErrorResponse), 500)]
 public class ApplicationsController : ControllerBase
 {
     private readonly IApplicationService _applicationService;
@@ -31,7 +27,6 @@ public class ApplicationsController : ControllerBase
     /// <response code="500">If there was an internal server error</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ApplicationDto>), 200)]
-    [Description("Get all job applications in the hiring pipeline")]
     public async Task<ActionResult<IEnumerable<ApplicationDto>>> GetApplications()
     {
         var applications = await _applicationService.GetAllAsync();
@@ -48,8 +43,7 @@ public class ApplicationsController : ControllerBase
     /// <response code="500">If there was an internal server error</response>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApplicationDetailDto), 200)]
-    [ProducesResponseType(typeof(ErrorResponse), 404)]
-    [Description("Get a specific job application by its ID")]
+    [ProducesResponseType(404)]
     public async Task<ActionResult<ApplicationDetailDto>> GetApplication(int id)
     {
         var application = await _applicationService.GetByIdAsync(id);
@@ -67,9 +61,8 @@ public class ApplicationsController : ControllerBase
     /// <response code="500">If there was an internal server error</response>
     [HttpPost]
     [ProducesResponseType(typeof(ApplicationDto), 201)]
-    [ProducesResponseType(typeof(ValidationErrorResponse), 400)]
-    [ProducesResponseType(typeof(ErrorResponse), 404)]
-    [Description("Create a new job application for a candidate and requisition")]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
     public async Task<ActionResult<ApplicationDto>> CreateApplication([FromBody] CreateApplicationDto createDto)
     {
         var createdApplication = await _applicationService.CreateAsync(createDto);
@@ -88,12 +81,11 @@ public class ApplicationsController : ControllerBase
     /// <response code="500">If there was an internal server error</response>
     [HttpPut("{id}")]
     [ProducesResponseType(204)]
-    [ProducesResponseType(typeof(ValidationErrorResponse), 400)]
-    [ProducesResponseType(typeof(ErrorResponse), 404)]
-    [Description("Update an existing job application")]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateApplication(int id, [FromBody] UpdateApplicationDto updateDto)
     {
-        var updated = await _applicationService.UpdateAsync(id, updateDto);
+        await _applicationService.UpdateAsync(id, updateDto);
         return NoContent();
     }
 
@@ -107,8 +99,7 @@ public class ApplicationsController : ControllerBase
     /// <response code="500">If there was an internal server error</response>
     [HttpDelete("{id}")]
     [ProducesResponseType(204)]
-    [ProducesResponseType(typeof(ErrorResponse), 404)]
-    [Description("Delete a job application from the system")]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> DeleteApplication(int id)
     {
         await _applicationService.DeleteAsync(id);

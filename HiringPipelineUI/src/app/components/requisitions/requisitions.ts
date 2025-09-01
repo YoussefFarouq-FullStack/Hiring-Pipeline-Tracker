@@ -39,6 +39,7 @@ export class RequisitionsComponent implements OnInit {
   searchTerm: string = '';
   selectedDepartment: string = '';
   selectedStatus: string = '';
+  selectedStat: string = 'all'; // New property for stats filtering
   departments: string[] = ['Engineering', 'HR', 'Finance', 'Marketing'];
 
   // UI states
@@ -47,7 +48,7 @@ export class RequisitionsComponent implements OnInit {
   errorMessage = '';
 
   // Pagination
-  pageSize = 5;
+  pageSize = 6;
   currentPage = 0;
   totalItems = 0;
 
@@ -106,6 +107,20 @@ export class RequisitionsComponent implements OnInit {
   }
 
   filterRequisitions(): void {
+    this.applyFilters();
+  }
+
+  filterByStat(stat: string): void {
+    this.selectedStat = stat;
+    
+    // Clear other filters when selecting a stat
+    if (stat === 'all') {
+      this.selectedStatus = '';
+      this.selectedDepartment = '';
+    } else {
+      this.selectedStatus = stat;
+    }
+    
     this.applyFilters();
   }
 

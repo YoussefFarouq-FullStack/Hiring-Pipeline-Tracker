@@ -467,6 +467,46 @@ body {
   }
 }
 
+/* Snackbar Styles */
+.success-snackbar {
+  background: #10b981 !important;
+  color: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+  font-weight: 500 !important;
+}
+
+.success-snackbar .mat-simple-snackbar-action {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.error-snackbar {
+  background: #ef4444 !important;
+  color: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+  font-weight: 500 !important;
+}
+
+.error-snackbar .mat-simple-snackbar-action {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.warning-snackbar {
+  background: #f59e0b !important;
+  color: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+  font-weight: 500 !important;
+}
+
+.warning-snackbar .mat-simple-snackbar-action {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .dialog-header {

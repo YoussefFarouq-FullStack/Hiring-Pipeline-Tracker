@@ -1,42 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
-using HiringPipelineAPI.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace HiringPipelineAPI.Controllers;
 
+/// <summary>
+/// Health check and system status endpoints
+/// </summary>
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
+[Produces("application/json")]
 public class HealthController : ControllerBase
 {
-    private readonly HiringPipelineDbContext _context;
-
-    public HealthController(HiringPipelineDbContext context)
-    {
-        _context = context;
-    }
-
+    /// <summary>
+    /// Basic health check endpoint
+    /// </summary>
+    /// <returns>API status message</returns>
+    /// <response code="200">API is running successfully</response>
     [HttpGet]
+    [ProducesResponseType(typeof(string), 200)]
     public IActionResult Get()
     {
         return Ok("API is running");
-    }
-
-    [HttpPost("reset-identity-seeds")]
-    public IActionResult ResetAllIdentitySeeds()
-    {
-        try
-        {
-            // Reset identity seeds for all tables using constant values (safe from SQL injection)
-            _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Candidates', RESEED, 0)");
-            _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Requisitions', RESEED, 0)");
-            _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Applications', RESEED, 0)");
-            _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('StageHistories', RESEED, 0)");
-
-            return Ok("All identity seeds have been reset to 0");
-        }
-        catch (Exception ex)
-        {
-            return BadRequest($"Failed to reset identity seeds: {ex.Message}");
-        }
     }
 }

@@ -25,6 +25,7 @@ export class ApplicationsComponent implements OnInit {
   candidates: Candidate[] = [];
   requisitions: Requisition[] = [];
   searchTerm: string = '';
+  selectedStat: string = 'all'; // New property for stats filtering
 
   isLoading = false;
   hasError = false;
@@ -32,7 +33,7 @@ export class ApplicationsComponent implements OnInit {
 
   // pagination
   currentPage = 1;
-  pageSize = 5;
+  pageSize = 6;
   totalPages = 1;
 
   private candidatesLoaded = false;
@@ -118,18 +119,56 @@ export class ApplicationsComponent implements OnInit {
   }
 
   filterApplications(): void {
-    if (!this.searchTerm.trim()) {
-      this.filteredApplications = [...this.applications];
-    } else {
+    let filtered = [...this.applications];
+
+    // Filter by selected stat
+    if (this.selectedStat && this.selectedStat !== 'all') {
+      switch (this.selectedStat) {
+        case 'Active':
+          filtered = filtered.filter(app =>
+            app.currentStage && !['Hired', 'Rejected', 'Withdrawn'].includes(app.currentStage)
+          );
+          break;
+        case 'In Progress':
+          filtered = filtered.filter(app =>
+            app.currentStage && ['Interview', 'Technical Interview', 'Onsite Interview'].includes(app.currentStage)
+          );
+          break;
+        case 'Completed':
+          filtered = filtered.filter(app =>
+            app.currentStage && ['Hired', 'Rejected', 'Withdrawn'].includes(app.currentStage)
+          );
+          break;
+        default:
+          // If no matching stat, show all
+          break;
+      }
+    }
+
+    // Filter by search term
+    if (this.searchTerm.trim()) {
       const searchLower = this.searchTerm.toLowerCase();
-      this.filteredApplications = this.applications.filter(app =>
+      filtered = filtered.filter(app =>
         this.getCandidateName(app.candidateId).toLowerCase().includes(searchLower) ||
         this.getRequisitionTitle(app.requisitionId).toLowerCase().includes(searchLower) ||
         (app.currentStage?.toLowerCase().includes(searchLower) || false)
       );
     }
+
+    this.filteredApplications = filtered;
     this.currentPage = 1;
     this.updatePagination();
+  }
+
+  filterByStat(stat: string): void {
+    this.selectedStat = stat;
+    
+    // Clear search term when selecting a stat
+    if (stat === 'all') {
+      this.searchTerm = '';
+    }
+    
+    this.filterApplications();
   }
 
   openDialog(): void {
@@ -162,8 +201,8 @@ export class ApplicationsComponent implements OnInit {
 
   viewStageHistory(applicationId: number, currentStage: string): void {
     const dialogRef = this.dialog.open(StageHistoryDialogComponent, {
-      width: '600px',
-      maxWidth: '90vw',
+      width: '900px',
+      maxWidth: '95vw',
       data: { applicationId, currentStage }
     });
 

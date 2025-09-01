@@ -7,9 +7,10 @@ A comprehensive web application for managing the entire hiring process, from job
 ### Core Functionality
 - **Requisition Management**: Create, edit, and track job openings
 - **Candidate Management**: Manage candidate profiles and applications
-- **Application Tracking**: Monitor candidates through various hiring stages
+- **Application Tracking**: Monitor candidates through various hiring stages with meaningful names and titles
 - **Stage History**: Complete audit trail of candidate progression
 - **Real-time Updates**: Live data synchronization between frontend and backend
+- **Enhanced Data Display**: Show candidate names and job titles instead of numeric IDs for better user experience
 
 ### Hiring Pipeline Stages
 - **Applied** → **Screening** → **Interviewing** → **Technical Assessment** → **Reference Check** → **Offer** → **Hired**
@@ -164,6 +165,7 @@ The application will automatically create the database and tables on first run. 
 - **New Migrations**: Added initial database setup migration
 - **Identity Management**: Automatic seed reset for optimal ID management
 - **Data Integrity**: Enhanced foreign key constraints and validation
+- **Enhanced Relationships**: Improved data serialization to include candidate and requisition information in application responses
 
 ## 🔌 API Endpoints
 
@@ -186,8 +188,8 @@ The application will automatically create the database and tables on first run. 
 - `DELETE /api/requisitions/delete-all` - Delete all requisitions and reset seed
 
 ### Applications
-- `GET /api/applications` - List all applications
-- `GET /api/applications/{id}` - Get specific application
+- `GET /api/applications` - List all applications (includes candidate and requisition details)
+- `GET /api/applications/{id}` - Get specific application (includes candidate and requisition details)
 - `POST /api/applications` - Create new application
 - `PUT /api/applications/{id}` - Update application
 - `DELETE /api/applications/{id}` - Delete application
@@ -387,6 +389,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **API Versioning**: Proper API version management
 - **Performance Monitoring**: Application performance insights
 - **Enhanced Identity Management**: Further database optimization
+- **Data Display Enhancements**: ✅ Completed - Show meaningful names instead of IDs
 
 ---
 
@@ -397,6 +400,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📋 Recent Updates (Latest)
 
 ### Latest Technical Improvements
+- **Enhanced Data Display**: Modified application to show candidate names and requisition titles instead of IDs while maintaining ID-based API calls
+- **Backend Model Updates**: Removed JsonIgnore attributes from Application model to enable proper serialization of related data
 - **Fixed Angular Proxy Configuration**: Resolved conflicting proxy settings causing 404 errors
 - **Added Applications Component**: Complete frontend interface for application management
 - **Enhanced DTOs**: Added structured data transfer objects for better API communication
@@ -404,12 +409,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Component Organization**: Improved frontend component structure and routing
 
 ### Bug Fixes
+- **Data Serialization**: Fixed issues with candidate and requisition data not being included in API responses
 - **API Routing Issues**: Fixed 404 errors when calling application endpoints
 - **Proxy Configuration**: Resolved Angular development server proxy conflicts
 - **Component Loading**: Improved component initialization and error handling
 
 ### New Features
+- **Enhanced User Experience**: Applications now display meaningful candidate names and job titles instead of numeric IDs
 - **Applications Management**: Full CRUD operations for job applications
 - **Enhanced Identity Management**: Automatic database seed reset for optimal performance
 - **Improved Error Handling**: Better error messages and user feedback
 - **Component Testing**: Added comprehensive test coverage for new components
+
+### Data Model Improvements
+- **Application Model**: Updated to include full candidate and requisition information in API responses
+- **Frontend Models**: Enhanced to support displaying related data while maintaining ID-based operations
+- **API Integration**: Improved data flow between frontend and backend for better user experience
