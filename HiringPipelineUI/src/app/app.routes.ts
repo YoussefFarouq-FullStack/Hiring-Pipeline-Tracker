@@ -1,13 +1,25 @@
 import { Routes } from '@angular/router';
-import { RequisitionsComponent } from './components/requisitions/requisitions';
-import { CandidatesComponent } from './components/candidates/candidates';
-import { ApplicationsComponent } from './components/applications/applications';
-import { StageHistoryComponent } from './components/stage-history/stage-history';
 
 export const routes: Routes = [
-  { path: 'requisitions', component: RequisitionsComponent },
-  { path: 'candidates', component: CandidatesComponent },
-  { path: 'applications', component: ApplicationsComponent },
-  { path: 'stage-history', component: StageHistoryComponent },
-  { path: '', redirectTo: 'candidates', pathMatch: 'full' }
+  { 
+    path: 'dashboard', 
+    loadComponent: () => import('./components/dashboard/dashboard').then(m => m.DashboardComponent)
+  },
+  { 
+    path: 'requisitions', 
+    loadComponent: () => import('./components/requisitions/requisitions').then(m => m.RequisitionsComponent)
+  },
+  { 
+    path: 'candidates', 
+    loadComponent: () => import('./components/candidates/candidates').then(m => m.CandidatesComponent)
+  },
+  { 
+    path: 'applications', 
+    loadComponent: () => import('./components/applications/applications').then(m => m.ApplicationsComponent)
+  },
+  { 
+    path: 'stage-history', 
+    loadComponent: () => import('./components/stage-history/stage-history').then(m => m.StageHistoryComponent)
+  },
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
 ];

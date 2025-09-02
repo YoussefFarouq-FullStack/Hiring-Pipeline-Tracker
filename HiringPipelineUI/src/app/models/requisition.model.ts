@@ -3,4 +3,6 @@ export interface Requisition {
   title: string;
   department: string;
   status: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

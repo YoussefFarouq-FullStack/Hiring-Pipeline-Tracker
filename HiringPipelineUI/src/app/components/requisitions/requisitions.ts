@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -28,9 +28,10 @@ import { RequisitionDialogComponent } from './requisition-dialog/requisition-dia
     MatPaginatorModule
   ],
   templateUrl: './requisitions.html',
-  styleUrls: ['./requisitions.scss']
+  styleUrls: ['./requisitions.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RequisitionsComponent implements OnInit {
+export class RequisitionsComponent implements OnInit, AfterViewInit {
   requisitions: Requisition[] = [];
   filteredRequisitions: Requisition[] = [];
   paginatedRequisitions: Requisition[] = [];
@@ -55,11 +56,17 @@ export class RequisitionsComponent implements OnInit {
   constructor(
     private requisitionService: RequisitionService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.loadRequisitions();
+  }
+
+  ngAfterViewInit(): void {
+    // Trigger change detection after view is initialized
+    this.cdr.detectChanges();
   }
 
   loadRequisitions(): void {
@@ -74,6 +81,8 @@ export class RequisitionsComponent implements OnInit {
           this.requisitions = data;
           this.applyFilters();
           this.isLoading = false;
+          // Trigger change detection after data is loaded
+          this.cdr.detectChanges();
         },
         error: (error: any) => {
           console.error('Error loading requisitions:', error);
@@ -81,6 +90,8 @@ export class RequisitionsComponent implements OnInit {
           this.errorMessage = error?.message || 'Unexpected error occurred while loading requisitions';
           this.isLoading = false;
           this.showError(this.errorMessage);
+          // Trigger change detection after error
+          this.cdr.detectChanges();
         }
       });
   }
@@ -104,6 +115,9 @@ export class RequisitionsComponent implements OnInit {
     this.totalItems = this.filteredRequisitions.length;
     this.currentPage = 0; // reset page when filters change
     this.updatePagination();
+    
+    // Trigger change detection after filters are applied
+    this.cdr.detectChanges();
   }
 
   filterRequisitions(): void {
