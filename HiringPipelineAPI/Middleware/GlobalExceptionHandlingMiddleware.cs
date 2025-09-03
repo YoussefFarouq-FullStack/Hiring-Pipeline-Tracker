@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using HiringPipelineAPI.Models;
-using HiringPipelineAPI.Exceptions;
+using HiringPipelineCore.Exceptions;
 
 namespace HiringPipelineAPI.Middleware;
 
@@ -41,11 +41,11 @@ public class GlobalExceptionHandlingMiddleware
         var (statusCode, message, details) = exception switch
         {
             // Handle specific custom application exceptions first
-            HiringPipelineAPI.Exceptions.NotFoundException => (HttpStatusCode.NotFound, "Resource not found", exception.Message),
-            HiringPipelineAPI.Exceptions.BusinessRuleViolationException => (HttpStatusCode.BadRequest, "Business rule violation", exception.Message),
-            HiringPipelineAPI.Exceptions.ConflictException => (HttpStatusCode.Conflict, "Conflict occurred", exception.Message),
-            HiringPipelineAPI.Exceptions.OperationNotAllowedException => (HttpStatusCode.Forbidden, "Operation not allowed", exception.Message),
-            HiringPipelineAPI.Exceptions.ValidationException => (HttpStatusCode.BadRequest, "Validation failed", exception.Message),
+            HiringPipelineCore.Exceptions.NotFoundException => (HttpStatusCode.NotFound, "Resource not found", exception.Message),
+            HiringPipelineCore.Exceptions.BusinessRuleViolationException => (HttpStatusCode.BadRequest, "Business rule violation", exception.Message),
+            HiringPipelineCore.Exceptions.ConflictException => (HttpStatusCode.Conflict, "Conflict occurred", exception.Message),
+            HiringPipelineCore.Exceptions.OperationNotAllowedException => (HttpStatusCode.Forbidden, "Operation not allowed", exception.Message),
+            HiringPipelineCore.Exceptions.ValidationException => (HttpStatusCode.BadRequest, "Validation failed", exception.Message),
             
             // Handle specific .NET exceptions
             ArgumentNullException => (HttpStatusCode.BadRequest, "Required argument is missing", exception.Message),
@@ -86,7 +86,7 @@ public class GlobalExceptionHandlingMiddleware
             errorResponse.StackTrace = exception.StackTrace;
             
             // Add validation errors if available
-            if (exception is HiringPipelineAPI.Exceptions.ValidationException validationException)
+            if (exception is HiringPipelineCore.Exceptions.ValidationException validationException)
             {
                 errorResponse.Details = new Dictionary<string, object>
                 {

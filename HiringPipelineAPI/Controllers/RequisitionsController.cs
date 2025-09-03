@@ -12,9 +12,9 @@ namespace HiringPipelineAPI.Controllers;
 [Produces("application/json")]
 public class RequisitionsController : ControllerBase
 {
-    private readonly IRequisitionService _requisitionService;
+    private readonly IRequisitionApiService _requisitionService;
 
-    public RequisitionsController(IRequisitionService requisitionService)
+    public RequisitionsController(IRequisitionApiService requisitionService)
     {
         _requisitionService = requisitionService;
     }

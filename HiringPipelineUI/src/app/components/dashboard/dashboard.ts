@@ -108,7 +108,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
                 lastName: 'Johnson',
                 email: 'sarah.johnson@email.com',
                 phone: '+1-555-0123',
-                status: 'Active'
+                status: 'Active',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
               },
               {
                 candidateId: 2,
@@ -116,7 +118,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
                 lastName: 'Chen',
                 email: 'michael.chen@email.com',
                 phone: '+1-555-0124',
-                status: 'Active'
+                status: 'Active',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
               }
             ];
           }

@@ -1,0 +1,18 @@
+using System.Text.Json.Serialization;
+
+namespace HiringPipelineCore.Entities;
+
+public class StageHistory
+{
+    public int StageHistoryId { get; set; }
+
+    // Foreign Key
+    public int ApplicationId { get; set; }
+    [JsonIgnore]
+    public Application Application { get; set; } = null!;
+
+    public string? FromStage { get; set; }
+    public string ToStage { get; set; } = string.Empty;
+    public string MovedBy { get; set; } = string.Empty;
+    public DateTime MovedAt { get; set; } = DateTime.UtcNow;
+}

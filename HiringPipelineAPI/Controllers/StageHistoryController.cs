@@ -12,9 +12,9 @@ namespace HiringPipelineAPI.Controllers;
 [Produces("application/json")]
 public class StageHistoryController : ControllerBase
 {
-    private readonly IStageHistoryService _stageHistoryService;
+    private readonly IStageHistoryApiService _stageHistoryService;
 
-    public StageHistoryController(IStageHistoryService stageHistoryService)
+    public StageHistoryController(IStageHistoryApiService stageHistoryService)
     {
         _stageHistoryService = stageHistoryService;
     }

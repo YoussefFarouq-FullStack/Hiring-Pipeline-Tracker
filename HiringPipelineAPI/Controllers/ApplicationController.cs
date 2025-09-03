@@ -12,9 +12,9 @@ namespace HiringPipelineAPI.Controllers;
 [Produces("application/json")]
 public class ApplicationsController : ControllerBase
 {
-    private readonly IApplicationService _applicationService;
+    private readonly IApplicationApiService _applicationService;
 
-    public ApplicationsController(IApplicationService applicationService)
+    public ApplicationsController(IApplicationApiService applicationService)
     {
         _applicationService = applicationService;
     }

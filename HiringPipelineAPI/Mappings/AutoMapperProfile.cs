@@ -1,6 +1,6 @@
 using AutoMapper;
 using HiringPipelineAPI.DTOs;
-using HiringPipelineAPI.Models;
+using HiringPipelineCore.Entities;
 
 namespace HiringPipelineAPI.Mappings;
 

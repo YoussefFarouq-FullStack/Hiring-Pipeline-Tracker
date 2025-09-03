@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using HiringPipelineAPI.Data;
-using HiringPipelineAPI.Services.Interfaces;
-using HiringPipelineAPI.Services.Implementations;
-using HiringPipelineAPI.Repositories.Interfaces;
-using HiringPipelineAPI.Repositories.Implementations;
+using HiringPipelineInfrastructure.Data;
+using HiringPipelineCore.Interfaces.Services;
+using HiringPipelineInfrastructure.Services;
+using HiringPipelineCore.Interfaces.Repositories;
+using HiringPipelineInfrastructure.Repositories;
 using HiringPipelineAPI.Mappings;
 using HiringPipelineAPI.Validators;
 using HiringPipelineAPI.Filters;
@@ -106,11 +106,17 @@ builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
 builder.Services.AddScoped<IRequisitionRepository, RequisitionRepository>();
 builder.Services.AddScoped<IStageHistoryRepository, StageHistoryRepository>();
 
-// Register services
+// Register core services
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddScoped<IRequisitionService, RequisitionService>();
 builder.Services.AddScoped<IStageHistoryService, StageHistoryService>();
+
+// Register API services
+builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.ICandidateApiService, HiringPipelineAPI.Services.Implementations.CandidateApiService>();
+builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IRequisitionApiService, HiringPipelineAPI.Services.Implementations.RequisitionApiService>();
+builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IApplicationApiService, HiringPipelineAPI.Services.Implementations.ApplicationApiService>();
+builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IStageHistoryApiService, HiringPipelineAPI.Services.Implementations.StageHistoryApiService>();
 
 // CORS must be registered before building the app
 builder.Services.AddCors(options =>

@@ -3,6 +3,10 @@ export interface Candidate {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
+  phone?: string;
+  linkedInUrl?: string;
+  source?: string;
   status: string;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -5,8 +5,8 @@ export interface StageHistory {
   toStage: string;
   movedBy: string;
   movedAt: string;
-  notes?: string;
   reason?: string;
+  notes?: string;
 }
 
 export interface CreateStageHistoryDto {
@@ -14,8 +14,8 @@ export interface CreateStageHistoryDto {
   fromStage?: string;
   toStage: string;
   movedBy: string;
-  notes?: string;
   reason?: string;
+  notes?: string;
 }
 
 // Define the hiring pipeline stages in order
