@@ -111,12 +111,14 @@ builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddScoped<IRequisitionService, RequisitionService>();
 builder.Services.AddScoped<IStageHistoryService, StageHistoryService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
 // Register API services
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.ICandidateApiService, HiringPipelineAPI.Services.Implementations.CandidateApiService>();
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IRequisitionApiService, HiringPipelineAPI.Services.Implementations.RequisitionApiService>();
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IApplicationApiService, HiringPipelineAPI.Services.Implementations.ApplicationApiService>();
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IStageHistoryApiService, HiringPipelineAPI.Services.Implementations.StageHistoryApiService>();
+builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IAnalyticsApiService, HiringPipelineAPI.Services.Implementations.AnalyticsApiService>();
 
 // CORS must be registered before building the app
 builder.Services.AddCors(options =>

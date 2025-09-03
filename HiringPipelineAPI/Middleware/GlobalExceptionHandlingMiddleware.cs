@@ -53,18 +53,21 @@ public class GlobalExceptionHandlingMiddleware
             UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "Access denied", "You are not authorized to perform this action"),
             
             // Handle specific database-related exceptions
-            Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException => (HttpStatusCode.Conflict, "Concurrency conflict", "The resource has been modified by another user"),
-            Microsoft.EntityFrameworkCore.DbUpdateException => (HttpStatusCode.BadRequest, "Database update failed", "Unable to save changes to the database"),
+            Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException => (HttpStatusCode.Conflict, "Concurrency conflict", "The resource has been modified by another user. Please refresh and try again."),
+            Microsoft.EntityFrameworkCore.DbUpdateException => (HttpStatusCode.BadRequest, "Database update failed", "Unable to save changes to the database. Please check your data and try again."),
             
-            // Handle FluentValidation exceptions
-            FluentValidation.ValidationException => (HttpStatusCode.BadRequest, "Validation failed", "One or more validation errors occurred"),
+            // Handle FluentValidation exceptions with detailed messages
+            FluentValidation.ValidationException validationEx => (HttpStatusCode.BadRequest, "Validation failed", GetValidationErrorMessage(validationEx)),
             
             // Broader .NET exceptions (catch-all for argument-related issues)
             ArgumentException => (HttpStatusCode.BadRequest, "Invalid argument provided", exception.Message),
             
+            // Handle specific database connection issues
+            Microsoft.Data.SqlClient.SqlException => (HttpStatusCode.ServiceUnavailable, "Database connection error", "Unable to connect to the database. Please try again later."),
+            
             // Final fallback for any other exceptions
             _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred", 
-                  _environment.IsDevelopment() ? exception.Message : "Please try again later")
+                  _environment.IsDevelopment() ? exception.Message : "Please try again later. If the problem persists, contact support.")
         };
 
         context.Response.StatusCode = (int)statusCode;
@@ -93,6 +96,20 @@ public class GlobalExceptionHandlingMiddleware
                     ["ValidationErrors"] = validationException.Errors
                 };
             }
+            
+            // Add FluentValidation errors if available
+            if (exception is FluentValidation.ValidationException fluentValidationEx)
+            {
+                errorResponse.Details = new Dictionary<string, object>
+                {
+                    ["ValidationErrors"] = fluentValidationEx.Errors.Select(e => new
+                    {
+                        Property = e.PropertyName,
+                        Error = e.ErrorMessage,
+                        AttemptedValue = e.AttemptedValue
+                    }).ToList()
+                };
+            }
         }
 
         var jsonResponse = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
@@ -102,6 +119,12 @@ public class GlobalExceptionHandlingMiddleware
         });
 
         await context.Response.WriteAsync(jsonResponse);
+    }
+
+    private static string GetValidationErrorMessage(FluentValidation.ValidationException validationEx)
+    {
+        var errors = validationEx.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}");
+        return string.Join("; ", errors);
     }
 
     private static string GetErrorType(HttpStatusCode statusCode) => statusCode switch
