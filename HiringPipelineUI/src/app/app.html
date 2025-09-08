@@ -9,12 +9,13 @@
 </head>
 <body>
   <div class="app-container">
-    <div class="app-main">
+    <!-- Show sidebar only when logged in -->
+    <div class="app-main" [class.logged-in]="isLoggedIn">
       <!-- Left Sidebar Navigation -->
-      <app-sidebar></app-sidebar>
+      <app-sidebar *ngIf="isLoggedIn"></app-sidebar>
 
       <!-- Main Content Area -->
-      <main class="main-content">
+      <main class="main-content" [class.with-sidebar]="isLoggedIn">
         <router-outlet></router-outlet>
       </main>
     </div>

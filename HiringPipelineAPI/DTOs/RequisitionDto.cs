@@ -1,22 +1,7 @@
 namespace HiringPipelineAPI.DTOs;
 
-// Response DTOs (what the frontend receives)
-public class RequisitionDto
-{
-    public int RequisitionId { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string Department { get; set; } = string.Empty;
-    public string? JobLevel { get; set; }
-    public string Status { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-}
-
-public class RequisitionDetailDto : RequisitionDto
-{
-    public int ApplicationCount { get; set; }
-    public List<ApplicationSummaryDto> Applications { get; set; } = new();
-}
+// API-specific DTOs for Requisition operations
+// These are only used by controllers and not shared with Core
 
 // Create DTOs (what the frontend sends to create)
 public class CreateRequisitionDto

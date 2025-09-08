@@ -8,9 +8,13 @@ using HiringPipelineAPI.Mappings;
 using HiringPipelineAPI.Validators;
 using HiringPipelineAPI.Filters;
 using HiringPipelineAPI.DTOs;
+using HiringPipelineCore.DTOs;
 using HiringPipelineAPI.Middleware;
 using FluentValidation.AspNetCore;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 
@@ -23,63 +27,8 @@ builder.Services.AddControllers(options =>
 });
 builder.Services.AddEndpointsApiExplorer();
 
-// Enhanced Swagger Configuration
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Hiring Pipeline Tracker API",
-        Version = "v1",
-        Description = "A comprehensive API for managing the hiring pipeline process including candidates, applications, requisitions, and stage tracking.",
-        Contact = new OpenApiContact
-        {
-            Name = "API Support",
-            Email = "support@company.com",
-            Url = new Uri("https://company.com/support")
-        },
-        License = new OpenApiLicense
-        {
-            Name = "MIT License",
-            Url = new Uri("https://opensource.org/licenses/MIT")
-        }
-    });
-
-    // Add XML comments for better documentation
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if (File.Exists(xmlPath))
-    {
-        options.IncludeXmlComments(xmlPath);
-    }
-
-    // Add operation filters for better documentation
-    options.OperationFilter<SwaggerDefaultValues>();
-    
-    // Add security definitions (if you plan to add authentication later)
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
+// ✅ Basic Swagger Configuration
+builder.Services.AddSwaggerGen();
 
 // ✅ Register your DbContext with SQL Server
 builder.Services.AddDbContext<HiringPipelineDbContext>(options =>
@@ -112,6 +61,7 @@ builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddScoped<IRequisitionService, RequisitionService>();
 builder.Services.AddScoped<IStageHistoryService, StageHistoryService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Register API services
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.ICandidateApiService, HiringPipelineAPI.Services.Implementations.CandidateApiService>();
@@ -120,13 +70,32 @@ builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IApplicationApi
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IStageHistoryApiService, HiringPipelineAPI.Services.Implementations.StageHistoryApiService>();
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IAnalyticsApiService, HiringPipelineAPI.Services.Implementations.AnalyticsApiService>();
 
-// CORS must be registered before building the app
+// Configure JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured")))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// ✅ CORS must be registered before building the app
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:4200") // frontend URL
+            policy.WithOrigins("http://localhost:4200") // Angular frontend URL
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -138,22 +107,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Hiring Pipeline API v1");
-        options.RoutePrefix = "api-docs"; // Change from default "swagger" to "api-docs"
-        options.DocumentTitle = "Hiring Pipeline Tracker API Documentation";
-        options.DefaultModelsExpandDepth(2);
-        options.DefaultModelExpandDepth(2);
-        options.DisplayRequestDuration();
-        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
-        
-        // Custom CSS for better styling
-        options.InjectStylesheet("/swagger-ui/custom.css");
-        
-        // Add custom JavaScript for better UX
-        options.InjectJavascript("/swagger-ui/custom.js");
-    });
+    app.UseSwaggerUI();
 
     // Seed the database with initial test data
     using (var scope = app.Services.CreateScope())
@@ -163,13 +117,17 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-// Add global exception handling middleware (must be early in the pipeline)
+// ✅ Global middleware
 app.UseGlobalExceptionHandling();
 
 app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
+
+// Enable authentication & authorization
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using HiringPipelineCore.Entities;
+using BCrypt.Net;
 
 namespace HiringPipelineInfrastructure.Data;
 
@@ -23,12 +24,8 @@ public static class DbInitializer
             // Ensure database is created
             await context.Database.EnsureCreatedAsync();
 
-            // Seed data only if no data exists
-            if (await context.Candidates.AnyAsync())
-            {
-                Console.WriteLine("Database already contains data. Skipping seeding.");
-                return;
-            }
+            // Always seed users for development
+            Console.WriteLine("Starting database seeding...");
 
             Console.WriteLine("Seeding database with initial test data...");
 
@@ -43,6 +40,9 @@ public static class DbInitializer
             
             // Seed stage history
             await SeedStageHistoryAsync(context, applications);
+            
+            // Seed users
+            await SeedUsersAsync(context);
 
             await context.SaveChangesAsync();
             
@@ -57,6 +57,13 @@ public static class DbInitializer
 
     private static async Task<List<Candidate>> SeedCandidatesAsync(HiringPipelineDbContext context)
     {
+        // Only seed candidates if none exist
+        if (await context.Candidates.AnyAsync())
+        {
+            Console.WriteLine("Candidates already exist. Skipping candidate seeding.");
+            return await context.Candidates.ToListAsync();
+        }
+
         var candidates = new List<Candidate>();
 
         foreach (var candidateData in SeedData.Candidates.SampleData)
@@ -205,6 +212,54 @@ public static class DbInitializer
         }
 
         return stageHistory;
+    }
+
+    private static async Task SeedUsersAsync(HiringPipelineDbContext context)
+    {
+        // Always seed users for development - check if specific users exist
+        var adminExists = await context.Users.AnyAsync(u => u.Username == "admin");
+        var testUserExists = await context.Users.AnyAsync(u => u.Username == "testuser");
+        
+        if (adminExists && testUserExists)
+        {
+            Console.WriteLine("Test users already exist. Skipping user seeding.");
+            return;
+        }
+
+        var users = new List<User>();
+
+        if (!adminExists)
+        {
+            users.Add(new User
+            {
+                Username = "admin",
+                Email = "admin@example.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                Role = "Admin",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+        }
+
+        if (!testUserExists)
+        {
+            users.Add(new User
+            {
+                Username = "testuser",
+                Email = "testuser@example.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"),
+                Role = "User",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+        }
+
+        if (users.Any())
+        {
+            await context.Users.AddRangeAsync(users);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"Seeded {users.Count} test users.");
+        }
     }
 
     private class StageHistoryData

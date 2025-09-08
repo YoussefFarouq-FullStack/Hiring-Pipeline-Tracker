@@ -1,5 +1,6 @@
 using AutoMapper;
 using HiringPipelineAPI.DTOs;
+using HiringPipelineCore.DTOs;
 using HiringPipelineCore.Entities;
 using HiringPipelineCore.Interfaces.Services;
 using HiringPipelineAPI.Services.Interfaces;

@@ -1,4 +1,5 @@
 using HiringPipelineAPI.DTOs;
+using HiringPipelineCore.DTOs;
 
 namespace HiringPipelineAPI.Services.Interfaces
 {

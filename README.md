@@ -44,17 +44,17 @@ Hiring Pipeline Tracker/
 ### Backend Setup
 
 1. **Restore dependencies:**
-   ```bash
+```bash
    dotnet restore
-   ```
+```
 
 2. **Build the solution:**
-   ```bash
+```bash
    dotnet build
    ```
 
 3. **Run the API:**
-   ```bash
+```bash
    dotnet run --project HiringPipelineAPI
    ```
    
@@ -74,7 +74,7 @@ Hiring Pipeline Tracker/
    ```
 
 3. **Start the development server:**
-   ```bash
+```bash
    npm start
    ```
    

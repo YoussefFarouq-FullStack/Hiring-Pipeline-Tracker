@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using HiringPipelineAPI.Services.Interfaces;
 using HiringPipelineAPI.DTOs;
+using HiringPipelineCore.DTOs;
 
 namespace HiringPipelineAPI.Controllers;
 

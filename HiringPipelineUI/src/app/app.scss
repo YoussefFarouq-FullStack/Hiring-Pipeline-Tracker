@@ -112,6 +112,20 @@ body {
   height: 100vh;
 }
 
+/* Login layout - no sidebar */
+.app-main:not(.logged-in) {
+  display: block;
+  height: 100vh;
+}
+
+.app-main:not(.logged-in) .main-content {
+  flex: none;
+  width: 100%;
+  height: 100vh;
+  padding: 0;
+  overflow: hidden;
+}
+
 /* Left Sidebar - New Component */
 app-sidebar {
   display: block;

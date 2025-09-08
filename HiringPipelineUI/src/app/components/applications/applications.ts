@@ -28,6 +28,9 @@ export class ApplicationsComponent implements OnInit {
   requisitions: Requisition[] = [];
   searchTerm: string = '';
   selectedStat: string = 'all'; // New property for stats filtering
+  selectedDepartment: string = '';
+  selectedStage: string = '';
+  departments: string[] = [];
 
   isLoading = false;
   hasError = false;
@@ -116,6 +119,9 @@ export class ApplicationsComponent implements OnInit {
       };
     });
 
+    // Extract unique departments for filtering
+    this.departments = [...new Set(this.requisitions.map(r => r.department).filter(d => d))];
+
     this.filteredApplications = [...this.applications];
     this.updatePagination();
   }
@@ -145,6 +151,19 @@ export class ApplicationsComponent implements OnInit {
           // If no matching stat, show all
           break;
       }
+    }
+
+    // Filter by department
+    if (this.selectedDepartment) {
+      filtered = filtered.filter(app => {
+        const requisition = this.requisitions.find(r => r.requisitionId === app.requisitionId);
+        return requisition?.department === this.selectedDepartment;
+      });
+    }
+
+    // Filter by stage
+    if (this.selectedStage) {
+      filtered = filtered.filter(app => app.currentStage === this.selectedStage);
     }
 
     // Filter by search term
@@ -384,5 +403,35 @@ export class ApplicationsComponent implements OnInit {
 
   getEndItemNumber(): number {
     return Math.min(this.currentPage * this.pageSize, this.totalItems);
+  }
+
+  exportApplications(): void {
+    // Create CSV content
+    const headers = ['Application ID', 'Candidate Name', 'Email', 'Position', 'Department', 'Applied Date', 'Current Stage'];
+    const csvContent = [
+      headers.join(','),
+      ...this.filteredApplications.map(app => [
+        app.applicationId,
+        `"${this.getCandidateName(app.candidateId)}"`,
+        `"${this.getCandidateEmail(app.candidateId)}"`,
+        `"${this.getRequisitionTitle(app.requisitionId)}"`,
+        `"${this.getRequisitionDepartment(app.requisitionId)}"`,
+        this.formatDate(app.createdAt),
+        `"${app.currentStage || 'N/A'}"`
+      ].join(','))
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `applications_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    this.showSuccess('Applications exported successfully!');
   }
 }

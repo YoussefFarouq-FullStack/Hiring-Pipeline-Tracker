@@ -1,6 +1,9 @@
-import { Component, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, signal, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Subject, takeUntil } from 'rxjs';
 
 interface NavigationItem {
   title: string;
@@ -12,7 +15,7 @@ interface NavigationItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MatSnackBarModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <aside [class]="sidebarClasses()">
@@ -32,7 +35,7 @@ interface NavigationItem {
       </div>
 
       <!-- Navigation -->
-      <div class="px-3 py-4">
+      <div class="px-3 py-4 flex-1">
         <div class="text-xs font-medium text-gray-500 mb-2">
           <span *ngIf="!collapsed()">Navigation</span>
         </div>
@@ -86,6 +89,37 @@ interface NavigationItem {
         </nav>
       </div>
 
+      <!-- User Info -->
+      <div *ngIf="currentUser" class="mt-auto p-3 border-t border-gray-200">
+        <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+          <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <div *ngIf="!collapsed()" class="flex-1 min-w-0">
+            <p class="text-xs font-semibold text-gray-900 truncate">{{ currentUser.username }}</p>
+            <p class="text-xs text-gray-600 truncate">{{ currentUser.email }}</p>
+            <p class="text-xs text-blue-600 font-medium">{{ currentUser.role }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sign Out Button -->
+      <div class="p-3">
+        <button
+          (click)="signOut()"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 transition-all duration-200 border border-red-200 hover:border-red-300"
+          [class.justify-center]="collapsed()"
+          title="Sign Out"
+        >
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+          </svg>
+          <span *ngIf="!collapsed()" class="font-medium">Sign Out</span>
+        </button>
+      </div>
+
       <!-- Toggle Button -->
       <button
         (click)="toggleSidebar()"
@@ -99,8 +133,30 @@ interface NavigationItem {
     </aside>
   `
 })
-export class AppSidebarComponent {
+export class AppSidebarComponent implements OnInit, OnDestroy {
   collapsed = signal(false);
+  currentUser: any = null;
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private snackBar: MatSnackBar
+  ) {}
+
+  ngOnInit(): void {
+    // Subscribe to current user changes
+    this.authService.currentUser$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(user => {
+      this.currentUser = user;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   navigationItems: NavigationItem[] = [
     {
@@ -136,7 +192,7 @@ export class AppSidebarComponent {
   ];
 
   sidebarClasses = computed(() => 
-    `relative bg-gradient-to-b from-white to-gray-50 border-r border-gray-200 transition-all duration-300 ${
+    `relative bg-gradient-to-b from-white to-gray-50 border-r border-gray-200 transition-all duration-300 flex flex-col h-screen ${
       this.collapsed() ? 'w-16' : 'w-64'
     }`
   );
@@ -152,5 +208,15 @@ export class AppSidebarComponent {
 
   toggleSidebar(): void {
     this.collapsed.update(value => !value);
+  }
+
+  signOut(): void {
+    if (confirm('Are you sure you want to sign out?')) {
+      this.authService.logout();
+      this.snackBar.open('You have been signed out successfully', 'Close', {
+        duration: 3000,
+        panelClass: ['success-snackbar']
+      });
+    }
   }
 }
