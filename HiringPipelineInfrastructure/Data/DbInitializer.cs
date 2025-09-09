@@ -21,8 +21,16 @@ public static class DbInitializer
 
         try
         {
-            // Ensure database is created
-            await context.Database.EnsureCreatedAsync();
+            // Check if database exists, if not create it
+            if (!await context.Database.CanConnectAsync())
+            {
+                Console.WriteLine("Database does not exist. Creating database...");
+                await context.Database.EnsureCreatedAsync();
+            }
+            else
+            {
+                Console.WriteLine("Database already exists. Skipping database creation.");
+            }
 
             // Always seed users for development
             Console.WriteLine("Starting database seeding...");
@@ -74,8 +82,10 @@ public static class DbInitializer
                 LastName = candidateData.LastName,
                 Email = candidateData.Email,
                 Phone = candidateData.Phone,
-                LinkedInUrl = candidateData.LinkedInUrl,
-                Source = candidateData.Source,
+                ResumeFileName = candidateData.Resume,
+                ResumeFilePath = candidateData.Resume,
+                Description = $"Sample candidate with {candidateData.Skills} skills",
+                Skills = candidateData.Skills,
                 Status = candidateData.Status,
                 CreatedAt = DateTime.UtcNow.AddDays(-candidateData.DaysAgo),
                 UpdatedAt = DateTime.UtcNow.AddDays(-candidateData.DaysAgo + 5) // Updated 5 days after creation
@@ -99,7 +109,15 @@ public static class DbInitializer
             var requisition = new Requisition
             {
                 Title = requisitionData.Title,
+                Description = requisitionData.Description,
                 Department = requisitionData.Department,
+                Location = requisitionData.Location,
+                EmploymentType = requisitionData.EmploymentType,
+                Salary = requisitionData.Salary,
+                IsDraft = requisitionData.IsDraft,
+                Priority = requisitionData.Priority,
+                RequiredSkills = requisitionData.RequiredSkills,
+                ExperienceLevel = requisitionData.ExperienceLevel,
                 JobLevel = requisitionData.JobLevel,
                 Status = requisitionData.Status,
                 CreatedAt = DateTime.UtcNow.AddDays(-requisitionData.DaysAgo),
@@ -216,50 +234,8 @@ public static class DbInitializer
 
     private static async Task SeedUsersAsync(HiringPipelineDbContext context)
     {
-        // Always seed users for development - check if specific users exist
-        var adminExists = await context.Users.AnyAsync(u => u.Username == "admin");
-        var testUserExists = await context.Users.AnyAsync(u => u.Username == "testuser");
-        
-        if (adminExists && testUserExists)
-        {
-            Console.WriteLine("Test users already exist. Skipping user seeding.");
-            return;
-        }
-
-        var users = new List<User>();
-
-        if (!adminExists)
-        {
-            users.Add(new User
-            {
-                Username = "admin",
-                Email = "admin@example.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                Role = "Admin",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            });
-        }
-
-        if (!testUserExists)
-        {
-            users.Add(new User
-            {
-                Username = "testuser",
-                Email = "testuser@example.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"),
-                Role = "User",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            });
-        }
-
-        if (users.Any())
-        {
-            await context.Users.AddRangeAsync(users);
-            await context.SaveChangesAsync();
-            Console.WriteLine($"Seeded {users.Count} test users.");
-        }
+        // User seeding removed - users should be created through proper registration process
+        Console.WriteLine("User seeding skipped - users should be created through registration.");
     }
 
     private class StageHistoryData

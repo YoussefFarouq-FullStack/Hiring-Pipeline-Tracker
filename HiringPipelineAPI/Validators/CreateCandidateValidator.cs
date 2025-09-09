@@ -33,22 +33,21 @@ public class CreateCandidateValidator : AbstractValidator<CreateCandidateDto>
             .Matches(ValidationConstants.RegexPatterns.Phone).When(x => !string.IsNullOrEmpty(x.Phone))
             .WithMessage("Please provide a valid phone number.");
 
-        RuleFor(x => x.LinkedInUrl)
-            .MaximumLength(ValidationConstants.Lengths.MaxLinkedInUrl)
-            .WithMessage($"LinkedIn URL cannot exceed {ValidationConstants.Lengths.MaxLinkedInUrl} characters.")
-            .Must(BeValidLinkedInUrl).When(x => !string.IsNullOrEmpty(x.LinkedInUrl))
-            .WithMessage("Please provide a valid LinkedIn URL.");
+        RuleFor(x => x.ResumeFileName)
+            .MaximumLength(ValidationConstants.Lengths.MaxFileName)
+            .WithMessage($"Resume filename cannot exceed {ValidationConstants.Lengths.MaxFileName} characters.");
 
-        RuleFor(x => x.Source)
-            .MaximumLength(ValidationConstants.Lengths.MaxSource)
-            .WithMessage($"Source cannot exceed {ValidationConstants.Lengths.MaxSource} characters.");
-    }
+        RuleFor(x => x.ResumeFilePath)
+            .MaximumLength(ValidationConstants.Lengths.MaxFilePath)
+            .WithMessage($"Resume file path cannot exceed {ValidationConstants.Lengths.MaxFilePath} characters.");
 
-    private static bool BeValidLinkedInUrl(string? url)
-    {
-        if (string.IsNullOrEmpty(url)) return true;
-        
-        return ValidationConstants.LinkedInUrlPatterns.ValidPatterns
-            .Any(pattern => url.StartsWith(pattern, StringComparison.OrdinalIgnoreCase));
+        RuleFor(x => x.Description)
+            .MaximumLength(ValidationConstants.Lengths.MaxDescription)
+            .WithMessage($"Description cannot exceed {ValidationConstants.Lengths.MaxDescription} characters.");
+
+        RuleFor(x => x.Skills)
+            .NotEmpty().WithMessage("Skills are required.")
+            .MaximumLength(ValidationConstants.Lengths.MaxSkills)
+            .WithMessage($"Skills cannot exceed {ValidationConstants.Lengths.MaxSkills} characters.");
     }
 }

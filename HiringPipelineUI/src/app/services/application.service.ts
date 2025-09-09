@@ -29,7 +29,13 @@ export class ApplicationService {
       } else if (error.status === 404) {
         errorMessage = 'Application not found.';
       } else if (error.status === 400) {
-        errorMessage = 'Invalid data provided. Please check your input.';
+        // Try to extract validation errors from the response
+        if (error.error && error.error.errors) {
+          const validationErrors = Object.values(error.error.errors).flat();
+          errorMessage = `Validation errors: ${validationErrors.join(', ')}`;
+        } else {
+          errorMessage = 'Invalid data provided. Please check your input.';
+        }
       } else if (error.status >= 500) {
         errorMessage = 'Server error. Please try again later.';
       }

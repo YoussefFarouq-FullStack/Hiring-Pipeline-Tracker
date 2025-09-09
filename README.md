@@ -83,7 +83,7 @@ Hiring Pipeline Tracker/
 ## 📋 Features
 
 ### Core Entities
-- **Candidates**: Manage job applicants with contact information and status
+- **Candidates**: Manage job applicants with contact information, skills, resume file uploads, and detailed descriptions
 - **Requisitions**: Track job openings with department and level details
 - **Applications**: Link candidates to job requisitions with stage tracking
 - **Stage History**: Monitor progression through the hiring pipeline
@@ -93,13 +93,15 @@ Hiring Pipeline Tracker/
 - **Requisitions**: `GET/POST/PUT/DELETE /api/requisitions`
 - **Applications**: `GET/POST/PUT/DELETE /api/applications`
 - **Stage History**: `GET/POST/PUT/DELETE /api/stagehistory`
+- **File Upload**: `POST/GET/DELETE /api/fileupload` (for resume files)
 
 ### Frontend Features
 - **Dashboard**: Overview of hiring pipeline metrics
-- **Candidate Management**: Add, edit, and track candidates
+- **Candidate Management**: Add, edit, and track candidates with file uploads and descriptions
 - **Requisition Management**: Create and manage job openings
-- **Application Tracking**: Monitor application progress
+- **Application Tracking**: Monitor application progress with proper validation
 - **Stage Progression**: Move applications through hiring stages
+- **File Upload**: Resume/CV file upload with drag-and-drop interface
 
 ## 🛠️ Technology Stack
 
@@ -149,6 +151,27 @@ Hiring Pipeline Tracker/
 ### Frontend Deployment
 1. Build the Angular app: `ng build --configuration production`
 2. Deploy the `dist` folder to your web server
+
+## 🔄 Recent Updates
+
+### Candidate Management Enhancements
+- **✅ File Upload Support**: Added resume/CV file upload functionality with drag-and-drop interface
+- **✅ Description Field**: Added detailed description field for candidate notes and additional information
+- **✅ Skills Validation**: Made skills field required with proper validation
+- **✅ Compact UI**: Optimized dialog layout for better user experience
+- **✅ Database Migration**: Updated schema to support new file upload and description fields
+
+### Application Management Improvements
+- **✅ Validation Fixes**: Fixed 400 Bad Request errors in application creation
+- **✅ Status Alignment**: Aligned frontend status options with backend validation rules
+- **✅ Stage Management**: Updated current stage options to match backend requirements
+- **✅ Error Handling**: Enhanced error messages with detailed validation feedback
+
+### Code Quality Improvements
+- **✅ Build Warnings**: Reduced backend build warnings by 42 (19% improvement)
+- **✅ XML Documentation**: Added comprehensive API documentation for Swagger
+- **✅ Type Safety**: Improved TypeScript type safety and validation
+- **✅ Clean Code**: Removed debugging code and unnecessary comments
 
 ## 📚 API Documentation
 

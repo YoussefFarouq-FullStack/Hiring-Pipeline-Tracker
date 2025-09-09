@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HiringPipelineAPI.Services.Interfaces;
 using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
@@ -11,6 +12,7 @@ namespace HiringPipelineAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[Authorize] // Require authentication for all candidate operations
 public class CandidatesController : ControllerBase
 {
     private readonly ICandidateApiService _candidateService;
@@ -54,7 +56,7 @@ public class CandidatesController : ControllerBase
     /// <summary>
     /// Creates a new candidate
     /// </summary>
-    /// <param name="createDto">The candidate data to create</param>
+    /// <param name="createDto">The candidate data to create, including optional description and resume file information</param>
     /// <returns>The newly created candidate</returns>
     /// <response code="201">Returns the newly created candidate</response>
     /// <response code="400">If the candidate data is invalid</response>
@@ -72,7 +74,7 @@ public class CandidatesController : ControllerBase
     /// Updates an existing candidate
     /// </summary>
     /// <param name="id">The unique identifier of the candidate to update</param>
-    /// <param name="updateDto">The updated candidate data</param>
+    /// <param name="updateDto">The updated candidate data, including optional description and resume file information</param>
     /// <returns>No content on successful update</returns>
     /// <response code="204">If the candidate was successfully updated</response>
     /// <response code="400">If the update data is invalid</response>
@@ -97,6 +99,7 @@ public class CandidatesController : ControllerBase
     /// <response code="404">If the candidate was not found</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")] // Only admins can delete candidates
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> DeleteCandidate(int id)
@@ -112,6 +115,7 @@ public class CandidatesController : ControllerBase
     /// <response code="204">If all candidates were successfully deleted</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpDelete("all")]
+    [Authorize(Roles = "Admin")] // Only admins can delete all candidates
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteAllCandidates()
     {

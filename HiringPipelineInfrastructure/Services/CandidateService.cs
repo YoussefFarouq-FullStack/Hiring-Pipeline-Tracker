@@ -45,8 +45,10 @@ namespace HiringPipelineInfrastructure.Services
             existingCandidate.LastName = candidate.LastName;
             existingCandidate.Email = candidate.Email;
             existingCandidate.Phone = candidate.Phone;
-            existingCandidate.LinkedInUrl = candidate.LinkedInUrl;
-            existingCandidate.Source = candidate.Source;
+            existingCandidate.ResumeFileName = candidate.ResumeFileName;
+            existingCandidate.ResumeFilePath = candidate.ResumeFilePath;
+            existingCandidate.Description = candidate.Description;
+            existingCandidate.Skills = candidate.Skills;
             existingCandidate.Status = candidate.Status;
             existingCandidate.UpdatedAt = DateTime.UtcNow;
 

@@ -46,6 +46,16 @@ export class LoginComponent implements OnInit {
     // Check if user is already logged in
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/dashboard']);
+      return;
+    }
+
+    // Check if redirected due to session expiry
+    const reason = this.route.snapshot.queryParams['reason'];
+    if (reason === 'session_expired') {
+      this.snackBar.open('Your session has expired. Please log in again.', 'Close', {
+        duration: 5000,
+        panelClass: ['warning-snackbar']
+      });
     }
   }
 

@@ -9,8 +9,11 @@ public static class ValidationConstants
         public const int MaxName = 50;
         public const int MaxEmail = 100;
         public const int MaxPhone = 20;
-        public const int MaxLinkedInUrl = 200;
-        public const int MaxSource = 100;
+        public const int MaxResume = 500;
+        public const int MaxFileName = 255;
+        public const int MaxFilePath = 500;
+        public const int MaxDescription = 2000;
+        public const int MaxSkills = 1000;
         public const int MaxStatus = 50;
         public const int MaxTitle = 100;
         public const int MaxDepartment = 100;
@@ -61,22 +64,17 @@ public static class ValidationConstants
         };
     }
 
+    /// <summary>
+    /// Valid job levels for requisitions
+    /// </summary>
     public static class JobLevels
     {
+        /// <summary>
+        /// Array of valid job levels
+        /// </summary>
         public static readonly string[] ValidLevels = 
         {
             "Entry", "Junior", "Mid", "Senior", "Lead", "Principal", "Director", "VP", "C-Level"
-        };
-    }
-
-    public static class LinkedInUrlPatterns
-    {
-        public static readonly string[] ValidPatterns = 
-        {
-            "https://www.linkedin.com/",
-            "http://www.linkedin.com/",
-            "https://linkedin.com/",
-            "http://linkedin.com/"
         };
     }
 }

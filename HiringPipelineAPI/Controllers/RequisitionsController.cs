@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HiringPipelineAPI.Services.Interfaces;
 using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
@@ -11,6 +12,7 @@ namespace HiringPipelineAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[Authorize] // Require authentication for all requisition operations
 public class RequisitionsController : ControllerBase
 {
     private readonly IRequisitionApiService _requisitionService;
@@ -97,6 +99,7 @@ public class RequisitionsController : ControllerBase
     /// <response code="404">If the requisition was not found</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")] // Only admins can delete requisitions
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> DeleteRequisition(int id)
@@ -112,6 +115,7 @@ public class RequisitionsController : ControllerBase
     /// <response code="204">If all requisitions were successfully deleted</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpDelete("all")]
+    [Authorize(Roles = "Admin")] // Only admins can delete all requisitions
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteAllRequisitions()
     {

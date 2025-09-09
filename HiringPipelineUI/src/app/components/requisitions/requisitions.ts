@@ -10,9 +10,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { take } from 'rxjs/operators';
 
-import { Requisition } from '../../models/requisition.model';
+import { Requisition, EMPLOYMENT_TYPES, PRIORITIES, EXPERIENCE_LEVELS, JOB_LEVELS, STATUSES } from '../../models/requisition.model';
 import { RequisitionService } from '../../services/requisition.service';
 import { RequisitionDialogComponent } from './requisition-dialog/requisition-dialog';
+import { RequisitionDetailComponent } from './requisition-detail/requisition-detail';
 
 @Component({
   selector: 'app-requisitions',
@@ -40,8 +41,18 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   searchTerm: string = '';
   selectedDepartment: string = '';
   selectedStatus: string = '';
-  selectedStat: string = 'all'; // New property for stats filtering
-  departments: string[] = ['Engineering', 'HR', 'Finance', 'Marketing'];
+  selectedPriority: string = '';
+  selectedEmploymentType: string = '';
+  selectedExperienceLevel: string = '';
+  selectedStat: string = 'all';
+  
+  // Filter options
+  departments: string[] = [];
+  employmentTypes = EMPLOYMENT_TYPES;
+  priorities = PRIORITIES;
+  experienceLevels = EXPERIENCE_LEVELS;
+  jobLevels = JOB_LEVELS;
+  statuses = STATUSES;
 
   // UI states
   isLoading = false;
@@ -79,6 +90,7 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
       .subscribe({
         next: (data: Requisition[]) => {
           this.requisitions = data;
+          this.extractDepartments();
           this.applyFilters();
           this.isLoading = false;
           // Trigger change detection after data is loaded
@@ -96,6 +108,16 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
       });
   }
 
+  extractDepartments(): void {
+    const deptSet = new Set<string>();
+    this.requisitions.forEach(req => {
+      if (req.department) {
+        deptSet.add(req.department);
+      }
+    });
+    this.departments = Array.from(deptSet).sort();
+  }
+
   applyFilters(): void {
     this.filteredRequisitions = this.requisitions.filter(req => {
       const term = this.searchTerm.trim().toLowerCase();
@@ -104,12 +126,18 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
         !term ||
         req.title.toLowerCase().includes(term) ||
         (req.department?.toLowerCase().includes(term)) ||
-        (req.status?.toLowerCase().includes(term));
+        (req.status?.toLowerCase().includes(term)) ||
+        (req.description?.toLowerCase().includes(term)) ||
+        (req.location?.toLowerCase().includes(term)) ||
+        (req.requiredSkills?.toLowerCase().includes(term));
 
       const matchesStatus = this.selectedStatus ? req.status === this.selectedStatus : true;
       const matchesDepartment = this.selectedDepartment ? req.department === this.selectedDepartment : true;
+      const matchesPriority = this.selectedPriority ? req.priority === this.selectedPriority : true;
+      const matchesEmploymentType = this.selectedEmploymentType ? req.employmentType === this.selectedEmploymentType : true;
+      const matchesExperienceLevel = this.selectedExperienceLevel ? req.experienceLevel === this.selectedExperienceLevel : true;
 
-      return matchesSearch && matchesStatus && matchesDepartment;
+      return matchesSearch && matchesStatus && matchesDepartment && matchesPriority && matchesEmploymentType && matchesExperienceLevel;
     });
 
     this.totalItems = this.filteredRequisitions.length;
@@ -124,6 +152,17 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
     this.applyFilters();
   }
 
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.selectedDepartment = '';
+    this.selectedStatus = '';
+    this.selectedPriority = '';
+    this.selectedEmploymentType = '';
+    this.selectedExperienceLevel = '';
+    this.selectedStat = 'all';
+    this.applyFilters();
+  }
+
   filterByStat(stat: string): void {
     this.selectedStat = stat;
     
@@ -131,6 +170,9 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
     if (stat === 'all') {
       this.selectedStatus = '';
       this.selectedDepartment = '';
+      this.selectedPriority = '';
+      this.selectedEmploymentType = '';
+      this.selectedExperienceLevel = '';
     } else {
       this.selectedStatus = stat;
     }
@@ -153,6 +195,7 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   openDialog(requisition?: Requisition): void {
     const dialogRef = this.dialog.open(RequisitionDialogComponent, {
       width: '500px',
+      maxHeight: '85vh',
       data: {
         mode: requisition ? 'edit' : 'create',
         requisition: requisition
@@ -194,6 +237,16 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
     });
   }
 
+  viewRequisitionDetails(requisition: Requisition): void {
+    this.dialog.open(RequisitionDetailComponent, {
+      width: '700px',
+      maxHeight: '90vh',
+      data: {
+        requisition: requisition
+      }
+    });
+  }
+
   deleteRequisition(id: number): void {
     if (confirm('Are you sure you want to delete this requisition?')) {
       this.requisitionService.deleteRequisition(id)
@@ -212,13 +265,15 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   }
 
   getStatusBadgeClass(status: string): string {
-    if (!status) return 'bg-gray-100 text-gray-800';
-    const statusLower = status.toLowerCase();
-    if (statusLower.includes('open')) return 'bg-green-100 text-green-800';
-    if (statusLower.includes('in progress')) return 'bg-purple-100 text-purple-800';
-    if (statusLower.includes('closed')) return 'bg-red-100 text-red-800';
-    if (statusLower.includes('on hold')) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-gray-100 text-gray-800';
+    return this.requisitionService.getStatusColor(status);
+  }
+
+  getPriorityBadgeClass(priority: string): string {
+    return this.requisitionService.getPriorityColor(priority);
+  }
+
+  getDraftBadgeClass(isDraft: boolean): string {
+    return this.requisitionService.getDraftStatusColor(isDraft);
   }
 
   getStatusDotClass(status: string): string {
@@ -238,7 +293,7 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
 
   // TODO: Replace with actual backend application count
   getApplicationCount(requisitionId: number): number {
-    return Math.floor(Math.random() * 10) + 1;
+    return 0; // Placeholder until backend provides actual count
   }
 
   retryLoad(): void {
@@ -246,15 +301,24 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   }
 
   exportRequisitions(): void {
-    const headers = ['Title', 'Department', 'Status', 'Applications'];
+    const headers = ['Title', 'Description', 'Department', 'Location', 'Employment Type', 'Salary', 'Priority', 'Experience Level', 'Job Level', 'Status', 'Draft', 'Required Skills', 'Created At'];
     const csvContent = [
       headers.join(','),
       ...this.filteredRequisitions.map(req =>
         [
           `"${req.title.replace(/"/g, '""')}"`,
+          `"${(req.description || '').replace(/"/g, '""')}"`,
           `"${(req.department || '').replace(/"/g, '""')}"`,
+          `"${(req.location || '').replace(/"/g, '""')}"`,
+          `"${(req.employmentType || '').replace(/"/g, '""')}"`,
+          `"${(req.salary || '').replace(/"/g, '""')}"`,
+          `"${(req.priority || '').replace(/"/g, '""')}"`,
+          `"${(req.experienceLevel || '').replace(/"/g, '""')}"`,
+          `"${(req.jobLevel || '').replace(/"/g, '""')}"`,
           `"${(req.status || '').replace(/"/g, '""')}"`,
-          this.getApplicationCount(req.requisitionId)
+          req.isDraft ? 'Yes' : 'No',
+          `"${(req.requiredSkills || '').replace(/"/g, '""')}"`,
+          this.formatDate(req.createdAt)
         ].join(',')
       )
     ].join('\n');
@@ -282,6 +346,12 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   }
   get closedRequisitions(): number {
     return this.requisitions.filter(r => r.status?.toLowerCase().includes('closed')).length;
+  }
+  get draftRequisitions(): number {
+    return this.requisitions.filter(r => r.isDraft).length;
+  }
+  get highPriorityRequisitions(): number {
+    return this.requisitions.filter(r => r.priority?.toLowerCase() === 'high').length;
   }
 
   // --- Snackbar helpers ---

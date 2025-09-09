@@ -7,17 +7,17 @@
   </p>
 </div>
 
-<form [formGroup]="form" (ngSubmit)="save()" class="p-6 space-y-4">
+<form [formGroup]="form" (ngSubmit)="save()" class="dialog-form">
   <!-- Candidate ID (Edit Mode Only) -->
   <div *ngIf="isEditMode" class="form-group">
     <label class="form-label">Candidate ID</label>
     <input
       formControlName="candidateId"
       type="text"
-      class="form-input-modern bg-gray-50"
+      class="form-input-modern readonly-field"
       readonly
     />
-    <p class="text-xs text-gray-500 mt-1">This field cannot be modified</p>
+    <p class="field-help-text">This field cannot be modified</p>
   </div>
 
   <!-- First Name -->
@@ -83,10 +83,10 @@
     </div>
   </div>
 
-    <!-- Phone -->
+  <!-- Phone -->
   <div class="form-group">
     <label class="form-label">
-      Phone <span class="text-red-500">*</span>
+      Phone <span class="text-gray-500 text-sm">(Optional)</span>
     </label>
     <input
       formControlName="phone"
@@ -94,13 +94,91 @@
       class="form-input-modern"
       [ngClass]="{'error': phoneError}"
       placeholder="Enter phone number"
-      required
     />
     <div *ngIf="phoneError" class="form-error">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
       </svg>
       {{ phoneError }}
+    </div>
+  </div>
+
+  <!-- Resume File Upload -->
+  <div class="form-group">
+    <label class="form-label">
+      Resume (CV) <span class="text-gray-500 text-sm">(Optional)</span>
+    </label>
+    <div class="file-upload-container">
+      <input
+        #fileInput
+        type="file"
+        accept=".pdf,.doc,.docx"
+        (change)="onFileSelected($event)"
+        class="file-input"
+        id="resume-upload"
+      />
+      <label for="resume-upload" class="file-upload-label">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <span *ngIf="!selectedFile">Choose Resume File</span>
+        <span *ngIf="selectedFile" class="text-green-600">{{ selectedFile.name }}</span>
+      </label>
+      <div *ngIf="selectedFile" class="file-info">
+        <p class="text-xs text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
+        <button type="button" (click)="removeFile()" class="remove-file-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div *ngIf="resumeError" class="form-error">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      {{ resumeError }}
+    </div>
+  </div>
+
+  <!-- Description -->
+  <div class="form-group">
+    <label class="form-label">
+      Description <span class="text-gray-500 text-sm">(Optional)</span>
+    </label>
+    <textarea
+      formControlName="description"
+      class="form-input-modern"
+      [ngClass]="{'error': descriptionError}"
+      placeholder="Enter candidate description or notes"
+      rows="3"
+    ></textarea>
+    <div *ngIf="descriptionError" class="form-error">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      {{ descriptionError }}
+    </div>
+  </div>
+
+  <!-- Skills -->
+  <div class="form-group">
+    <label class="form-label">
+      Skills <span class="text-red-500">*</span>
+    </label>
+    <textarea
+      formControlName="skills"
+      class="form-input-modern"
+      [ngClass]="{'error': skillsError}"
+      placeholder="Enter skills (comma-separated or one per line)"
+      rows="2"
+      required
+    ></textarea>
+    <div *ngIf="skillsError" class="form-error">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      {{ skillsError }}
     </div>
   </div>
 
@@ -131,7 +209,7 @@
   </div>
 
   <!-- Actions -->
-  <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+  <div class="flex justify-end gap-3 pt-3 border-t border-gray-200">
     <button
       type="button"
       (click)="close()"

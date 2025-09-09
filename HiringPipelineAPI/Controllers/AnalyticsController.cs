@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HiringPipelineCore.DTOs;
 using HiringPipelineAPI.Services.Interfaces;
 
@@ -6,6 +7,7 @@ namespace HiringPipelineAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Require authentication for analytics data
 public class AnalyticsController : ControllerBase
 {
     private readonly IAnalyticsApiService _analyticsService;

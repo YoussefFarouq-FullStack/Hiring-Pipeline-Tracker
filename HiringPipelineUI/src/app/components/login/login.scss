@@ -222,37 +222,6 @@
   100% { transform: rotate(360deg); }
 }
 
-.demo-info {
-  margin-top: 2rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-radius: 0.5rem;
-  border: 1px solid #bfdbfe;
-}
-
-.demo-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.demo-header span {
-  color: #1e40af;
-  font-weight: 600;
-}
-
-.demo-credentials {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.demo-credentials p {
-  margin: 0;
-  color: #4b5563;
-  font-size: 0.75rem;
-}
 
 // Responsive design
 @media (max-width: 640px) {

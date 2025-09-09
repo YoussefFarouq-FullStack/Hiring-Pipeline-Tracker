@@ -82,8 +82,11 @@
       required
     >
       <option value="Applied">Applied</option>
-      <option value="Screening">Screening</option>
-      <option value="Interviewing">Interviewing</option>
+      <option value="Phone Screen">Phone Screen</option>
+      <option value="Technical Interview">Technical Interview</option>
+      <option value="Onsite Interview">Onsite Interview</option>
+      <option value="Reference Check">Reference Check</option>
+      <option value="Offer">Offer</option>
       <option value="Hired">Hired</option>
       <option value="Rejected">Rejected</option>
     </select>
@@ -107,9 +110,10 @@
       required
     >
       <option value="Active">Active</option>
-      <option value="Pending">Pending</option>
-      <option value="Completed">Completed</option>
-      <option value="Cancelled">Cancelled</option>
+      <option value="On Hold">On Hold</option>
+      <option value="Withdrawn">Withdrawn</option>
+      <option value="Rejected">Rejected</option>
+      <option value="Hired">Hired</option>
     </select>
     <div *ngIf="statusError" class="form-error">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

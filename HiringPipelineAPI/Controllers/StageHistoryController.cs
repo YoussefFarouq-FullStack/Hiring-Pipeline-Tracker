@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HiringPipelineAPI.Services.Interfaces;
 using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
@@ -11,6 +12,7 @@ namespace HiringPipelineAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[Authorize] // Require authentication for all stage history operations
 public class StageHistoryController : ControllerBase
 {
     private readonly IStageHistoryApiService _stageHistoryService;

@@ -4,8 +4,10 @@ export interface Candidate {
   lastName: string;
   email: string;
   phone?: string;
-  linkedInUrl?: string;
-  source?: string;
+  resumeFileName?: string;
+  resumeFilePath?: string;
+  description?: string;
+  skills?: string;
   status: string;
   createdAt: string;
   updatedAt: string;

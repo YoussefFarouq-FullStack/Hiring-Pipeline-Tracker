@@ -7,7 +7,7 @@
   </p>
 </div>
 
-<form [formGroup]="requisitionForm" (ngSubmit)="save()" class="p-6 space-y-4">
+<form [formGroup]="requisitionForm" (ngSubmit)="save()" class="p-4 space-y-3">
   <!-- Requisition ID (Edit Mode Only) -->
   <div *ngIf="isEditMode" class="form-group">
     <label class="form-label">Requisition ID</label>
@@ -41,6 +41,24 @@
     </div>
   </div>
 
+  <!-- Description -->
+  <div class="form-group">
+    <label class="form-label">Description</label>
+    <textarea
+      formControlName="description"
+      class="form-input-modern min-h-20"
+      [ngClass]="{'error': descriptionError}"
+      placeholder="Enter job description and responsibilities"
+      rows="3"
+    ></textarea>
+    <div *ngIf="descriptionError" class="form-error">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      {{ descriptionError }}
+    </div>
+  </div>
+
   <!-- Department -->
   <div class="form-group">
     <label class="form-label">
@@ -62,8 +80,132 @@
     </div>
   </div>
 
-  <!-- Status -->
+  <!-- Location -->
   <div class="form-group">
+    <label class="form-label">Location</label>
+    <input
+      formControlName="location"
+      type="text"
+      class="form-input-modern"
+      [ngClass]="{'error': locationError}"
+      placeholder="Enter work location (e.g., San Francisco, CA)"
+    />
+    <div *ngIf="locationError" class="form-error">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      {{ locationError }}
+    </div>
+  </div>
+
+  <!-- Employment Type -->
+  <div class="form-group">
+    <label class="form-label">Employment Type</label>
+    <select
+      formControlName="employmentType"
+      class="form-input-modern"
+    >
+      <option value="">Select employment type</option>
+      <option *ngFor="let type of employmentTypes" [value]="type">{{ type }}</option>
+    </select>
+  </div>
+
+  <!-- Salary -->
+  <div class="form-group">
+    <label class="form-label">Salary</label>
+    <input
+      formControlName="salary"
+      type="text"
+      class="form-input-modern"
+      [ngClass]="{'error': salaryError}"
+      placeholder="Enter salary range (e.g., $80,000 - $120,000)"
+    />
+    <div *ngIf="salaryError" class="form-error">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      {{ salaryError }}
+    </div>
+  </div>
+
+  <!-- Priority -->
+  <div class="form-group">
+    <label class="form-label">
+      Priority <span class="text-red-500">*</span>
+    </label>
+    <select
+      formControlName="priority"
+      class="form-input-modern"
+      [ngClass]="{'error': priorityError}"
+      required
+    >
+      <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+    </select>
+    <div *ngIf="priorityError" class="form-error">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      {{ priorityError }}
+    </div>
+  </div>
+
+  <!-- Experience Level -->
+  <div class="form-group">
+    <label class="form-label">Experience Level</label>
+    <select
+      formControlName="experienceLevel"
+      class="form-input-modern"
+    >
+      <option value="">Select experience level</option>
+      <option *ngFor="let level of experienceLevels" [value]="level">{{ level }}</option>
+    </select>
+  </div>
+
+  <!-- Job Level -->
+  <div class="form-group">
+    <label class="form-label">Job Level</label>
+    <select
+      formControlName="jobLevel"
+      class="form-input-modern"
+    >
+      <option value="">Select job level</option>
+      <option *ngFor="let level of jobLevels" [value]="level">{{ level }}</option>
+    </select>
+  </div>
+
+  <!-- Required Skills -->
+  <div class="form-group">
+    <label class="form-label">Required Skills</label>
+    <textarea
+      formControlName="requiredSkills"
+      class="form-input-modern min-h-16"
+      [ngClass]="{'error': requiredSkillsError}"
+      placeholder="Enter required skills (comma-separated)"
+      rows="2"
+    ></textarea>
+    <div *ngIf="requiredSkillsError" class="form-error">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      {{ requiredSkillsError }}
+    </div>
+  </div>
+
+  <!-- Draft Status -->
+  <div class="form-group">
+    <label class="flex items-center space-x-2">
+      <input
+        formControlName="isDraft"
+        type="checkbox"
+        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+      />
+      <span class="form-label">Save as Draft</span>
+    </label>
+    <p class="text-xs text-gray-500 mt-1">Draft requisitions are not published and can be edited later</p>
+  </div>
+
+  <!-- Status (Edit Mode Only) -->
+  <div *ngIf="isEditMode" class="form-group">
     <label class="form-label">
       Status <span class="text-red-500">*</span>
     </label>
@@ -73,10 +215,7 @@
       [ngClass]="{'error': statusError}"
       required
     >
-      <option value="Open">Open</option>
-      <option value="In Progress">In Progress</option>
-      <option value="Closed">Closed</option>
-      <option value="Cancelled">Cancelled</option>
+      <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
     </select>
     <div *ngIf="statusError" class="form-error">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +226,7 @@
   </div>
 
   <!-- Actions -->
-  <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+  <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 mt-4">
     <button
       type="button"
       (click)="cancel()"
@@ -111,4 +250,3 @@
     </button>
   </div>
 </form>
-

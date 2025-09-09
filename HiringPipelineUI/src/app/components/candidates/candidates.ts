@@ -19,6 +19,7 @@ import { ApplicationService } from '../../services/application.service';
 import { Application } from '../../models/application.model';
 import { Requisition } from '../../models/requisition.model';
 import { CandidateDialogComponent } from './candidate-dialog/candidate-dialog';
+import { CandidateDetailComponent } from './candidate-detail/candidate-detail';
 
 @Component({
   selector: 'app-candidates',
@@ -300,6 +301,16 @@ export class CandidatesComponent implements OnInit {
     });
   }
 
+  viewCandidateDetails(candidate: Candidate): void {
+    this.dialog.open(CandidateDetailComponent, {
+      width: '600px',
+      maxHeight: '90vh',
+      data: {
+        candidate: candidate
+      }
+    });
+  }
+
   deleteCandidate(id: number): void {
     if (confirm('Are you sure you want to delete this candidate?')) {
       this.candidateService.deleteCandidate(id).subscribe({
@@ -331,7 +342,7 @@ export class CandidatesComponent implements OnInit {
   getApplicationCount(candidateId: number): number {
     // This would need to be implemented based on your application data
     // For now, returning a placeholder
-    return Math.floor(Math.random() * 5) + 1;
+    return 0; // Placeholder until backend provides actual count
   }
 
   getStatusBadgeClass(status: string): string {

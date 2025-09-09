@@ -18,8 +18,8 @@ public static class SeedData
                 LastName = "Smith",
                 Email = "john.smith@email.com",
                 Phone = "+1-555-0101",
-                LinkedInUrl = "https://linkedin.com/in/johnsmith",
-                Source = "LinkedIn",
+                Resume = "https://example.com/resumes/john-smith.pdf",
+                Skills = "C#, .NET, SQL Server, Azure, JavaScript",
                 Status = "Applied",
                 DaysAgo = 30
             },
@@ -29,8 +29,8 @@ public static class SeedData
                 LastName = "Johnson",
                 Email = "sarah.johnson@email.com",
                 Phone = "+1-555-0102",
-                LinkedInUrl = "https://linkedin.com/in/sarahjohnson",
-                Source = "Indeed",
+                Resume = "https://example.com/resumes/sarah-johnson.pdf",
+                Skills = "React, TypeScript, Node.js, MongoDB, AWS",
                 Status = "Interviewing",
                 DaysAgo = 28
             },
@@ -40,8 +40,8 @@ public static class SeedData
                 LastName = "Brown",
                 Email = "michael.brown@email.com",
                 Phone = "+1-555-0103",
-                LinkedInUrl = "https://linkedin.com/in/michaelbrown",
-                Source = "Company Website",
+                Resume = "https://example.com/resumes/michael-brown.pdf",
+                Skills = "Python, Django, PostgreSQL, Docker, Kubernetes",
                 Status = "Offered",
                 DaysAgo = 25
             },
@@ -51,8 +51,8 @@ public static class SeedData
                 LastName = "Davis",
                 Email = "emily.davis@email.com",
                 Phone = "+1-555-0104",
-                LinkedInUrl = "https://linkedin.com/in/emilydavis",
-                Source = "Referral",
+                Resume = "https://example.com/resumes/emily-davis.pdf",
+                Skills = "Java, Spring Boot, MySQL, Redis, Microservices",
                 Status = "Hired",
                 DaysAgo = 35
             },
@@ -62,8 +62,8 @@ public static class SeedData
                 LastName = "Wilson",
                 Email = "david.wilson@email.com",
                 Phone = "+1-555-0105",
-                LinkedInUrl = "https://linkedin.com/in/davidwilson",
-                Source = "LinkedIn",
+                Resume = "https://example.com/resumes/david-wilson.pdf",
+                Skills = "Angular, RxJS, Firebase, GraphQL, Jest",
                 Status = "Rejected",
                 DaysAgo = 22
             },
@@ -73,8 +73,8 @@ public static class SeedData
                 LastName = "Anderson",
                 Email = "lisa.anderson@email.com",
                 Phone = "+1-555-0106",
-                LinkedInUrl = "https://linkedin.com/in/lisaanderson",
-                Source = "Glassdoor",
+                Resume = "https://example.com/resumes/lisa-anderson.pdf",
+                Skills = "Vue.js, Nuxt.js, Tailwind CSS, Supabase, Cypress",
                 Status = "Applied",
                 DaysAgo = 15
             },
@@ -84,8 +84,8 @@ public static class SeedData
                 LastName = "Taylor",
                 Email = "robert.taylor@email.com",
                 Phone = "+1-555-0107",
-                LinkedInUrl = "https://linkedin.com/in/roberttaylor",
-                Source = "Referral",
+                Resume = "https://example.com/resumes/robert-taylor.pdf",
+                Skills = "Go, Gin, PostgreSQL, Docker, Terraform",
                 Status = "Interviewing",
                 DaysAgo = 20
             },
@@ -95,8 +95,8 @@ public static class SeedData
                 LastName = "Martinez",
                 Email = "jennifer.martinez@email.com",
                 Phone = "+1-555-0108",
-                LinkedInUrl = "https://linkedin.com/in/jennifermartinez",
-                Source = "LinkedIn",
+                Resume = "https://example.com/resumes/jennifer-martinez.pdf",
+                Skills = "PHP, Laravel, MySQL, Redis, Vue.js",
                 Status = "On Hold",
                 DaysAgo = 18
             },
@@ -106,8 +106,8 @@ public static class SeedData
                 LastName = "Garcia",
                 Email = "chris.garcia@email.com",
                 Phone = "+1-555-0109",
-                LinkedInUrl = "https://linkedin.com/in/chrisgarcia",
-                Source = "Indeed",
+                Resume = "https://example.com/resumes/christopher-garcia.pdf",
+                Skills = "Ruby, Rails, PostgreSQL, Sidekiq, RSpec",
                 Status = "Applied",
                 DaysAgo = 12
             },
@@ -117,8 +117,8 @@ public static class SeedData
                 LastName = "Rodriguez",
                 Email = "amanda.rodriguez@email.com",
                 Phone = "+1-555-0110",
-                LinkedInUrl = "https://linkedin.com/in/amandarodriguez",
-                Source = "Company Website",
+                Resume = "https://example.com/resumes/amanda-rodriguez.pdf",
+                Skills = "Swift, iOS, Core Data, Alamofire, XCTest",
                 Status = "Phone Screen",
                 DaysAgo = 10
             }
@@ -135,7 +135,15 @@ public static class SeedData
             new RequisitionData
             {
                 Title = "Senior Software Engineer",
+                Description = "Lead development of scalable web applications using modern technologies. Mentor junior developers and drive technical decisions.",
                 Department = "Engineering",
+                Location = "San Francisco, CA (Hybrid)",
+                EmploymentType = "Full-time",
+                Salary = "$120,000 - $160,000",
+                IsDraft = false,
+                Priority = "High",
+                RequiredSkills = "C#, .NET Core, SQL Server, Azure, Microservices, REST APIs",
+                ExperienceLevel = "Senior",
                 JobLevel = "Senior",
                 Status = "Open",
                 DaysAgo = 40
@@ -143,7 +151,15 @@ public static class SeedData
             new RequisitionData
             {
                 Title = "Product Manager",
+                Description = "Define product strategy and roadmap for our core platform. Work closely with engineering and design teams to deliver user-focused features.",
                 Department = "Product",
+                Location = "New York, NY (Remote)",
+                EmploymentType = "Full-time",
+                Salary = "$100,000 - $140,000",
+                IsDraft = false,
+                Priority = "High",
+                RequiredSkills = "Product Strategy, Agile, User Research, Analytics, Stakeholder Management",
+                ExperienceLevel = "Mid",
                 JobLevel = "Mid",
                 Status = "Open",
                 DaysAgo = 35
@@ -151,7 +167,15 @@ public static class SeedData
             new RequisitionData
             {
                 Title = "UX Designer",
+                Description = "Create intuitive user experiences for our web and mobile applications. Conduct user research and collaborate with product and engineering teams.",
                 Department = "Design",
+                Location = "Austin, TX (Hybrid)",
+                EmploymentType = "Full-time",
+                Salary = "$70,000 - $90,000",
+                IsDraft = false,
+                Priority = "Medium",
+                RequiredSkills = "Figma, User Research, Prototyping, Design Systems, Accessibility",
+                ExperienceLevel = "Junior",
                 JobLevel = "Junior",
                 Status = "Open",
                 DaysAgo = 30
@@ -159,7 +183,15 @@ public static class SeedData
             new RequisitionData
             {
                 Title = "DevOps Engineer",
+                Description = "Build and maintain CI/CD pipelines, manage cloud infrastructure, and ensure system reliability and scalability.",
                 Department = "Engineering",
+                Location = "Seattle, WA (Remote)",
+                EmploymentType = "Full-time",
+                Salary = "$110,000 - $150,000",
+                IsDraft = true,
+                Priority = "Medium",
+                RequiredSkills = "Docker, Kubernetes, AWS, Terraform, CI/CD, Monitoring",
+                ExperienceLevel = "Senior",
                 JobLevel = "Senior",
                 Status = "On Hold",
                 DaysAgo = 25
@@ -167,7 +199,15 @@ public static class SeedData
             new RequisitionData
             {
                 Title = "Data Scientist",
+                Description = "Analyze large datasets to extract insights and build predictive models. Work with stakeholders to solve business problems using data.",
                 Department = "Analytics",
+                Location = "Boston, MA (Hybrid)",
+                EmploymentType = "Full-time",
+                Salary = "$95,000 - $130,000",
+                IsDraft = false,
+                Priority = "Low",
+                RequiredSkills = "Python, R, SQL, Machine Learning, Statistics, Data Visualization",
+                ExperienceLevel = "Mid",
                 JobLevel = "Mid",
                 Status = "Closed",
                 DaysAgo = 45
@@ -175,7 +215,15 @@ public static class SeedData
             new RequisitionData
             {
                 Title = "Frontend Developer",
+                Description = "Build responsive and interactive user interfaces using modern frontend technologies. Collaborate with UX designers and backend developers.",
                 Department = "Engineering",
+                Location = "Chicago, IL (Hybrid)",
+                EmploymentType = "Full-time",
+                Salary = "$80,000 - $110,000",
+                IsDraft = false,
+                Priority = "High",
+                RequiredSkills = "React, TypeScript, HTML/CSS, JavaScript, REST APIs, Testing",
+                ExperienceLevel = "Mid",
                 JobLevel = "Mid",
                 Status = "Open",
                 DaysAgo = 20
@@ -183,7 +231,15 @@ public static class SeedData
             new RequisitionData
             {
                 Title = "QA Engineer",
+                Description = "Design and execute comprehensive test plans for web applications. Work with development teams to ensure quality and reliability.",
                 Department = "Engineering",
+                Location = "Denver, CO (Hybrid)",
+                EmploymentType = "Full-time",
+                Salary = "$65,000 - $85,000",
+                IsDraft = false,
+                Priority = "Medium",
+                RequiredSkills = "Manual Testing, Automated Testing, Selenium, Test Planning, Bug Tracking",
+                ExperienceLevel = "Junior",
                 JobLevel = "Junior",
                 Status = "Open",
                 DaysAgo = 15
@@ -366,8 +422,8 @@ public class CandidateData
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
-    public string LinkedInUrl { get; set; } = string.Empty;
-    public string Source { get; set; } = string.Empty;
+    public string Resume { get; set; } = string.Empty;
+    public string Skills { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public int DaysAgo { get; set; }
 }
@@ -378,7 +434,15 @@ public class CandidateData
 public class RequisitionData
 {
     public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
     public string Department { get; set; } = string.Empty;
+    public string? Location { get; set; }
+    public string? EmploymentType { get; set; }
+    public string? Salary { get; set; }
+    public bool IsDraft { get; set; } = false;
+    public string Priority { get; set; } = "Medium";
+    public string? RequiredSkills { get; set; }
+    public string? ExperienceLevel { get; set; }
     public string JobLevel { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public int DaysAgo { get; set; }

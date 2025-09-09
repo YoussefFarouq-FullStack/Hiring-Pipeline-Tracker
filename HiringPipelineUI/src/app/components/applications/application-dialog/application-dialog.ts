@@ -57,8 +57,8 @@ export class ApplicationDialogComponent implements OnInit {
     
     this.applicationForm = this.fb.group({
       applicationId: [this.isEditMode ? data?.application?.applicationId : null],
-      candidateId: [this.isEditMode ? data?.application?.candidateId : '', [Validators.required]],
-      requisitionId: [this.isEditMode ? data?.application?.requisitionId : '', [Validators.required]],
+      candidateId: [this.isEditMode ? data?.application?.candidateId : null, [Validators.required]],
+      requisitionId: [this.isEditMode ? data?.application?.requisitionId : null, [Validators.required]],
       currentStage: [this.isEditMode ? data?.application?.currentStage || 'Applied' : 'Applied', [Validators.required]],
       status: [this.isEditMode ? data?.application?.status || 'Active' : 'Active', [Validators.required]]
     });
@@ -102,9 +102,27 @@ export class ApplicationDialogComponent implements OnInit {
       try {
         const formData = this.applicationForm.value;
         
+        // Convert string values to numbers for IDs
+        formData.candidateId = parseInt(formData.candidateId, 10);
+        formData.requisitionId = parseInt(formData.requisitionId, 10);
+        
+        // Validate that the parsed values are valid numbers
+        if (isNaN(formData.candidateId) || formData.candidateId <= 0) {
+          this.showError('Please select a valid candidate.');
+          this.isSubmitting = false;
+          return;
+        }
+        
+        if (isNaN(formData.requisitionId) || formData.requisitionId <= 0) {
+          this.showError('Please select a valid requisition.');
+          this.isSubmitting = false;
+          return;
+        }
+        
         if (!this.isEditMode) {
           delete formData.applicationId;
         }
+
 
         if (this.isEditMode && this.data?.application) {
           this.appService.updateApplication(this.data.application.applicationId, formData).subscribe({

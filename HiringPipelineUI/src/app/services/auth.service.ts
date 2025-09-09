@@ -11,6 +11,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string;
+  refreshToken?: string;
   user: {
     id: number;
     username: string;
@@ -33,10 +34,14 @@ export interface User {
 export class AuthService {
   private apiUrl = '/api/auth';
   private tokenKey = 'hiring_pipeline_token';
+  private refreshTokenKey = 'hiring_pipeline_refresh_token';
   private userKey = 'hiring_pipeline_user';
 
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  
+  private refreshTokenSubject = new BehaviorSubject<string | null>(null);
+  public refreshToken$ = this.refreshTokenSubject.asObservable();
 
   constructor(
     private http: HttpClient,
@@ -59,7 +64,9 @@ export class AuthService {
       if (error.status === 0) {
         errorMessage = 'Unable to connect to server. Please check your internet connection.';
       } else if (error.status === 401) {
-        errorMessage = 'Invalid username or password.';
+        // Handle token expiry or invalid token
+        this.handleUnauthorized();
+        errorMessage = 'Session expired. Please log in again.';
       } else if (error.status === 403) {
         errorMessage = 'Access denied. Your account may be locked.';
       } else if (error.status === 404) {
@@ -80,14 +87,33 @@ export class AuthService {
     return throwError(() => new Error(errorMessage));
   }
 
+  private handleUnauthorized(): void {
+    console.log('Unauthorized access detected, clearing auth and redirecting to login');
+    this.clearAuth();
+    this.currentUserSubject.next(null);
+    this.router.navigate(['/login'], { 
+      queryParams: { reason: 'session_expired' } 
+    });
+  }
+
   private loadStoredAuth(): void {
     const token = this.getToken();
+    const refreshToken = this.getRefreshToken();
     const user = this.getStoredUser();
 
     if (token && user) {
       // Check if token is still valid
       if (this.isTokenValid(token)) {
         this.currentUserSubject.next(user);
+        if (refreshToken) {
+          this.refreshTokenSubject.next(refreshToken);
+        }
+      } else if (refreshToken) {
+        // Try to refresh the token
+        this.refreshToken().subscribe({
+          next: () => console.log('Token refreshed successfully'),
+          error: () => this.clearAuth()
+        });
       } else {
         this.clearAuth();
       }
@@ -143,6 +169,11 @@ export class AuthService {
   private storeAuth(response: LoginResponse): void {
     localStorage.setItem(this.tokenKey, response.token);
     localStorage.setItem(this.userKey, JSON.stringify(response.user));
+    
+    if (response.refreshToken) {
+      localStorage.setItem(this.refreshTokenKey, response.refreshToken);
+      this.refreshTokenSubject.next(response.refreshToken);
+    }
   }
 
   private getStoredUser(): User | null {
@@ -161,16 +192,35 @@ export class AuthService {
   private clearAuth(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
+    localStorage.removeItem(this.refreshTokenKey);
+    this.refreshTokenSubject.next(null);
+  }
+
+  getRefreshToken(): string | null {
+    return localStorage.getItem(this.refreshTokenKey);
   }
 
   // Method to refresh token (if needed)
   refreshToken(): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/refresh`, {}).pipe(
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+
+    return this.http.post<LoginResponse>(`${this.apiUrl}/refresh`, { 
+      refreshToken: refreshToken 
+    }).pipe(
       tap(response => {
+        console.log('Token refreshed successfully');
         this.storeAuth(response);
         this.currentUserSubject.next(response.user);
       }),
-      catchError(this.handleError)
+      catchError(error => {
+        console.error('Token refresh failed:', error);
+        this.clearAuth();
+        this.handleUnauthorized();
+        return throwError(() => new Error('Token refresh failed'));
+      })
     );
   }
 

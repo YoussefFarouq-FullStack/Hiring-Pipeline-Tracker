@@ -153,9 +153,18 @@ export class DashboardComponent implements OnInit, AfterViewInit {
               {
                 requisitionId: 1,
                 title: 'Senior React Developer',
+                description: 'Lead development of React applications with modern technologies',
                 department: 'Engineering',
-                status: 'Active',
-                createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+                location: 'San Francisco, CA',
+                employmentType: 'Full-time',
+                salary: '$120,000 - $160,000',
+                isDraft: false,
+                priority: 'High',
+                requiredSkills: 'React, TypeScript, Node.js, GraphQL',
+                experienceLevel: 'Senior',
+                jobLevel: 'Senior',
+                status: 'Open',
+                createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
                 updatedAt: new Date().toISOString()
               }
             ];
@@ -315,8 +324,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
     this.hiringVelocity = months.map((month, index) => ({
       month,
-      hired: Math.floor(Math.random() * 15) + 5,
-      applied: Math.floor(Math.random() * 50) + 20
+      hired: [8, 12, 15, 10, 18, 14][index], // Static sample data
+      applied: [25, 35, 42, 30, 48, 38][index] // Static sample data
     }));
   }
 

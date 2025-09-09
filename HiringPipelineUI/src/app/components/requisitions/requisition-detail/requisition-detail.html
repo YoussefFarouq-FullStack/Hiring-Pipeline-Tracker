@@ -1,0 +1,120 @@
+<div class="detail-header">
+  <div class="header-content">
+    <h2 class="detail-title">{{ data.requisition.title }}</h2>
+    <div class="badges">
+      <span class="badge" [ngClass]="getPriorityColor(data.requisition.priority)">
+        {{ data.requisition.priority || 'Medium' }}
+      </span>
+      <span class="badge" [ngClass]="getStatusColor(data.requisition.status)">
+        {{ data.requisition.status || 'Open' }}
+      </span>
+      <span class="badge" [ngClass]="getDraftStatusColor(data.requisition.isDraft)">
+        {{ data.requisition.isDraft ? 'Draft' : 'Published' }}
+      </span>
+    </div>
+  </div>
+  <button (click)="close()" class="close-button">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  </button>
+</div>
+
+<div class="detail-content">
+  <!-- Basic Information -->
+  <div class="info-section">
+    <h3 class="section-title">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      Basic Information
+    </h3>
+    <div class="info-grid">
+      <div class="info-item">
+        <label>Department</label>
+        <span>{{ data.requisition.department || 'Not specified' }}</span>
+      </div>
+      <div class="info-item">
+        <label>Location</label>
+        <span>{{ data.requisition.location || 'Not specified' }}</span>
+      </div>
+      <div class="info-item">
+        <label>Employment Type</label>
+        <span>{{ data.requisition.employmentType || 'Not specified' }}</span>
+      </div>
+      <div class="info-item">
+        <label>Salary</label>
+        <span>{{ data.requisition.salary || 'Not specified' }}</span>
+      </div>
+      <div class="info-item">
+        <label>Experience Level</label>
+        <span>{{ data.requisition.experienceLevel || 'Not specified' }}</span>
+      </div>
+      <div class="info-item">
+        <label>Job Level</label>
+        <span>{{ data.requisition.jobLevel || 'Not specified' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Description -->
+  <div class="info-section" *ngIf="data.requisition.description">
+    <h3 class="section-title">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+      </svg>
+      Description
+    </h3>
+    <div class="description-content">
+      {{ data.requisition.description }}
+    </div>
+  </div>
+
+  <!-- Required Skills -->
+  <div class="info-section" *ngIf="data.requisition.requiredSkills">
+    <h3 class="section-title">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+      </svg>
+      Required Skills
+    </h3>
+    <div class="skills-content">
+      {{ data.requisition.requiredSkills }}
+    </div>
+  </div>
+
+  <!-- Additional Information -->
+  <div class="info-section">
+    <h3 class="section-title">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      Additional Information
+    </h3>
+    <div class="info-grid">
+      <div class="info-item">
+        <label>Applications</label>
+        <span>{{ getApplicationCount(data.requisition.requisitionId) }}</span>
+      </div>
+      <div class="info-item">
+        <label>Created</label>
+        <span>{{ formatDate(data.requisition.createdAt) }}</span>
+      </div>
+      <div class="info-item">
+        <label>Last Updated</label>
+        <span>{{ formatDate(data.requisition.updatedAt) }}</span>
+      </div>
+      <div class="info-item">
+        <label>Requisition ID</label>
+        <span>#{{ data.requisition.requisitionId }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-actions">
+  <button (click)="close()" class="btn btn-secondary">
+    Close
+  </button>
+</div>
+

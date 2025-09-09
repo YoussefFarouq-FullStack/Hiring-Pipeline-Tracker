@@ -42,7 +42,7 @@ interface NavigationItem {
 
         <nav class="space-y-1">
           <a
-            *ngFor="let item of navigationItems"
+            *ngFor="let item of getFilteredNavigationItems()"
             [routerLink]="item.url"
             routerLinkActive="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"
             [routerLinkActiveOptions]="{exact: true}"
@@ -190,6 +190,33 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
       description: 'Track hiring stages'
     }
   ];
+
+  getFilteredNavigationItems(): NavigationItem[] {
+    if (!this.currentUser) {
+      return this.navigationItems;
+    }
+
+    // Filter based on user role
+    const userRole = this.currentUser.role.toLowerCase();
+    
+    if (userRole === 'admin') {
+      return this.navigationItems; // Admin sees everything
+    } else if (userRole === 'hr') {
+      return this.navigationItems; // HR sees everything
+    } else if (userRole === 'recruiter') {
+      // Recruiters see most things except admin features
+      return this.navigationItems.filter(item => 
+        item.url !== '/dashboard' || userRole === 'recruiter'
+      );
+    } else if (userRole === 'viewer') {
+      // Viewers have limited access
+      return this.navigationItems.filter(item => 
+        ['/dashboard', '/applications', '/stage-history'].includes(item.url)
+      );
+    }
+
+    return this.navigationItems;
+  }
 
   sidebarClasses = computed(() => 
     `relative bg-gradient-to-b from-white to-gray-50 border-r border-gray-200 transition-all duration-300 flex flex-col h-screen ${

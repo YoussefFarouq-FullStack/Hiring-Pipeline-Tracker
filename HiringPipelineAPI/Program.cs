@@ -27,8 +27,41 @@ builder.Services.AddControllers(options =>
 });
 builder.Services.AddEndpointsApiExplorer();
 
-// ✅ Basic Swagger Configuration
-builder.Services.AddSwaggerGen();
+// ✅ Swagger Configuration with JWT Authentication
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo 
+    { 
+        Title = "Hiring Pipeline API", 
+        Version = "v1",
+        Description = "API for managing hiring pipeline with comprehensive requisition fields"
+    });
+    
+    // Add JWT Authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // ✅ Register your DbContext with SQL Server
 builder.Services.AddDbContext<HiringPipelineDbContext>(options =>
@@ -69,6 +102,7 @@ builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IRequisitionApi
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IApplicationApiService, HiringPipelineAPI.Services.Implementations.ApplicationApiService>();
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IStageHistoryApiService, HiringPipelineAPI.Services.Implementations.StageHistoryApiService>();
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IAnalyticsApiService, HiringPipelineAPI.Services.Implementations.AnalyticsApiService>();
+builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.IFileUploadService, HiringPipelineAPI.Services.Implementations.FileUploadService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

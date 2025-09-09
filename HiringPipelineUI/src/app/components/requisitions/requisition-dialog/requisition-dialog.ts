@@ -5,8 +5,10 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Requisition } from '../../../models/requisition.model';
+import { Requisition, CreateRequisitionRequest, UpdateRequisitionRequest, EMPLOYMENT_TYPES, PRIORITIES, EXPERIENCE_LEVELS, JOB_LEVELS, STATUSES } from '../../../models/requisition.model';
 
 interface DialogData {
   mode: 'create' | 'edit';
@@ -16,7 +18,7 @@ interface DialogData {
 @Component({
   selector: 'app-requisition-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSnackBarModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatCheckboxModule, MatSnackBarModule],
   templateUrl: './requisition-dialog.html',
   styleUrls: ['./requisition-dialog.scss']
 })
@@ -24,6 +26,13 @@ export class RequisitionDialogComponent {
   requisitionForm!: FormGroup;
   isSubmitting = false;
   isEditMode = false;
+
+  // Constants for dropdowns
+  employmentTypes = EMPLOYMENT_TYPES;
+  priorities = PRIORITIES;
+  experienceLevels = EXPERIENCE_LEVELS;
+  jobLevels = JOB_LEVELS;
+  statuses = STATUSES;
 
   constructor(
     private fb: FormBuilder,
@@ -42,8 +51,17 @@ export class RequisitionDialogComponent {
     
     this.requisitionForm = this.fb.group({
       requisitionId: [this.isEditMode ? data?.requisition?.requisitionId : null],
-      title: [this.isEditMode ? data?.requisition?.title || '' : '', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
-      department: [this.isEditMode ? data?.requisition?.department || '' : '', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+      title: [this.isEditMode ? data?.requisition?.title || '' : '', [Validators.required, Validators.minLength(3), Validators.maxLength(200)]],
+      description: [this.isEditMode ? data?.requisition?.description || '' : '', [Validators.maxLength(2000)]],
+      department: [this.isEditMode ? data?.requisition?.department || '' : '', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      location: [this.isEditMode ? data?.requisition?.location || '' : '', [Validators.maxLength(100)]],
+      employmentType: [this.isEditMode ? data?.requisition?.employmentType || '' : ''],
+      salary: [this.isEditMode ? data?.requisition?.salary || '' : '', [Validators.maxLength(100)]],
+      isDraft: [this.isEditMode ? data?.requisition?.isDraft || false : true],
+      priority: [this.isEditMode ? data?.requisition?.priority || 'Medium' : 'Medium', [Validators.required]],
+      requiredSkills: [this.isEditMode ? data?.requisition?.requiredSkills || '' : '', [Validators.maxLength(1000)]],
+      experienceLevel: [this.isEditMode ? data?.requisition?.experienceLevel || '' : ''],
+      jobLevel: [this.isEditMode ? data?.requisition?.jobLevel || '' : ''],
       status: [this.isEditMode ? data?.requisition?.status || 'Open' : 'Open', [Validators.required]]
     });
   }
@@ -121,7 +139,15 @@ export class RequisitionDialogComponent {
     if (control?.errors && control.touched) {
       if (control.errors['required']) return 'Job title is required';
       if (control.errors['minlength']) return 'Job title must be at least 3 characters';
-      if (control.errors['maxlength']) return 'Job title cannot exceed 100 characters';
+      if (control.errors['maxlength']) return 'Job title cannot exceed 200 characters';
+    }
+    return '';
+  }
+
+  get descriptionError(): string {
+    const control = this.requisitionForm.get('description');
+    if (control?.errors && control.touched) {
+      if (control.errors['maxlength']) return 'Description cannot exceed 2000 characters';
     }
     return '';
   }
@@ -131,7 +157,39 @@ export class RequisitionDialogComponent {
     if (control?.errors && control.touched) {
       if (control.errors['required']) return 'Department is required';
       if (control.errors['minlength']) return 'Department must be at least 2 characters';
-      if (control.errors['maxlength']) return 'Department cannot exceed 50 characters';
+      if (control.errors['maxlength']) return 'Department cannot exceed 100 characters';
+    }
+    return '';
+  }
+
+  get locationError(): string {
+    const control = this.requisitionForm.get('location');
+    if (control?.errors && control.touched) {
+      if (control.errors['maxlength']) return 'Location cannot exceed 100 characters';
+    }
+    return '';
+  }
+
+  get salaryError(): string {
+    const control = this.requisitionForm.get('salary');
+    if (control?.errors && control.touched) {
+      if (control.errors['maxlength']) return 'Salary cannot exceed 100 characters';
+    }
+    return '';
+  }
+
+  get priorityError(): string {
+    const control = this.requisitionForm.get('priority');
+    if (control?.errors && control.touched) {
+      if (control.errors['required']) return 'Priority is required';
+    }
+    return '';
+  }
+
+  get requiredSkillsError(): string {
+    const control = this.requisitionForm.get('requiredSkills');
+    if (control?.errors && control.touched) {
+      if (control.errors['maxlength']) return 'Required skills cannot exceed 1000 characters';
     }
     return '';
   }

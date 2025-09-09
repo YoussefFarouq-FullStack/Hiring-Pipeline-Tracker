@@ -22,7 +22,7 @@ namespace HiringPipelineInfrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("HiringPipelineAPI.Models.Application", b =>
+            modelBuilder.Entity("HiringPipelineCore.Entities.Application", b =>
                 {
                     b.Property<int>("ApplicationId")
                         .ValueGeneratedOnAdd()
@@ -55,10 +55,10 @@ namespace HiringPipelineInfrastructure.Migrations
 
                     b.HasIndex("RequisitionId");
 
-                    b.ToTable("Applications", (string)null);
+                    b.ToTable("Applications");
                 });
 
-            modelBuilder.Entity("HiringPipelineAPI.Models.Candidate", b =>
+            modelBuilder.Entity("HiringPipelineCore.Entities.Candidate", b =>
                 {
                     b.Property<int>("CandidateId")
                         .ValueGeneratedOnAdd()
@@ -68,6 +68,9 @@ namespace HiringPipelineInfrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -81,13 +84,16 @@ namespace HiringPipelineInfrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("LinkedInUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Source")
+                    b.Property<string>("ResumeFileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ResumeFilePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Skills")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
@@ -99,10 +105,10 @@ namespace HiringPipelineInfrastructure.Migrations
 
                     b.HasKey("CandidateId");
 
-                    b.ToTable("Candidates", (string)null);
+                    b.ToTable("Candidates");
                 });
 
-            modelBuilder.Entity("HiringPipelineAPI.Models.Requisition", b =>
+            modelBuilder.Entity("HiringPipelineCore.Entities.Requisition", b =>
                 {
                     b.Property<int>("RequisitionId")
                         .ValueGeneratedOnAdd()
@@ -115,28 +121,64 @@ namespace HiringPipelineInfrastructure.Migrations
 
                     b.Property<string>("Department")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("EmploymentType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ExperienceLevel")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsDraft")
+                        .HasColumnType("bit");
 
                     b.Property<string>("JobLevel")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("RequiredSkills")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Salary")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("RequisitionId");
 
-                    b.ToTable("Requisitions", (string)null);
+                    b.ToTable("Requisitions");
                 });
 
-            modelBuilder.Entity("HiringPipelineAPI.Models.StageHistory", b =>
+            modelBuilder.Entity("HiringPipelineCore.Entities.StageHistory", b =>
                 {
                     b.Property<int>("StageHistoryId")
                         .ValueGeneratedOnAdd()
@@ -165,18 +207,57 @@ namespace HiringPipelineInfrastructure.Migrations
 
                     b.HasIndex("ApplicationId");
 
-                    b.ToTable("StageHistories", (string)null);
+                    b.ToTable("StageHistories");
                 });
 
-            modelBuilder.Entity("HiringPipelineAPI.Models.Application", b =>
+            modelBuilder.Entity("HiringPipelineCore.Entities.User", b =>
                 {
-                    b.HasOne("HiringPipelineAPI.Models.Candidate", "Candidate")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("HiringPipelineCore.Entities.Application", b =>
+                {
+                    b.HasOne("HiringPipelineCore.Entities.Candidate", "Candidate")
                         .WithMany("Applications")
                         .HasForeignKey("CandidateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HiringPipelineAPI.Models.Requisition", "Requisition")
+                    b.HasOne("HiringPipelineCore.Entities.Requisition", "Requisition")
                         .WithMany("Applications")
                         .HasForeignKey("RequisitionId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -187,9 +268,9 @@ namespace HiringPipelineInfrastructure.Migrations
                     b.Navigation("Requisition");
                 });
 
-            modelBuilder.Entity("HiringPipelineAPI.Models.StageHistory", b =>
+            modelBuilder.Entity("HiringPipelineCore.Entities.StageHistory", b =>
                 {
-                    b.HasOne("HiringPipelineAPI.Models.Application", "Application")
+                    b.HasOne("HiringPipelineCore.Entities.Application", "Application")
                         .WithMany("StageHistories")
                         .HasForeignKey("ApplicationId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -198,17 +279,17 @@ namespace HiringPipelineInfrastructure.Migrations
                     b.Navigation("Application");
                 });
 
-            modelBuilder.Entity("HiringPipelineAPI.Models.Application", b =>
+            modelBuilder.Entity("HiringPipelineCore.Entities.Application", b =>
                 {
                     b.Navigation("StageHistories");
                 });
 
-            modelBuilder.Entity("HiringPipelineAPI.Models.Candidate", b =>
+            modelBuilder.Entity("HiringPipelineCore.Entities.Candidate", b =>
                 {
                     b.Navigation("Applications");
                 });
 
-            modelBuilder.Entity("HiringPipelineAPI.Models.Requisition", b =>
+            modelBuilder.Entity("HiringPipelineCore.Entities.Requisition", b =>
                 {
                     b.Navigation("Applications");
                 });
