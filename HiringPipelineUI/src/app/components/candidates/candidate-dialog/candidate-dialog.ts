@@ -65,7 +65,6 @@ export class CandidateDialogComponent {
       this.isSubmitting = true;
 
       const formData = this.form.value;
-      console.log('Form data before processing:', formData);
 
       // For new candidates, don't send candidateId (let backend assign it)
       if (!this.isEditMode) {
@@ -74,7 +73,6 @@ export class CandidateDialogComponent {
 
       // Ensure status is always set
       if (!formData.status || formData.status === '') {
-        console.log('Status is required but not provided');
         this.showError('Please select a status for the candidate.');
         this.isSubmitting = false;
         return;
@@ -115,7 +113,6 @@ export class CandidateDialogComponent {
         })
       ).subscribe((result: any) => {
         if (result) {
-          console.log('Final form data being sent:', result);
           this.dialogRef.close(result);
         }
       });
