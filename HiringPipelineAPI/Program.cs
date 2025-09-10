@@ -81,6 +81,9 @@ builder.Services.AddScoped<IValidator<UpdateApplicationDto>, UpdateApplicationVa
 builder.Services.AddScoped<IValidator<CreateRequisitionDto>, CreateRequisitionValidator>();
 builder.Services.AddScoped<IValidator<UpdateRequisitionDto>, UpdateRequisitionValidator>();
 builder.Services.AddScoped<IValidator<CreateStageHistoryDto>, CreateStageHistoryValidator>();
+builder.Services.AddScoped<IValidator<CreateUserDto>, CreateUserValidator>();
+builder.Services.AddScoped<IValidator<UpdateUserDto>, UpdateUserValidator>();
+builder.Services.AddScoped<IValidator<ChangePasswordDto>, ChangePasswordValidator>();
 
 // Register repositories
 builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
@@ -95,6 +98,8 @@ builder.Services.AddScoped<IRequisitionService, RequisitionService>();
 builder.Services.AddScoped<IStageHistoryService, StageHistoryService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Register API services
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.ICandidateApiService, HiringPipelineAPI.Services.Implementations.CandidateApiService>();
@@ -131,7 +136,8 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins("http://localhost:4200") // Angular frontend URL
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .AllowCredentials();
         });
 });
 

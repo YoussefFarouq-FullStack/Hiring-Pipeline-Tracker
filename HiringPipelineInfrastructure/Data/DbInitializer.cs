@@ -37,6 +37,9 @@ public static class DbInitializer
 
             Console.WriteLine("Seeding database with initial test data...");
 
+            // Seed roles and permissions first
+            await SeedRolesAndPermissionsAsync(context);
+            
             // Seed candidates
             var candidates = await SeedCandidatesAsync(context);
             
@@ -54,7 +57,7 @@ public static class DbInitializer
 
             await context.SaveChangesAsync();
             
-            Console.WriteLine($"Database seeded successfully with {candidates.Count} candidates, {requisitions.Count} requisitions, {applications.Count} applications, and stage history.");
+            Console.WriteLine($"Database seeded successfully with roles, permissions, {candidates.Count} candidates, {requisitions.Count} requisitions, {applications.Count} applications, and stage history.");
         }
         catch (Exception ex)
         {
@@ -232,10 +235,208 @@ public static class DbInitializer
         return stageHistory;
     }
 
+    private static async Task SeedRolesAndPermissionsAsync(HiringPipelineDbContext context)
+    {
+        // Only seed if no roles exist
+        if (await context.Roles.AnyAsync())
+        {
+            Console.WriteLine("Roles and permissions already exist. Skipping role seeding.");
+            return;
+        }
+
+        Console.WriteLine("Seeding roles and permissions...");
+
+        // Seed permissions first
+        var permissions = RoleSeedData.GetDefaultPermissions();
+        await context.Permissions.AddRangeAsync(permissions);
+        await context.SaveChangesAsync();
+
+        // Seed roles
+        var roles = RoleSeedData.GetDefaultRoles();
+        await context.Roles.AddRangeAsync(roles);
+        await context.SaveChangesAsync();
+
+        // Seed role permissions using names instead of IDs
+        await SeedRolePermissionsAsync(context);
+
+        Console.WriteLine($"Seeded {roles.Count} roles and {permissions.Count} permissions.");
+    }
+
+    private static async Task SeedRolePermissionsAsync(HiringPipelineDbContext context)
+    {
+        var rolePermissions = new List<RolePermission>();
+
+        // Get roles and permissions by name
+        var adminRole = await context.Roles.FirstAsync(r => r.Name == "Admin");
+        var recruiterRole = await context.Roles.FirstAsync(r => r.Name == "Recruiter");
+        var hiringManagerRole = await context.Roles.FirstAsync(r => r.Name == "Hiring Manager");
+        var interviewerRole = await context.Roles.FirstAsync(r => r.Name == "Interviewer");
+        var readOnlyRole = await context.Roles.FirstAsync(r => r.Name == "Read-only");
+
+        var permissions = await context.Permissions.ToListAsync();
+
+        // Admin - All permissions
+        foreach (var permission in permissions)
+        {
+            rolePermissions.Add(new RolePermission
+            {
+                RoleId = adminRole.Id,
+                PermissionId = permission.Id,
+                AssignedAt = DateTime.UtcNow
+            });
+        }
+
+        // Recruiter - Requisition and Candidate management
+        var recruiterPermissions = permissions.Where(p => 
+            p.Resource == "Requisition" || 
+            p.Resource == "Candidate" || 
+            p.Resource == "Application" ||
+            p.Resource == "StageHistory").ToList();
+
+        foreach (var permission in recruiterPermissions)
+        {
+            rolePermissions.Add(new RolePermission
+            {
+                RoleId = recruiterRole.Id,
+                PermissionId = permission.Id,
+                AssignedAt = DateTime.UtcNow
+            });
+        }
+
+        // Hiring Manager - Review and feedback
+        var hiringManagerPermissions = permissions.Where(p => 
+            p.Name == "ViewRequisition" ||
+            p.Name == "ViewCandidate" ||
+            p.Name == "MoveStage" ||
+            p.Name == "RejectApplication" ||
+            p.Name == "HireCandidate" ||
+            p.Name == "ViewApplication" ||
+            p.Name == "AddFeedback" ||
+            p.Name == "ViewStageHistory").ToList();
+
+        foreach (var permission in hiringManagerPermissions)
+        {
+            rolePermissions.Add(new RolePermission
+            {
+                RoleId = hiringManagerRole.Id,
+                PermissionId = permission.Id,
+                AssignedAt = DateTime.UtcNow
+            });
+        }
+
+        // Interviewer - Limited access
+        var interviewerPermissions = permissions.Where(p => 
+            p.Name == "ViewCandidate" ||
+            p.Name == "ViewApplication" ||
+            p.Name == "AddFeedback" ||
+            p.Name == "ViewStageHistory").ToList();
+
+        foreach (var permission in interviewerPermissions)
+        {
+            rolePermissions.Add(new RolePermission
+            {
+                RoleId = interviewerRole.Id,
+                PermissionId = permission.Id,
+                AssignedAt = DateTime.UtcNow
+            });
+        }
+
+        // Read-only - View only
+        var readOnlyPermissions = permissions.Where(p => 
+            p.Name == "ViewRequisition" ||
+            p.Name == "ViewCandidate" ||
+            p.Name == "ViewApplication" ||
+            p.Name == "ViewStageHistory").ToList();
+
+        foreach (var permission in readOnlyPermissions)
+        {
+            rolePermissions.Add(new RolePermission
+            {
+                RoleId = readOnlyRole.Id,
+                PermissionId = permission.Id,
+                AssignedAt = DateTime.UtcNow
+            });
+        }
+
+        await context.RolePermissions.AddRangeAsync(rolePermissions);
+        await context.SaveChangesAsync();
+    }
+
     private static async Task SeedUsersAsync(HiringPipelineDbContext context)
     {
-        // User seeding removed - users should be created through proper registration process
-        Console.WriteLine("User seeding skipped - users should be created through registration.");
+        var usersExist = await context.Users.AnyAsync();
+        
+        if (!usersExist)
+        {
+            Console.WriteLine("Seeding default users...");
+
+            // Seed users using the new UserSeedData
+            var users = UserSeedData.GetDefaultUsers();
+            await context.Users.AddRangeAsync(users);
+            await context.SaveChangesAsync();
+
+            Console.WriteLine($"Seeded {users.Count} default users.");
+        }
+        else
+        {
+            Console.WriteLine("Users already exist. Skipping user creation.");
+        }
+
+        // Always ensure role assignments (even if users already exist)
+        await AssignRolesToUsersAsync(context);
+    }
+
+    private static async Task AssignRolesToUsersAsync(HiringPipelineDbContext context)
+    {
+        Console.WriteLine("Ensuring role assignments for users...");
+
+        // Get users and roles by name
+        var adminUser = await context.Users.FirstAsync(u => u.Username == "admin");
+        var recruiterUser = await context.Users.FirstAsync(u => u.Username == "recruiter1");
+        var hiringManagerUser = await context.Users.FirstAsync(u => u.Username == "hiringmanager1");
+        var interviewerUser = await context.Users.FirstAsync(u => u.Username == "interviewer1");
+        var readOnlyUser = await context.Users.FirstAsync(u => u.Username == "readonly1");
+
+        var adminRole = await context.Roles.FirstAsync(r => r.Name == "Admin");
+        var recruiterRole = await context.Roles.FirstAsync(r => r.Name == "Recruiter");
+        var hiringManagerRole = await context.Roles.FirstAsync(r => r.Name == "Hiring Manager");
+        var interviewerRole = await context.Roles.FirstAsync(r => r.Name == "Interviewer");
+        var readOnlyRole = await context.Roles.FirstAsync(r => r.Name == "Read-only");
+
+        // Check and assign roles only if they don't already exist
+        var userRoleAssignments = new[]
+        {
+            new { User = adminUser, Role = adminRole, UserName = "admin" },
+            new { User = recruiterUser, Role = recruiterRole, UserName = "recruiter1" },
+            new { User = hiringManagerUser, Role = hiringManagerRole, UserName = "hiringmanager1" },
+            new { User = interviewerUser, Role = interviewerRole, UserName = "interviewer1" },
+            new { User = readOnlyUser, Role = readOnlyRole, UserName = "readonly1" }
+        };
+
+        foreach (var assignment in userRoleAssignments)
+        {
+            var existingUserRole = await context.UserRoles
+                .FirstOrDefaultAsync(ur => ur.UserId == assignment.User.Id && ur.RoleId == assignment.Role.Id);
+
+            if (existingUserRole == null)
+            {
+                var userRole = new UserRole 
+                { 
+                    UserId = assignment.User.Id, 
+                    RoleId = assignment.Role.Id, 
+                    AssignedAt = DateTime.UtcNow 
+                };
+                await context.UserRoles.AddAsync(userRole);
+                Console.WriteLine($"Assigned {assignment.Role.Name} role to {assignment.UserName}");
+            }
+            else
+            {
+                Console.WriteLine($"User {assignment.UserName} already has {assignment.Role.Name} role");
+            }
+        }
+
+        await context.SaveChangesAsync();
+        Console.WriteLine("Role assignments completed.");
     }
 
     private class StageHistoryData

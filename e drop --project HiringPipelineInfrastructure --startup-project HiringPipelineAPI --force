@@ -1,0 +1,10 @@
+[33m0e5c58d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: Enhanced candidate management with file uploads and descriptions
+[33meac47cb[m feat: Enhanced candidate management with file uploads and descriptions
+[33meb9e1fe[m feat: implement complete authentication system with JWT
+[33m33b536b[m feat: implement comprehensive analytics and enhanced validation
+[33m1d239e1[m refactor: implement clean architecture with 3-layer backend structure
+[33m5fd58eb[m feat: enhance dashboard with improved Recent Activity section
+[33mff85fa2[m fix: resolve horizontal scrollbar on table hover and improve UI consistency
+[33m0cd7968[m Implemented services, repositories, DTOs, middleware, and updated controllers
+[33me9c3bc5[m Added service layer with interfaces and implementations for Requisition, Candidate, Application, and StageHistory
+[33m0ebde4a[m Frontend: improved styling & consistency across requisition, candidate, application, and stage history pages. Added pagination + page selector. Backend: prepared for service interface refactor.

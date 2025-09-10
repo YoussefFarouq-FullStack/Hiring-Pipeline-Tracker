@@ -29,6 +29,7 @@ public class ApplicationsController : ControllerBase
     /// <response code="200">Returns the list of applications</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpGet]
+    [Authorize(Roles = "Admin,Recruiter,Hiring Manager,Interviewer,Read-only")]
     [ProducesResponseType(typeof(IEnumerable<ApplicationDto>), 200)]
     public async Task<ActionResult<IEnumerable<ApplicationDto>>> GetApplications()
     {
@@ -45,6 +46,7 @@ public class ApplicationsController : ControllerBase
     /// <response code="404">If the application was not found</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Recruiter,Hiring Manager,Interviewer,Read-only")]
     [ProducesResponseType(typeof(ApplicationDetailDto), 200)]
     [ProducesResponseType(404)]
     public async Task<ActionResult<ApplicationDetailDto>> GetApplication(int id)
@@ -63,6 +65,7 @@ public class ApplicationsController : ControllerBase
     /// <response code="404">If the candidate or requisition doesn't exist</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpPost]
+    [Authorize(Roles = "Admin,Recruiter")]
     [ProducesResponseType(typeof(ApplicationDto), 201)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
@@ -83,6 +86,7 @@ public class ApplicationsController : ControllerBase
     /// <response code="404">If the application was not found</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,Recruiter,Hiring Manager")]
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]

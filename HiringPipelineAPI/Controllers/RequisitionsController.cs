@@ -29,6 +29,7 @@ public class RequisitionsController : ControllerBase
     /// <response code="200">Returns the list of requisitions</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpGet]
+    [Authorize(Roles = "Admin,Recruiter,Hiring Manager,Interviewer,Read-only")]
     [ProducesResponseType(typeof(IEnumerable<RequisitionDto>), 200)]
     public async Task<ActionResult<IEnumerable<RequisitionDto>>> GetRequisitions()
     {
@@ -45,6 +46,7 @@ public class RequisitionsController : ControllerBase
     /// <response code="404">If the requisition was not found</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Recruiter,Hiring Manager,Interviewer,Read-only")]
     [ProducesResponseType(typeof(RequisitionDetailDto), 200)]
     [ProducesResponseType(404)]
     public async Task<ActionResult<RequisitionDetailDto>> GetRequisition(int id)
@@ -62,6 +64,7 @@ public class RequisitionsController : ControllerBase
     /// <response code="400">If the requisition data is invalid</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpPost]
+    [Authorize(Roles = "Admin,Recruiter")]
     [ProducesResponseType(typeof(RequisitionDto), 201)]
     [ProducesResponseType(400)]
     public async Task<ActionResult<RequisitionDto>> CreateRequisition([FromBody] CreateRequisitionDto createDto)
@@ -81,6 +84,7 @@ public class RequisitionsController : ControllerBase
     /// <response code="404">If the requisition was not found</response>
     /// <response code="500">If there was an internal server error</response>
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,Recruiter")]
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]

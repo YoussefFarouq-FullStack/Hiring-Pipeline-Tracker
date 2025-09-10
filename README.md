@@ -94,6 +94,9 @@ Hiring Pipeline Tracker/
 - **Applications**: `GET/POST/PUT/DELETE /api/applications`
 - **Stage History**: `GET/POST/PUT/DELETE /api/stagehistory`
 - **File Upload**: `POST/GET/DELETE /api/fileupload` (for resume files)
+- **Authentication**: `POST /api/auth/login` (JWT token generation)
+- **User Management**: `GET/POST/PUT/DELETE /api/users` (Admin only)
+- **Role Management**: `GET/POST/PUT/DELETE /api/roles` (Admin only)
 
 ### Frontend Features
 - **Dashboard**: Overview of hiring pipeline metrics
@@ -102,6 +105,8 @@ Hiring Pipeline Tracker/
 - **Application Tracking**: Monitor application progress with proper validation
 - **Stage Progression**: Move applications through hiring stages
 - **File Upload**: Resume/CV file upload with drag-and-drop interface
+- **Role-Based Access Control (RBAC)**: Secure access control with role-based permissions
+- **Authentication**: JWT-based authentication with role-based authorization
 
 ## 🛠️ Technology Stack
 
@@ -173,6 +178,60 @@ Hiring Pipeline Tracker/
 - **✅ Type Safety**: Improved TypeScript type safety and validation
 - **✅ Clean Code**: Removed debugging code and unnecessary comments
 
+### Role-Based Access Control (RBAC) Implementation
+- **✅ User Management**: Complete user CRUD operations with role assignment
+- **✅ Role-Based Routes**: Protected routes with role-based access control
+- **✅ Dynamic Menu**: Sidebar menu items show/hide based on user roles
+- **✅ Button Visibility**: Action buttons appear/disappear based on permissions
+- **✅ Permission Errors**: User-friendly error messages for unauthorized access
+- **✅ JWT Authentication**: Secure token-based authentication with role claims
+- **✅ Database Seeding**: Pre-configured roles, permissions, and test users
+
+## 👥 Test Users & Credentials
+
+The application comes with pre-seeded test users for different roles:
+
+| Username | Password | Role | Access Level |
+|----------|----------|------|--------------|
+| `admin` | `Admin123!` | Admin | **Full system control** - Manage users, roles, requisitions, candidates, applications |
+| `recruiter1` | `Recruiter123!` | Recruiter | Create/manage requisitions, add candidates, move them through stages |
+| `hiringmanager1` | `Manager123!` | Hiring Manager | Review candidates, give feedback, move to next stages |
+| `interviewer1` | `Interviewer123!` | Interviewer | Limited access - view assigned candidates, submit interview feedback |
+| `readonly1` | `ReadOnly123!` | Read-only | View only - can only view requisitions or candidate profiles, no edits |
+
+### 🔑 Role-Based Permissions
+
+**Admin Role:**
+- ✅ Manage all users and roles
+- ✅ Create, edit, archive requisitions
+- ✅ Add, update, delete candidates
+- ✅ Move applications through all stages
+- ✅ View analytics and system configuration
+
+**Recruiter Role:**
+- ✅ Create and manage requisitions
+- ✅ Add and update candidates
+- ✅ Assign candidates to requisitions
+- ✅ Move applications through stages
+- ❌ Cannot manage users or system settings
+
+**Hiring Manager Role:**
+- ✅ Review candidate applications
+- ✅ Provide feedback on candidates
+- ✅ Move applications to next stages
+- ✅ View requisition details
+- ❌ Cannot create requisitions or manage users
+
+**Interviewer Role:**
+- ✅ View assigned candidates
+- ✅ Submit interview feedback
+- ✅ View application details
+- ❌ Cannot move applications or manage data
+
+**Read-only Role:**
+- ✅ View requisitions and candidate profiles
+- ❌ Cannot make any edits or changes
+
 ## 📚 API Documentation
 
 Once the API is running, visit `http://localhost:5192/api-docs` for interactive API documentation.
@@ -191,4 +250,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**Built with ❤️ using Clean Architecture principles**
+**Built with using Clean Architecture principles**

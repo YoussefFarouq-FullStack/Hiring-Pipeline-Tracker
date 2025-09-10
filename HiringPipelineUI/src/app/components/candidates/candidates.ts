@@ -20,6 +20,7 @@ import { Application } from '../../models/application.model';
 import { Requisition } from '../../models/requisition.model';
 import { CandidateDialogComponent } from './candidate-dialog/candidate-dialog';
 import { CandidateDetailComponent } from './candidate-detail/candidate-detail';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-candidates',
@@ -66,7 +67,8 @@ export class CandidatesComponent implements OnInit {
     private candidateService: CandidateService, 
     private applicationService: ApplicationService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -426,5 +428,34 @@ export class CandidatesComponent implements OnInit {
 
   get lastCandidateId(): number {
     return this.candidates.length > 0 ? this.candidates[this.candidates.length - 1].candidateId : 0;
+  }
+
+  // Role-based visibility methods
+  canCreateCandidate(): boolean {
+    const user = this.authService.getCurrentUser();
+    if (!user) return false;
+    const role = user.role?.toLowerCase();
+    return ['admin', 'recruiter'].includes(role);
+  }
+
+  canEditCandidate(): boolean {
+    const user = this.authService.getCurrentUser();
+    if (!user) return false;
+    const role = user.role?.toLowerCase();
+    return ['admin', 'recruiter'].includes(role);
+  }
+
+  canDeleteCandidate(): boolean {
+    const user = this.authService.getCurrentUser();
+    if (!user) return false;
+    const role = user.role?.toLowerCase();
+    return role === 'admin';
+  }
+
+  canViewCandidateDetails(): boolean {
+    const user = this.authService.getCurrentUser();
+    if (!user) return false;
+    const role = user.role?.toLowerCase();
+    return ['admin', 'recruiter', 'hiring manager', 'interviewer', 'read-only'].includes(role);
   }
 }

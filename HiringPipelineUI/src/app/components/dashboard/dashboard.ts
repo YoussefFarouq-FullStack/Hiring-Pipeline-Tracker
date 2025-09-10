@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { CandidateService } from '../../services/candidate.service';
 import { RequisitionService } from '../../services/requisition.service';
 import { ApplicationService } from '../../services/application.service';
@@ -55,11 +55,33 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     private requisitionService: RequisitionService,
     private applicationService: ApplicationService,
     private stageHistoryService: StageHistoryService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.loadDashboardData();
+    this.checkForPermissionErrors();
+  }
+
+  private checkForPermissionErrors(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['error'] === 'insufficient_permissions') {
+        const requiredRoles = params['requiredRoles'];
+        const userRole = params['userRole'];
+        const page = params['page'];
+        
+        if (requiredRoles && userRole && page) {
+          this.errorMessage = `Access denied: You need ${requiredRoles} role to access ${page}. Your current role: ${userRole}`;
+          this.hasError = true;
+          this.cdr.markForCheck();
+        }
+      } else if (params['error'] === 'role_not_found') {
+        this.errorMessage = 'Access denied: Your user role could not be determined. Please contact your administrator.';
+        this.hasError = true;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   ngAfterViewInit(): void {

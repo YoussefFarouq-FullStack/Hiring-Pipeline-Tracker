@@ -9,15 +9,23 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ApiUser {
+  id: number;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  roles: string[];
+  permissions: string[];
+  isActive: boolean;
+  lastLoginAt: string;
+}
+
 export interface LoginResponse {
   token: string;
   refreshToken?: string;
-  user: {
-    id: number;
-    username: string;
-    email: string;
-    role: string;
-  };
+  user: ApiUser;
   expiresAt: string;
 }
 
@@ -101,22 +109,30 @@ export class AuthService {
     const refreshToken = this.getRefreshToken();
     const user = this.getStoredUser();
 
+    console.log('Loading stored auth:', { token: !!token, user, refreshToken: !!refreshToken });
+
     if (token && user) {
       // Check if token is still valid
       if (this.isTokenValid(token)) {
+        console.log('Token is valid, setting current user:', user);
         this.currentUserSubject.next(user);
         if (refreshToken) {
           this.refreshTokenSubject.next(refreshToken);
         }
       } else if (refreshToken) {
+        console.log('Token expired, attempting refresh');
         // Try to refresh the token
         this.refreshToken().subscribe({
           next: () => console.log('Token refreshed successfully'),
           error: () => this.clearAuth()
         });
       } else {
+        console.log('No refresh token, clearing auth');
         this.clearAuth();
       }
+    } else {
+      console.log('No token or user found, clearing auth');
+      this.clearAuth();
     }
   }
 
@@ -136,9 +152,23 @@ export class AuthService {
 
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
       tap(response => {
-        console.log('Login successful, storing auth data');
+        console.log('Login successful, storing auth data:', response);
+        
+        // Transform the API response to match our User interface
+        const transformedUser: User = {
+          id: response.user.id,
+          username: response.user.username,
+          email: response.user.email,
+          role: response.user.roles && response.user.roles.length > 0 ? response.user.roles[0] : 'Unknown'
+        };
+        
+        console.log('Transformed user:', transformedUser);
+        
+        // Store the original response (with token)
         this.storeAuth(response);
-        this.currentUserSubject.next(response.user);
+        // Set the transformed user for the application
+        this.currentUserSubject.next(transformedUser);
+        console.log('Current user set:', this.currentUserSubject.value);
       }),
       catchError(this.handleError)
     );
@@ -168,7 +198,16 @@ export class AuthService {
 
   private storeAuth(response: LoginResponse): void {
     localStorage.setItem(this.tokenKey, response.token);
-    localStorage.setItem(this.userKey, JSON.stringify(response.user));
+    
+    // Transform and store the user data
+    const transformedUser: User = {
+      id: response.user.id,
+      username: response.user.username,
+      email: response.user.email,
+      role: response.user.roles && response.user.roles.length > 0 ? response.user.roles[0] : 'Unknown'
+    };
+    
+    localStorage.setItem(this.userKey, JSON.stringify(transformedUser));
     
     if (response.refreshToken) {
       localStorage.setItem(this.refreshTokenKey, response.refreshToken);
@@ -213,7 +252,16 @@ export class AuthService {
       tap(response => {
         console.log('Token refreshed successfully');
         this.storeAuth(response);
-        this.currentUserSubject.next(response.user);
+        
+        // Transform the user data
+        const transformedUser: User = {
+          id: response.user.id,
+          username: response.user.username,
+          email: response.user.email,
+          role: response.user.roles && response.user.roles.length > 0 ? response.user.roles[0] : 'Unknown'
+        };
+        
+        this.currentUserSubject.next(transformedUser);
       }),
       catchError(error => {
         console.error('Token refresh failed:', error);

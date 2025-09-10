@@ -60,14 +60,17 @@ namespace HiringPipelineAPI.Controllers
     public async Task<ActionResult> GetUsers()
     {
         // This is a temporary debug endpoint - remove in production
-                var users = await _context.Users.Select(u => new { 
-                    u.Id, 
-                    u.Username, 
-                    u.Email,
-                    u.Role,
-                    PasswordHashLength = u.PasswordHash.Length,
-                    u.CreatedAt 
-                }).ToListAsync();
+        var users = await _context.Users
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .Select(u => new { 
+                u.Id, 
+                u.Username, 
+                u.Email,
+                Roles = u.UserRoles.Select(ur => ur.Role.Name).ToList(),
+                PasswordHashLength = u.PasswordHash.Length,
+                u.CreatedAt 
+            }).ToListAsync();
         
         return Ok(new { 
             message = "Debug endpoint - users in database",

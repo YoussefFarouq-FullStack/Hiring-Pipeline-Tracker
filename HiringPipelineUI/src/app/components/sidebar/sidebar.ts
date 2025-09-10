@@ -98,9 +98,9 @@ interface NavigationItem {
             </svg>
           </div>
           <div *ngIf="!collapsed()" class="flex-1 min-w-0">
-            <p class="text-xs font-semibold text-gray-900 truncate">{{ currentUser.username }}</p>
-            <p class="text-xs text-gray-600 truncate">{{ currentUser.email }}</p>
-            <p class="text-xs text-blue-600 font-medium">{{ currentUser.role }}</p>
+            <p class="text-xs font-semibold text-gray-900 truncate">{{ currentUser?.username || 'Loading...' }}</p>
+            <p class="text-xs text-gray-600 truncate">{{ currentUser?.email || 'Loading...' }}</p>
+            <p class="text-xs text-blue-600 font-medium">{{ currentUser?.role || 'Loading...' }}</p>
           </div>
         </div>
       </div>
@@ -192,7 +192,7 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
   ];
 
   getFilteredNavigationItems(): NavigationItem[] {
-    if (!this.currentUser) {
+    if (!this.currentUser || !this.currentUser.role) {
       return this.navigationItems;
     }
 
@@ -201,21 +201,30 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
     
     if (userRole === 'admin') {
       return this.navigationItems; // Admin sees everything
-    } else if (userRole === 'hr') {
-      return this.navigationItems; // HR sees everything
     } else if (userRole === 'recruiter') {
       // Recruiters see most things except admin features
       return this.navigationItems.filter(item => 
-        item.url !== '/dashboard' || userRole === 'recruiter'
+        !['/users', '/roles'].includes(item.url)
       );
-    } else if (userRole === 'viewer') {
-      // Viewers have limited access
+    } else if (userRole === 'hiring manager') {
+      // Hiring managers see candidates, applications, and stage history
+      return this.navigationItems.filter(item => 
+        ['/dashboard', '/candidates', '/applications', '/stage-history'].includes(item.url)
+      );
+    } else if (userRole === 'interviewer') {
+      // Interviewers see only applications and stage history
       return this.navigationItems.filter(item => 
         ['/dashboard', '/applications', '/stage-history'].includes(item.url)
       );
+    } else if (userRole === 'read-only') {
+      // Read-only users see only dashboard and view-only pages
+      return this.navigationItems.filter(item => 
+        ['/dashboard', '/requisitions', '/candidates'].includes(item.url)
+      );
     }
 
-    return this.navigationItems;
+    // Default: show only dashboard
+    return this.navigationItems.filter(item => item.url === '/dashboard');
   }
 
   sidebarClasses = computed(() => 
