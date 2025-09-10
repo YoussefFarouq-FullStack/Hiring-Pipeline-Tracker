@@ -188,6 +188,12 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
       url: '/stage-history',
       icon: 'bar-chart',
       description: 'Track hiring stages'
+    },
+    {
+      title: 'Users',
+      url: '/users',
+      icon: 'user-cog',
+      description: 'Manage system users'
     }
   ];
 
