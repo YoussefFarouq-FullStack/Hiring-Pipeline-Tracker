@@ -433,10 +433,10 @@ export class UserDialogComponent {
       id: [this.isEditMode ? this.data?.user?.id : null],
       username: [this.isEditMode ? this.data?.user?.username : '', [Validators.required, Validators.minLength(3)]],
       email: [this.isEditMode ? this.data?.user?.email : '', [Validators.required, Validators.email]],
-      firstName: [this.isEditMode ? this.data?.user?.firstName : '', [Validators.required, Validators.minLength(2)]],
-      lastName: [this.isEditMode ? this.data?.user?.lastName : '', [Validators.required, Validators.minLength(2)]],
-      password: [this.isEditMode ? '' : '', this.isEditMode ? [] : [Validators.required, Validators.minLength(6)]],
-      roleId: [this.isEditMode ? this.data?.user?.roles?.[0]?.id : '', Validators.required],
+      firstName: [this.isEditMode ? this.data?.user?.firstName : '', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]+$/)]],
+      lastName: [this.isEditMode ? this.data?.user?.lastName : '', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]+$/)]],
+      password: [this.isEditMode ? '' : '', this.isEditMode ? [] : [Validators.required, Validators.minLength(8)]],
+      roleId: [this.isEditMode ? this.data?.user?.roles?.[0]?.id : null, Validators.required],
       isActive: [this.isEditMode ? this.data?.user?.isActive : true]
     });
   }
@@ -458,11 +458,23 @@ export class UserDialogComponent {
       this.isSubmitting = true;
 
       const formData = this.userForm.value;
+      console.log('Original form data:', formData);
+
+      // Transform roleId to RoleIds array for backend compatibility
+      if (formData.roleId) {
+        formData.roleIds = [formData.roleId];
+        delete formData.roleId;
+      }
+
+      console.log('Transformed form data:', formData);
 
       // For edit mode, don't send password if it's empty
       if (this.isEditMode && !formData.password) {
         delete formData.password;
       }
+
+      // Remove isActive field as backend DTO doesn't include it
+      delete formData.isActive;
 
       // For edit mode, don't send id
       if (this.isEditMode) {
@@ -484,7 +496,29 @@ export class UserDialogComponent {
         },
         error: (error: any) => {
           console.error('Error saving user:', error);
-          this.snackBar.open('Failed to save user', 'Close', { duration: 5000 });
+          console.error('Request payload:', formData);
+          console.error('Error details:', error.error);
+          
+          // Extract specific validation errors
+          let errorMessage = 'Failed to save user';
+          
+          if (error.error) {
+            if (typeof error.error === 'string') {
+              errorMessage = error.error;
+            } else if (error.error.message) {
+              errorMessage = error.error.message;
+            } else if (error.error.errors) {
+              // Handle ModelState validation errors
+              const validationErrors = Object.values(error.error.errors).flat();
+              errorMessage = validationErrors.join(', ');
+            } else if (error.error.title) {
+              errorMessage = error.error.title;
+            }
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          
+          this.snackBar.open(errorMessage, 'Close', { duration: 7000 });
           this.isSubmitting = false;
         }
       });
@@ -522,6 +556,7 @@ export class UserDialogComponent {
     if (control?.errors && control.touched) {
       if (control.errors['required']) return 'First name is required';
       if (control.errors['minlength']) return 'First name must be at least 2 characters';
+      if (control.errors['pattern']) return 'First name can only contain letters and spaces';
     }
     return '';
   }
@@ -531,6 +566,7 @@ export class UserDialogComponent {
     if (control?.errors && control.touched) {
       if (control.errors['required']) return 'Last name is required';
       if (control.errors['minlength']) return 'Last name must be at least 2 characters';
+      if (control.errors['pattern']) return 'Last name can only contain letters and spaces';
     }
     return '';
   }
@@ -539,7 +575,7 @@ export class UserDialogComponent {
     const control = this.userForm.get('password');
     if (control?.errors && control.touched) {
       if (control.errors['required']) return 'Password is required';
-      if (control.errors['minlength']) return 'Password must be at least 6 characters';
+      if (control.errors['minlength']) return 'Password must be at least 8 characters';
     }
     return '';
   }

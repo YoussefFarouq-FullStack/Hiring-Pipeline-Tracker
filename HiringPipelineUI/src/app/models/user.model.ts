@@ -36,7 +36,7 @@ export interface CreateUserRequest {
   firstName: string;
   lastName: string;
   password: string;
-  roleId: number;
+  roleIds: number[]; // Changed from roleId to roleIds to match backend DTO
   isActive: boolean;
 }
 
@@ -46,7 +46,7 @@ export interface UpdateUserRequest {
   firstName?: string;
   lastName?: string;
   password?: string;
-  roleId?: number;
+  roleIds?: number[]; // Changed from roleId to roleIds to match backend DTO
   isActive?: boolean;
 }
 

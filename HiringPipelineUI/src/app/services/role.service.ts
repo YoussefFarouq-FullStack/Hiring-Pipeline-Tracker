@@ -7,7 +7,7 @@ import { Role, Permission, CreateRoleRequest, UpdateRoleRequest } from '../model
   providedIn: 'root'
 })
 export class RoleService {
-  private apiUrl = '/api/roles';
+  private apiUrl = '/api/role';
 
   constructor(private http: HttpClient) {}
 
