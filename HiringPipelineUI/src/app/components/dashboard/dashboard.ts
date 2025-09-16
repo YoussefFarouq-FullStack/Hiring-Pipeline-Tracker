@@ -5,15 +5,17 @@ import { CandidateService } from '../../services/candidate.service';
 import { RequisitionService } from '../../services/requisition.service';
 import { ApplicationService } from '../../services/application.service';
 import { StageHistoryService } from '../../services/stage-history.service';
+import { AuditLogService } from '../../services/audit-log.service';
 import { Candidate } from '../../models/candidate.model';
 import { Requisition } from '../../models/requisition.model';
 import { Application } from '../../models/application.model';
 import { StageHistory } from '../../models/stage-history.model';
+import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -55,11 +57,16 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     private requisitionService: RequisitionService,
     private applicationService: ApplicationService,
     private stageHistoryService: StageHistoryService,
+    private auditLogService: AuditLogService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    // Note: Audit logging is now handled by the middleware automatically
+    // The middleware will log "View Dashboard" when the dashboard page is accessed
+    // and log background data fetches as "BackgroundFetch" type
+    
     this.loadDashboardData();
     this.checkForPermissionErrors();
   }
@@ -116,7 +123,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   private async loadCandidates(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.candidateService.getCandidates().subscribe({
+      this.candidateService.getCandidatesForDashboard().subscribe({
         next: (candidates: Candidate[]) => {
           this.totalCandidates = candidates.length;
           this.candidates = candidates;
@@ -156,7 +163,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   private async loadRequisitions(): Promise<void> {
     console.log('🔍 Starting loadRequisitions...');
     return new Promise((resolve, reject) => {
-      this.requisitionService.getRequisitions().subscribe({
+      this.requisitionService.getRequisitionsForDashboard().subscribe({
         next: (requisitions: Requisition[]) => {
           console.log('📊 Requisitions received:', requisitions.length);
           this.activeRequisitions = requisitions.filter(r => r.status === 'Active').length;
@@ -202,7 +209,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   private async loadApplications(): Promise<void> {
     console.log('🔍 Starting loadApplications...');
     return new Promise((resolve, reject) => {
-      this.applicationService.getApplications().subscribe({
+      this.applicationService.getApplicationsForDashboard().subscribe({
         next: (applications: Application[]) => {
           console.log('📊 Applications received:', applications.length);
           this.totalApplications = applications.length;
@@ -248,7 +255,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   private async loadStageHistory(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.stageHistoryService.getStageHistory().subscribe({
+      this.stageHistoryService.getStageHistoryForDashboard().subscribe({
         next: (histories: StageHistory[]) => {
           // Count hired candidates
           const hiredHistories = histories.filter(h => 
@@ -269,7 +276,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.cdr.detectChanges(); // Force update to show loading state
     
     return new Promise((resolve, reject) => {
-      this.stageHistoryService.getStageHistory().subscribe({
+      this.stageHistoryService.getStageHistoryForDashboard().subscribe({
         next: (histories: StageHistory[]) => {
           console.log('📊 Stage histories received:', histories.length);
           

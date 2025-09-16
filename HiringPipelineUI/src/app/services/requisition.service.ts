@@ -47,6 +47,15 @@ export class RequisitionService {
     );
   }
 
+  // Method specifically for dashboard background calls
+  getRequisitionsForDashboard(): Observable<Requisition[]> {
+    const headers = { 'X-Dashboard-Background': 'true' };
+    return this.http.get<Requisition[]>(this.apiUrl, { headers }).pipe(
+      retry(1),
+      catchError(this.handleError)
+    );
+  }
+
   getRequisition(id: number): Observable<Requisition> {
     return this.http.get<Requisition>(`${this.apiUrl}/${id}`).pipe(
       retry(1),

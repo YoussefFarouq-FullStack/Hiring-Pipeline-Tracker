@@ -127,4 +127,126 @@ public class CandidatesController : ControllerBase
         _candidateService.ResetIdentitySeed();
         return NoContent();
     }
+
+    /// <summary>
+    /// Uploads a resume file for a candidate
+    /// </summary>
+    /// <param name="id">The unique identifier of the candidate</param>
+    /// <param name="file">The resume file to upload</param>
+    /// <returns>Success message with file information</returns>
+    /// <response code="200">If the resume was successfully uploaded</response>
+    /// <response code="404">If the candidate was not found</response>
+    /// <response code="400">If the file is invalid or too large</response>
+    /// <response code="500">If there was an internal server error</response>
+    [HttpPost("{id}/upload-resume")]
+    [Authorize(Roles = "Admin,Recruiter")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> UploadResume(int id, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new { message = "No file provided" });
+        }
+
+        if (file.Length > 10 * 1024 * 1024) // 10MB limit
+        {
+            return BadRequest(new { message = "File size exceeds 10MB limit" });
+        }
+
+        var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
+        var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        
+        if (!allowedExtensions.Contains(fileExtension))
+        {
+            return BadRequest(new { message = "Only PDF, DOC, and DOCX files are allowed" });
+        }
+
+        try
+        {
+            using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            var fileContent = memoryStream.ToArray();
+            
+            var result = await _candidateService.UploadResumeAsync(id, file.FileName, fileContent);
+            return Ok(new { message = "Resume uploaded successfully", fileName = result.FileName, fileSize = result.FileSize });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Adds skills/tags to a candidate
+    /// </summary>
+    /// <param name="id">The unique identifier of the candidate</param>
+    /// <param name="skills">List of skills to add</param>
+    /// <returns>Success message</returns>
+    /// <response code="200">If the skills were successfully added</response>
+    /// <response code="404">If the candidate was not found</response>
+    /// <response code="400">If the skills data is invalid</response>
+    /// <response code="500">If there was an internal server error</response>
+    [HttpPost("{id}/add-skills")]
+    [Authorize(Roles = "Admin,Recruiter")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> AddSkills(int id, [FromBody] List<string> skills)
+    {
+        if (skills == null || !skills.Any())
+        {
+            return BadRequest(new { message = "Skills list cannot be empty" });
+        }
+
+        try
+        {
+            await _candidateService.AddSkillsAsync(id, skills);
+            return Ok(new { message = "Skills added successfully", skillsCount = skills.Count });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Archives a candidate (soft delete)
+    /// </summary>
+    /// <param name="id">The unique identifier of the candidate to archive</param>
+    /// <returns>Success message</returns>
+    /// <response code="200">If the candidate was successfully archived</response>
+    /// <response code="404">If the candidate was not found</response>
+    /// <response code="400">If the candidate is already archived</response>
+    /// <response code="500">If there was an internal server error</response>
+    [HttpPost("{id}/archive")]
+    [Authorize(Roles = "Admin,Recruiter")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> ArchiveCandidate(int id)
+    {
+        try
+        {
+            await _candidateService.ArchiveAsync(id);
+            return Ok(new { message = "Candidate archived successfully" });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

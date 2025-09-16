@@ -1,0 +1,34 @@
+// Minimal custom styles for audit logs component
+// Most styling is handled by Tailwind classes in the template
+
+// Custom scrollbar for the changes content in dialog
+.changes-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.changes-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.changes-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.changes-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+// Responsive adjustments that are difficult to achieve with Tailwind alone
+@media (max-width: 768px) {
+  .min-w-15 {
+    min-width: 60px;
+  }
+  
+  // Ensure table cells don't break on mobile
+  .table-fixed th,
+  .table-fixed td {
+    padding: 0.75rem;
+  }
+}

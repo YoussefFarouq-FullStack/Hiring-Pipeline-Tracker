@@ -127,4 +127,66 @@ public class RequisitionsController : ControllerBase
         _requisitionService.ResetIdentitySeed();
         return NoContent();
     }
+
+    /// <summary>
+    /// Publishes a requisition (moves from draft to live status)
+    /// </summary>
+    /// <param name="id">The unique identifier of the requisition to publish</param>
+    /// <returns>No content on successful publish</returns>
+    /// <response code="204">If the requisition was successfully published</response>
+    /// <response code="404">If the requisition was not found</response>
+    /// <response code="400">If the requisition is already published</response>
+    /// <response code="500">If there was an internal server error</response>
+    [HttpPost("{id}/publish")]
+    [Authorize(Roles = "Admin,Recruiter")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> PublishRequisition(int id)
+    {
+        try
+        {
+            await _requisitionService.PublishAsync(id);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    /// <summary>
+    /// Closes a requisition (moves from live to closed status)
+    /// </summary>
+    /// <param name="id">The unique identifier of the requisition to close</param>
+    /// <returns>No content on successful close</returns>
+    /// <response code="204">If the requisition was successfully closed</response>
+    /// <response code="404">If the requisition was not found</response>
+    /// <response code="400">If the requisition is already closed</response>
+    /// <response code="500">If there was an internal server error</response>
+    [HttpPost("{id}/close")]
+    [Authorize(Roles = "Admin,Recruiter")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> CloseRequisition(int id)
+    {
+        try
+        {
+            await _requisitionService.CloseAsync(id);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
 }

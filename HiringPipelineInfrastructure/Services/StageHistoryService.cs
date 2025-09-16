@@ -21,7 +21,12 @@ namespace HiringPipelineInfrastructure.Services
 
         public async Task<StageHistory> AddStageAsync(StageHistory stageHistory)
         {
+            // Create the stage history record
             var createdStageHistory = await _stageHistoryRepository.AddAsync(stageHistory);
+            
+            // Note: Application's current stage should be updated by the ApplicationService
+            // when it calls this method, not here to avoid circular dependency
+            
             return createdStageHistory;
         }
 

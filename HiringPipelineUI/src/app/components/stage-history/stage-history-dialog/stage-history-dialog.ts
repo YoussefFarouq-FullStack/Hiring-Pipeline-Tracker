@@ -14,8 +14,10 @@ import { StageHistoryService } from '../../../services/stage-history.service';
 import { CreateStageHistoryDto, HIRING_STAGES, STAGE_PROGRESSION_RULES } from '../../../models/stage-history.model';
 
 interface DialogData {
+  mode?: 'create' | 'edit' | 'view';
   applicationId: number;
   currentStage?: string;
+  history?: any; // StageHistory object for edit/view mode
 }
 
 @Component({
@@ -70,18 +72,41 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     console.log('StageHistoryDialog initialized with data:', this.data);
+    console.log('Mode:', this.data.mode);
     console.log('Raw currentStage:', this.data.currentStage);
+    console.log('Raw applicationId:', this.data.applicationId);
+    console.log('ApplicationId type:', typeof this.data.applicationId);
+    console.log('History data:', this.data.history);
     
-    // Set the current stage if provided
-    if (this.data.currentStage) {
-      // Clean up the stage name to match expected format
-      this.currentStage = this.cleanStageName(this.data.currentStage);
-      this.stageForm.patchValue({ fromStage: this.currentStage });
-      console.log('Setting fromStage to:', this.currentStage);
+    // Validate that we have the required applicationId
+    if (!this.data.applicationId || this.data.applicationId <= 0) {
+      console.error('Invalid applicationId received:', this.data.applicationId);
+      this.showError('Invalid application ID. Cannot create stage history.');
+      this.dialogRef.close();
+      return;
+    }
+    
+    // Handle different modes
+    if (this.data.mode === 'view' && this.data.history) {
+      console.log('View mode: Populating form with existing data (read-only)');
+      this.populateFormForEdit(this.data.history);
+      // Disable all form controls for view mode
+      this.stageForm.disable();
+    } else if (this.data.mode === 'edit' && this.data.history) {
+      console.log('Edit mode: Populating form with existing data');
+      this.populateFormForEdit(this.data.history);
     } else {
-      this.currentStage = 'Applied';
-      this.stageForm.patchValue({ fromStage: this.currentStage });
-      console.log('Setting fromStage to default:', this.currentStage);
+      // Create mode - set the current stage if provided
+      if (this.data.currentStage) {
+        // Clean up the stage name to match expected format
+        this.currentStage = this.cleanStageName(this.data.currentStage);
+        this.stageForm.patchValue({ fromStage: this.currentStage });
+        console.log('Setting fromStage to:', this.currentStage);
+      } else {
+        this.currentStage = 'Applied';
+        this.stageForm.patchValue({ fromStage: this.currentStage });
+        console.log('Setting fromStage to default:', this.currentStage);
+      }
     }
     
     // Initialize available stages based on current stage
@@ -307,6 +332,13 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
     console.log('Form errors:', this.stageForm.errors);
     console.log('Form value:', this.stageForm.value);
     
+    // Handle view mode - just close the dialog
+    if (this.data.mode === 'view') {
+      console.log('View mode: Closing dialog without saving');
+      this.dialogRef.close();
+      return;
+    }
+    
     // Ensure form is properly populated before submission
     this.ensureFormValidity();
     
@@ -335,8 +367,20 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
     if (this.stageForm.valid && !this.isLoading) {
       this.isLoading = true;
       
+      // Ensure applicationId is a number
+      const applicationId = typeof this.data.applicationId === 'string' 
+        ? parseInt(this.data.applicationId, 10) 
+        : this.data.applicationId;
+        
+      if (isNaN(applicationId) || applicationId <= 0) {
+        console.error('Invalid applicationId after conversion:', applicationId);
+        this.showError('Invalid application ID. Cannot create stage history.');
+        this.isLoading = false;
+        return;
+      }
+
       const newHistory: CreateStageHistoryDto = {
-        applicationId: this.data.applicationId,
+        applicationId: applicationId,
         fromStage: this.normalizeStageName(formValue.fromStage.trim()),
         toStage: this.normalizeStageName(formValue.toStage.trim()),
         movedBy: formValue.movedBy.trim(),
@@ -350,20 +394,59 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
       console.log('To Stage:', formValue.toStage);
       console.log('Moved By:', formValue.movedBy);
 
-      this.stageHistoryService.addStageHistory(newHistory)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.isLoading = false;
-            this.showSuccess('Stage history added successfully!');
-            this.dialogRef.close(true);
-          },
-          error: (err: Error) => {
-            console.error('Error adding stage history:', err);
-            this.isLoading = false;
-            this.showError(err.message || 'Failed to add stage history. Please try again.');
-          }
-        });
+      if (this.data.mode === 'edit' && this.data.history) {
+        // Edit mode - update existing stage history
+        console.log('Updating existing stage history:', this.data.history.stageHistoryId);
+        
+        const updateData = {
+          ...newHistory,
+          stageHistoryId: this.data.history.stageHistoryId,
+          movedAt: this.data.history.movedAt // Preserve the original movedAt timestamp
+        };
+        
+        this.stageHistoryService.updateStageHistory(this.data.history.stageHistoryId, updateData)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.isLoading = false;
+              this.showSuccess('Stage history updated successfully!');
+              this.dialogRef.close({
+                updated: true,
+                fromStage: newHistory.fromStage,
+                toStage: newHistory.toStage,
+                applicationId: newHistory.applicationId
+              });
+            },
+            error: (err: Error) => {
+              console.error('Error updating stage history:', err);
+              this.isLoading = false;
+              this.showError(err.message || 'Failed to update stage history. Please try again.');
+            }
+          });
+      } else {
+        // Create mode - add new stage history
+        console.log('Creating new stage history');
+        
+        this.stageHistoryService.addStageHistory(newHistory)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.isLoading = false;
+              this.showSuccess('Stage history added successfully!');
+              // Return the stage transition data for audit logging
+              this.dialogRef.close({
+                fromStage: newHistory.fromStage,
+                toStage: newHistory.toStage,
+                applicationId: newHistory.applicationId
+              });
+            },
+            error: (err: Error) => {
+              console.error('Error adding stage history:', err);
+              this.isLoading = false;
+              this.showError(err.message || 'Failed to add stage history. Please try again.');
+            }
+          });
+      }
     } else {
       console.log('Form is invalid, marking as touched');
       this.stageForm.markAllAsTouched();
@@ -508,5 +591,26 @@ export class StageHistoryDialogComponent implements OnInit, OnDestroy {
       verticalPosition: 'bottom',
       panelClass: ['error-snackbar']
     });
+  }
+
+  private populateFormForEdit(history: any): void {
+    console.log('Populating form for edit with history:', history);
+    
+    // Set the current stage from the history
+    if (history.fromStage) {
+      this.currentStage = this.cleanStageName(history.fromStage);
+    }
+    
+    // Populate all form fields with existing data
+    this.stageForm.patchValue({
+      fromStage: history.fromStage || '',
+      toStage: history.toStage || '',
+      movedBy: history.movedBy || '',
+      reason: history.reason || '',
+      notes: history.notes || ''
+    });
+    
+    console.log('Form populated with values:', this.stageForm.value);
+    console.log('Current stage set to:', this.currentStage);
   }
 }

@@ -1,14 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Application } from '../../models/application.model';
 import { Candidate } from '../../models/candidate.model';
 import { Requisition } from '../../models/requisition.model';
 import { ApplicationService } from '../../services/application.service';
+import { AuditLogService } from '../../services/audit-log.service';
 import { ApplicationDialogComponent } from './application-dialog/application-dialog';
 import { StageHistoryDialogComponent } from '../stage-history/stage-history-dialog/stage-history-dialog';
+import { StageHistoryComponent } from '../stage-history/stage-history';
+import { ConfirmationDialogService } from '../shared/confirmation-dialog/confirmation-dialog.service';
+import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-applications',
@@ -16,7 +21,9 @@ import { StageHistoryDialogComponent } from '../stage-history/stage-history-dial
   imports: [
     CommonModule,
     FormsModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    StageHistoryComponent,
+    LoadingSpinnerComponent
   ],
   templateUrl: './applications.html',
   styleUrls: ['./applications.scss']
@@ -36,6 +43,11 @@ export class ApplicationsComponent implements OnInit {
   hasError = false;
   errorMessage = '';
 
+  // Stage history viewing
+  selectedApplicationId: number | undefined = undefined;
+  selectedCandidateName: string | undefined = undefined;
+  selectedCurrentStage: string | undefined = undefined;
+
   // pagination
   currentPage = 1;
   pageSize = 6;
@@ -46,11 +58,18 @@ export class ApplicationsComponent implements OnInit {
 
   constructor(
     private appService: ApplicationService,
+    private auditLogService: AuditLogService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private router: Router,
+    private confirmationDialog: ConfirmationDialogService
   ) {}
 
   ngOnInit(): void {
+    // Note: Audit logging is now handled by the middleware automatically
+    // The middleware will log "View Applications" when the applications page is accessed
+    // and log background data fetches as "BackgroundFetch" type
+    
     this.loadApplications();
   }
 
@@ -61,8 +80,33 @@ export class ApplicationsComponent implements OnInit {
 
     this.appService.getApplications().subscribe({
       next: (data: Application[]) => {
-        this.applications = data;
-        this.filteredApplications = data;
+        console.log('Raw applications data from API:', data);
+        if (data.length > 0) {
+          console.log('First application object keys:', Object.keys(data[0]));
+          console.log('First application applicationId:', data[0].applicationId);
+          console.log('First application ApplicationId (PascalCase):', (data[0] as any).ApplicationId);
+        }
+        
+        // Temporary fix: Convert PascalCase to camelCase if needed
+        const normalizedData = data.map(app => {
+          const anyApp = app as any;
+          if (!anyApp.applicationId && anyApp.ApplicationId) {
+            return {
+              ...anyApp,
+              applicationId: anyApp.ApplicationId,
+              candidateId: anyApp.CandidateId,
+              requisitionId: anyApp.RequisitionId,
+              currentStage: anyApp.CurrentStage,
+              status: anyApp.Status,
+              createdAt: anyApp.CreatedAt,
+              updatedAt: anyApp.UpdatedAt
+            } as Application;
+          }
+          return app;
+        });
+        
+        this.applications = normalizedData;
+        this.filteredApplications = normalizedData;
         this.isLoading = false;
         this.loadRelatedData();
       },
@@ -208,35 +252,122 @@ export class ApplicationsComponent implements OnInit {
   }
 
   deleteApplication(id: number): void {
-    if (confirm('Are you sure you want to delete this application?')) {
-      this.appService.deleteApplication(id).subscribe({
-        next: () => {
-          // Reload applications to get the fresh data from the server
-          this.loadApplications();
-          this.showSuccess('Application deleted successfully!');
-        },
-        error: () => this.showError('Failed to delete application. Please try again.')
-      });
-    }
+    this.confirmationDialog.confirmDanger(
+      'Delete Application',
+      'Are you sure you want to delete this application? This action cannot be undone.',
+      'Delete',
+      'Cancel'
+    ).subscribe(confirmed => {
+      if (confirmed) {
+        this.appService.deleteApplication(id).subscribe({
+          next: () => {
+            // Reload applications to get the fresh data from the server
+            this.loadApplications();
+            this.showSuccess('Application deleted successfully!');
+          },
+          error: () => this.showError('Failed to delete application. Please try again.')
+        });
+      }
+    });
   }
 
   viewStageHistory(applicationId: number, currentStage: string): void {
-    const dialogRef = this.dialog.open(StageHistoryDialogComponent, {
-      width: '900px',
-      maxWidth: '95vw',
-      data: { applicationId, currentStage }
+    // Find the application to get candidate name
+    const application = this.applications.find(app => app.applicationId === applicationId);
+    if (!application) return;
+
+    // Find the candidate name
+    const candidate = this.candidates.find(c => c.candidateId === application.candidateId);
+    const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : `Candidate #${application.candidateId}`;
+
+    // Set the selected application data for stage history viewing
+    this.selectedApplicationId = applicationId;
+    this.selectedCandidateName = candidateName;
+    this.selectedCurrentStage = currentStage;
+  }
+
+  moveToStage(applicationId: number, currentStage: string): void {
+    console.log('=== moveToStage DEBUG START ===');
+    console.log('moveToStage called with applicationId:', applicationId, 'type:', typeof applicationId);
+    console.log('moveToStage called with currentStage:', currentStage);
+    
+    // Early validation
+    if (!applicationId || applicationId <= 0) {
+      console.error('Invalid applicationId passed to moveToStage:', applicationId);
+      this.showError('Invalid application ID. Cannot move to next stage.');
+      return;
+    }
+    console.log('All applications count:', this.applications.length);
+    
+    // Debug: Check all application objects and their IDs
+    this.applications.forEach((app, index) => {
+      console.log(`Application ${index}:`, {
+        applicationId: app.applicationId,
+        ApplicationId: (app as any).ApplicationId,
+        candidateId: app.candidateId,
+        currentStage: app.currentStage,
+        allKeys: Object.keys(app)
+      });
+    });
+    
+    // Find the application to get candidate name
+    let application = this.applications.find(app => app.applicationId === applicationId);
+    console.log('Found application by applicationId:', application);
+    
+    // If not found by camelCase, try PascalCase
+    if (!application) {
+      application = this.applications.find(app => (app as any).ApplicationId === applicationId);
+      console.log('Found application by ApplicationId (PascalCase):', application);
+    }
+    
+    console.log('=== moveToStage DEBUG END ===');
+    
+    if (!application) {
+      console.error('Application not found for ID:', applicationId);
+      this.showError('Application not found. Cannot move to next stage.');
+      return;
+    }
+
+    // Find the candidate name
+    const candidate = this.candidates.find(c => c.candidateId === application.candidateId);
+    const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : `Candidate #${application.candidateId}`;
+
+    console.log('Opening dialog with data:', {
+      applicationId: applicationId,
+      currentStage: currentStage,
+      candidateName: candidateName
     });
 
-    dialogRef.afterClosed().subscribe(updatedStage => {
-      if (updatedStage) {
-        const app = this.applications.find(a => a.applicationId === applicationId);
-        if (app) {
-          app.currentStage = updatedStage;
-          this.mergeRelatedData();
-        }
-        this.showSuccess('Stage updated successfully!');
+    // Open the stage transition dialog
+    const dialogRef = this.dialog.open(StageHistoryDialogComponent, {
+      width: '500px',
+      data: { 
+        applicationId: applicationId,
+        currentStage: currentStage
       }
     });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        // Reload applications to get the updated stage
+        this.loadApplications();
+        this.showSuccess(`Candidate moved to ${result.toStage} successfully!`);
+        
+        // Log the stage transition
+        this.auditLogService.logUserAction(
+          `Move Candidate to ${result.toStage}`,
+          'StageHistory',
+          applicationId,
+          `Moved ${candidateName} from ${result.fromStage} to ${result.toStage}`
+        );
+      }
+    });
+  }
+
+  closeStageHistory(): void {
+    this.selectedApplicationId = undefined;
+    this.selectedCandidateName = undefined;
+    this.selectedCurrentStage = undefined;
   }
 
   // Pagination helpers
@@ -299,8 +430,8 @@ export class ApplicationsComponent implements OnInit {
     return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
   }
 
-  getStageBadgeClass(stage: string): string {
-    if (!stage) return 'bg-gray-100 text-gray-800';
+  getStageBadgeClass(stage: string | null | undefined): string {
+    if (!stage || typeof stage !== 'string') return 'bg-gray-100 text-gray-800';
     const s = stage.toLowerCase();
     if (s.includes('interview')) return 'bg-purple-100 text-purple-800';
     if (s.includes('offer')) return 'bg-yellow-100 text-yellow-800';
@@ -310,8 +441,8 @@ export class ApplicationsComponent implements OnInit {
     return 'bg-blue-100 text-blue-800';
   }
 
-  getStageDotClass(stage: string): string {
-    if (!stage) return 'bg-gray-400';
+  getStageDotClass(stage: string | null | undefined): string {
+    if (!stage || typeof stage !== 'string') return 'bg-gray-400';
     const s = stage.toLowerCase();
     if (s.includes('interview')) return 'bg-purple-500';
     if (s.includes('offer')) return 'bg-yellow-500';
@@ -396,9 +527,15 @@ export class ApplicationsComponent implements OnInit {
   }
 
   viewApplication(application: Application): void {
-    // For now, just show a success message
-    // You can implement a detailed view dialog later
-    this.showSuccess(`Viewing application for ${this.getCandidateName(application.candidateId)}`);
+    this.dialog.open(ApplicationDialogComponent, {
+      width: '800px',
+      maxHeight: '90vh',
+      data: {
+        mode: 'view', // Use view mode to show all details in read-only
+        application: application
+      },
+      disableClose: false
+    });
   }
 
   getEndItemNumber(): number {
@@ -433,5 +570,19 @@ export class ApplicationsComponent implements OnInit {
     document.body.removeChild(link);
 
     this.showSuccess('Applications exported successfully!');
+  }
+
+  // 🔹 Empty state methods
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.filterApplications();
+  }
+
+  navigateToRequisitions(): void {
+    this.router.navigate(['/requisitions']);
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
   }
 }

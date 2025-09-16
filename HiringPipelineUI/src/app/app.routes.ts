@@ -42,5 +42,17 @@ export const routes: Routes = [
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['admin'] }
   },
+  { 
+    path: 'audit-logs', 
+    loadComponent: () => import('./components/audit-logs/audit-logs').then(m => m.AuditLogsComponent),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin'] }
+  },
+  { 
+    path: 'database-management', 
+    loadComponent: () => import('./components/database-management/database-management').then(m => m.DatabaseManagementComponent),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin'] }
+  },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
 ];

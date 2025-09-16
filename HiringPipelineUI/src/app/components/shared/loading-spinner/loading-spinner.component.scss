@@ -1,0 +1,287 @@
+/* Loading Spinner Component Styles */
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  width: 100%;
+}
+
+.loading-content {
+  text-align: center;
+  max-width: 400px;
+  padding: 2rem;
+}
+
+/* Spinner Container */
+.spinner-container {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
+/* Main Spinner Ring */
+.spinner-ring {
+  width: 60px;
+  height: 60px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  position: relative;
+}
+
+.spinner-ring-inner {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 2px solid transparent;
+  border-top: 2px solid #60a5fa;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite reverse;
+}
+
+/* Animated Dots */
+.spinner-dots {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 4px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  background: #3b82f6;
+  border-radius: 50%;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.dot-1 {
+  animation-delay: 0s;
+}
+
+.dot-2 {
+  animation-delay: 0.2s;
+}
+
+.dot-3 {
+  animation-delay: 0.4s;
+}
+
+/* Loading Text */
+.loading-text {
+  margin-bottom: 1rem;
+}
+
+.loading-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.loading-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+/* Progress Bar */
+.progress-container {
+  margin-top: 1rem;
+  animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Size Variants */
+.loading-container.small {
+  min-height: 120px;
+  
+  .spinner-ring {
+    width: 40px;
+    height: 40px;
+    border-width: 2px;
+  }
+  
+  .spinner-ring-inner {
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    border-width: 1px;
+  }
+  
+  .dot {
+    width: 4px;
+    height: 4px;
+  }
+  
+  .loading-title {
+    font-size: 1rem;
+  }
+  
+  .loading-subtitle {
+    font-size: 0.75rem;
+  }
+}
+
+.loading-container.large {
+  min-height: 300px;
+  
+  .spinner-ring {
+    width: 80px;
+    height: 80px;
+    border-width: 4px;
+  }
+  
+  .spinner-ring-inner {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border-width: 3px;
+  }
+  
+  .dot {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .loading-title {
+    font-size: 1.5rem;
+  }
+  
+  .loading-subtitle {
+    font-size: 1rem;
+  }
+}
+
+/* Variant Styles */
+.loading-container.minimal {
+  min-height: 100px;
+  
+  .loading-content {
+    padding: 1rem;
+  }
+  
+  .spinner-ring {
+    width: 40px;
+    height: 40px;
+    border-width: 2px;
+  }
+  
+  .spinner-ring-inner {
+    display: none;
+  }
+  
+  .spinner-dots {
+    display: none;
+  }
+  
+  .loading-title {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .loading-subtitle {
+    font-size: 0.75rem;
+  }
+}
+
+.loading-container.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  margin: 1rem;
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .loading-container {
+    min-height: 150px;
+  }
+  
+  .loading-content {
+    padding: 1rem;
+  }
+  
+  .spinner-ring {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .loading-title {
+    font-size: 1.125rem;
+  }
+  
+  .loading-subtitle {
+    font-size: 0.8rem;
+  }
+}

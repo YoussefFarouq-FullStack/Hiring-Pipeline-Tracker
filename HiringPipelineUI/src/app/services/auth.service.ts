@@ -175,12 +175,6 @@ export class AuthService {
   }
 
 
-  logout(): void {
-    console.log('Logging out user');
-    this.clearAuth();
-    this.currentUserSubject.next(null);
-    this.router.navigate(['/login']);
-  }
 
   isLoggedIn(): boolean {
     const token = this.getToken();
@@ -268,6 +262,31 @@ export class AuthService {
         this.clearAuth();
         this.handleUnauthorized();
         return throwError(() => new Error('Token refresh failed'));
+      })
+    );
+  }
+
+  // Method to logout and revoke tokens
+  logout(): Observable<any> {
+    const refreshToken = this.getRefreshToken();
+    
+    // Always clear local auth first to ensure user is logged out
+    this.clearAuth();
+    this.currentUserSubject.next(null);
+    
+    // Try to call logout endpoint to revoke tokens on server
+    const logoutRequest = this.http.post(`${this.apiUrl}/logout`, {}).pipe(
+      catchError(error => {
+        console.warn('Server logout failed, but local auth already cleared:', error);
+        // Return a successful response even if server logout fails
+        return of({ success: true });
+      })
+    );
+    
+    return logoutRequest.pipe(
+      tap(() => {
+        console.log('Logout completed successfully');
+        this.router.navigate(['/login']);
       })
     );
   }

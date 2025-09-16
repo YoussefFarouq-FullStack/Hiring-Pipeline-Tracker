@@ -1,0 +1,147 @@
+<div class="users-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="header-content">
+      <h1 class="page-title">User Management</h1>
+      <p class="page-subtitle">Manage system users and their roles</p>
+    </div>
+    <button 
+      *ngIf="canCreateUser()" 
+      (click)="openDialog()" 
+      class="btn btn-primary"
+    >
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+      </svg>
+      Add New User
+    </button>
+  </div>
+
+  <!-- Users Table -->
+  <div class="table-container">
+    <div class="table-header">
+      <h3 class="table-title">System Users</h3>
+      <div class="table-actions">
+        <button 
+          (click)="loadUsers()" 
+          class="btn btn-secondary"
+          [disabled]="isLoading"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          {{ isLoading ? 'Loading...' : 'Refresh' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-state">
+      <app-loading-spinner 
+        title="Loading users..."
+        subtitle="Please wait while we fetch the latest data"
+        size="medium"
+        variant="minimal">
+      </app-loading-spinner>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && users.length === 0" class="empty-state">
+      <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+      </svg>
+      <h3 class="empty-title">No Users Found</h3>
+      <p class="empty-description">Get started by adding your first user to the system.</p>
+      <button 
+        *ngIf="canCreateUser()" 
+        (click)="openDialog()" 
+        class="btn btn-primary"
+      >
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Add First User
+      </button>
+    </div>
+
+    <!-- Users Table -->
+    <div *ngIf="!isLoading && users.length > 0" class="table-wrapper">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Status</th>
+            <th>Last Login</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users" class="user-row">
+            <td class="user-info">
+              <div class="user-avatar">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div class="user-details">
+                <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
+                <div class="user-username">@{{ user.username }}</div>
+              </div>
+            </td>
+            <td class="user-email">{{ user.email }}</td>
+            <td class="user-roles">
+              <span 
+                *ngFor="let role of user.roles" 
+                class="role-chip"
+                [ngClass]="getRoleChipClass(role)"
+              >
+                {{ role || 'Unknown' }}
+              </span>
+              <span 
+                *ngIf="!user.roles || user.roles.length === 0" 
+                class="role-chip no-role"
+              >
+                No Role
+              </span>
+            </td>
+            <td class="user-status">
+              <span 
+                class="status-badge"
+                [ngClass]="user.isActive ? 'status-active' : 'status-inactive'"
+              >
+                {{ user.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="user-last-login">
+              {{ user.lastLoginAt ? (user.lastLoginAt | date:'short') : 'Never' }}
+            </td>
+            <td class="user-actions">
+              <button 
+                *ngIf="canEditUser(user)" 
+                (click)="openDialog(user)" 
+                class="action-btn edit-btn"
+                title="Edit User"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </button>
+              <button 
+                *ngIf="canDeleteUser(user)" 
+                (click)="deleteUser(user)" 
+                class="action-btn delete-btn"
+                title="Delete User"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

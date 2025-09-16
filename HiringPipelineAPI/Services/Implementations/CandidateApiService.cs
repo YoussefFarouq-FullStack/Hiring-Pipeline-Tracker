@@ -63,5 +63,20 @@ namespace HiringPipelineAPI.Services.Implementations
         {
             _candidateService.ResetIdentitySeed();
         }
+
+        public async Task<FileUploadResultDto> UploadResumeAsync(int id, string fileName, byte[] fileContent)
+        {
+            return await _candidateService.UploadResumeAsync(id, fileName, fileContent);
+        }
+
+        public async Task AddSkillsAsync(int id, List<string> skills)
+        {
+            await _candidateService.AddSkillsAsync(id, skills);
+        }
+
+        public async Task ArchiveAsync(int id)
+        {
+            await _candidateService.ArchiveAsync(id);
+        }
     }
 }

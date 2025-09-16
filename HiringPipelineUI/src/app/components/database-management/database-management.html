@@ -1,0 +1,340 @@
+<div class="h-full bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 mb-2">
+      Database Management
+    </h1>
+    <p class="text-sm text-gray-600 font-medium">
+      Manage database records and clear hiring pipeline data
+    </p>
+  </div>
+
+  <!-- Dashboard Overview Section -->
+  <div class="mb-6">
+    <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-semibold text-gray-900">Database Overview</h2>
+        <button 
+          (click)="loadTableCounts()" 
+          [disabled]="isLoadingCounts"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors duration-200 flex items-center gap-2">
+          <svg *ngIf="!isLoadingCounts" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <svg *ngIf="isLoadingCounts" class="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          {{ isLoadingCounts ? 'Loading...' : 'Refresh' }}
+        </button>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div *ngIf="isLoadingCounts" class="flex justify-center py-8">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <!-- Categorized Overview Cards -->
+      <div *ngIf="!isLoadingCounts && tableCounts" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Hiring Data Card -->
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-6 border border-blue-200">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center shadow-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">Hiring Data</h3>
+              <p class="text-sm text-gray-600">Job postings & applications</p>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-blue-600 mb-2">
+            {{ getCategoryTotal('hiring') }}
+          </div>
+          <div class="text-sm text-gray-600">
+            Applications: {{ tableCounts['Applications'] || 0 }} • 
+            Candidates: {{ tableCounts['Candidates'] || 0 }} • 
+            Requisitions: {{ tableCounts['Requisitions'] || 0 }}
+          </div>
+        </div>
+
+        <!-- System Data Card -->
+        <div class="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 rounded-full bg-gray-500 flex items-center justify-center shadow-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">System Data</h3>
+              <p class="text-sm text-gray-600">Activity logs & tokens</p>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-gray-600 mb-2">
+            {{ getCategoryTotal('system') }}
+          </div>
+          <div class="text-sm text-gray-600">
+            Audit Logs: {{ tableCounts['AuditLogs'] || 0 }} • 
+            Refresh Tokens: {{ tableCounts['RefreshTokens'] || 0 }}
+          </div>
+        </div>
+
+        <!-- User Management Card -->
+        <div class="bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-6 border border-purple-200">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center shadow-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">User Management</h3>
+              <p class="text-sm text-gray-600">Users, roles & permissions</p>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-purple-600 mb-2">
+            {{ getCategoryTotal('users') }}
+          </div>
+          <div class="text-sm text-gray-600">
+            Users: {{ tableCounts['Users'] || 0 }} • 
+            Roles: {{ tableCounts['Roles'] || 0 }} • 
+            Permissions: {{ tableCounts['Permissions'] || 0 }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Database Data Section -->
+  <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900">Clear Database Data</h2>
+        <p class="text-sm text-gray-600">Select specific tables to clear or clear all hiring pipeline data</p>
+      </div>
+    </div>
+
+    <!-- Search and Selection Controls -->
+    <div class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+      <!-- Search Bar -->
+      <div class="mb-4">
+        <div class="relative">
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm"
+            placeholder="Search tables..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Selection Controls -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button 
+          (click)="selectAll()" 
+          class="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200 transition-colors">
+          Select All
+        </button>
+        <button 
+          (click)="selectByCategory('hiring')" 
+          class="px-3 py-1 bg-orange-100 text-orange-700 rounded-md text-sm hover:bg-orange-200 transition-colors">
+          Hiring Data Only
+        </button>
+        <button 
+          (click)="selectByCategory('system')" 
+          class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors">
+          System Data Only
+        </button>
+        <button 
+          (click)="selectByCategory('users')" 
+          class="px-3 py-1 bg-purple-100 text-purple-700 rounded-md text-sm hover:bg-purple-200 transition-colors">
+          User Data Only
+        </button>
+        <button 
+          (click)="clearSelection()" 
+          class="px-3 py-1 bg-red-100 text-red-700 rounded-md text-sm hover:bg-red-200 transition-colors">
+          Clear Selection
+        </button>
+      </div>
+      
+      <div class="text-sm text-gray-600">
+        <span class="font-medium">{{ getSelectedCount() }}</span> table(s) selected for clearing
+      </div>
+    </div>
+
+    <!-- Collapsible Category Panels -->
+    <div class="mb-6 space-y-4">
+      <div *ngFor="let category of ['hiring', 'system', 'users']" class="border border-gray-200 rounded-lg overflow-hidden">
+        <!-- Category Header -->
+        <div 
+          (click)="toggleCategory(category)"
+          class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                 [ngClass]="getCategoryIconClass(category)">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      [attr.d]="getCategoryIcon(category)"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900">{{ getCategoryName(category) }}</h3>
+              <p class="text-sm text-gray-600">{{ getTablesByCategory(category).length }} tables</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium text-gray-500">
+              {{ getCategoryTotal(category) }} records
+            </span>
+            <svg class="w-5 h-5 text-gray-400 transition-transform duration-200"
+                 [class.rotate-180]="expandedCategories[category]"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Category Content -->
+        <div *ngIf="expandedCategories[category]" class="p-4 bg-white">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div *ngFor="let table of getFilteredTablesByCategory(category)" 
+                 class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors group"
+                 [title]="getTableTooltip(table.name)">
+              <input 
+                type="checkbox" 
+                [id]="table.name"
+                [(ngModel)]="selectedTables[table.name]"
+                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+              <label [for]="table.name" class="flex-1 cursor-pointer">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center"
+                       [ngClass]="getTableIconClass(table.name)">
+                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            [attr.d]="getTableIcon(table.name)"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="font-medium text-gray-900">{{ table.name }}</div>
+                    <div class="text-xs text-gray-600">{{ table.description }}</div>
+                  </div>
+                </div>
+              </label>
+              <div class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                {{ tableCounts?.[table.name] || 0 }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warning Message -->
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+      <div class="flex items-start gap-3">
+        <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14c1 0 2-1 1-2L13 5a2 2 0 00-2 0L4 17c-1 1 0 2 1 2z"/>
+        </svg>
+        <div>
+          <h3 class="text-sm font-semibold text-red-800 mb-1">⚠️ Warning: This action cannot be undone!</h3>
+          <p class="text-sm text-red-700">
+            Selected tables will be permanently deleted. Make sure you have selected the correct tables before proceeding.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-3">
+      <button 
+        (click)="clearSelectedData()" 
+        [disabled]="isClearing || getSelectedCount() === 0"
+        [class]="getSelectedCount() === 0 ? 'border-red-300 text-red-400' : 'bg-red-600 hover:bg-red-700 text-white'"
+        class="flex-1 px-6 py-3 border-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2">
+        <svg *ngIf="!isClearing" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        <svg *ngIf="isClearing" class="animate-spin w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        {{ isClearing ? 'Clearing Data...' : 'Clear Selected Tables (' + getSelectedCount() + ')' }}
+      </button>
+      
+      <button 
+        (click)="clearHiringData()" 
+        [disabled]="isClearing"
+        class="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2">
+        <svg *ngIf="!isClearing" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        {{ isClearing ? 'Clearing...' : 'Clear All Hiring Data' }}
+      </button>
+    </div>
+
+    <!-- Seed Database Section -->
+    <div class="mt-8 pt-6 border-t border-gray-200">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">Add Test Data</h3>
+          <p class="text-sm text-gray-600">Populate the database with sample data for testing</p>
+        </div>
+      </div>
+      
+      <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+        <div class="flex items-start gap-3">
+          <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="text-left">
+            <h4 class="text-sm font-semibold text-green-900 mb-1">What gets added:</h4>
+            <p class="text-xs text-green-700 leading-relaxed">
+              Sample candidates, job requisitions, applications, stage history entries, and test users for different roles.
+              This is perfect for testing the application with realistic data.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button 
+          (click)="seedDatabase()" 
+          [disabled]="isClearing"
+          class="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2">
+          <svg *ngIf="!isClearing" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          <svg *ngIf="isClearing" class="animate-spin w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          {{ isClearing ? 'Seeding Database...' : 'Seed Database with Test Data' }}
+        </button>
+        
+        <button 
+          (click)="openCustomSeedDialog()" 
+          [disabled]="isClearing"
+          class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Custom Data Seeding
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

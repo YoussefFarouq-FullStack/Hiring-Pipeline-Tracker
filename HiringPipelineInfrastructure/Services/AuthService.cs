@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using HiringPipelineCore.DTOs;
@@ -48,14 +49,18 @@ namespace HiringPipelineInfrastructure.Services
             user.LastLoginAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            // Generate JWT token
-            var token = GenerateJwtToken(user);
+            // Generate JWT access token
+            var accessToken = GenerateJwtToken(user);
+            
+            // Generate refresh token
+            var refreshToken = await GenerateRefreshTokenAsync(user.Id);
 
-            var expirationTime = DateTime.UtcNow.AddHours(2);
+            var accessTokenExpiration = DateTime.UtcNow.AddMinutes(GetAccessTokenExpirationMinutes());
             
             return new AuthResponseDto
             {
-                Token = token,
+                Token = accessToken,
+                RefreshToken = refreshToken.Token,
                 User = new UserDto
                 {
                     Id = user.Id,
@@ -72,8 +77,116 @@ namespace HiringPipelineInfrastructure.Services
                     IsActive = user.IsActive,
                     LastLoginAt = user.LastLoginAt
                 },
-                ExpiresAt = expirationTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                ExpiresAt = accessTokenExpiration.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
             };
+        }
+
+        public async Task<AuthResponseDto?> RefreshTokenAsync(string refreshToken, string? ipAddress = null)
+        {
+            var token = await _context.RefreshTokens
+                .Include(rt => rt.User)
+                    .ThenInclude(u => u.UserRoles)
+                        .ThenInclude(ur => ur.Role)
+                            .ThenInclude(r => r.RolePermissions)
+                                .ThenInclude(rp => rp.Permission)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+            if (token == null || !token.IsActive || token.User == null || !token.User.IsActive)
+            {
+                return null;
+            }
+
+            // Revoke the old refresh token
+            await RevokeRefreshTokenAsync(token, ipAddress, "Replaced by new refresh token");
+
+            // Generate new tokens
+            var newAccessToken = GenerateJwtToken(token.User);
+            var newRefreshToken = await GenerateRefreshTokenAsync(token.UserId);
+
+            var accessTokenExpiration = DateTime.UtcNow.AddMinutes(GetAccessTokenExpirationMinutes());
+
+            return new AuthResponseDto
+            {
+                Token = newAccessToken,
+                RefreshToken = newRefreshToken.Token,
+                User = new UserDto
+                {
+                    Id = token.User.Id,
+                    Username = token.User.Username,
+                    Email = token.User.Email,
+                    FirstName = token.User.FirstName,
+                    LastName = token.User.LastName,
+                    Roles = token.User.UserRoles.Select(ur => ur.Role.Name).ToList(),
+                    Permissions = token.User.UserRoles
+                        .SelectMany(ur => ur.Role.RolePermissions)
+                        .Select(rp => rp.Permission.Name)
+                        .Distinct()
+                        .ToList(),
+                    IsActive = token.User.IsActive,
+                    LastLoginAt = token.User.LastLoginAt
+                },
+                ExpiresAt = accessTokenExpiration.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            };
+        }
+
+        public async Task<bool> RevokeRefreshTokenAsync(string refreshToken, string? ipAddress = null)
+        {
+            var token = await _context.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+            if (token == null || !token.IsActive)
+            {
+                return false;
+            }
+
+            await RevokeRefreshTokenAsync(token, ipAddress, "Token revoked");
+            return true;
+        }
+
+        public async Task<bool> RevokeAllRefreshTokensForUserAsync(int userId, string? ipAddress = null)
+        {
+            var tokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && rt.IsActive)
+                .ToListAsync();
+
+            foreach (var token in tokens)
+            {
+                await RevokeRefreshTokenAsync(token, ipAddress, "All tokens revoked for user");
+            }
+
+            return true;
+        }
+
+        private async Task<RefreshToken> GenerateRefreshTokenAsync(int userId)
+        {
+            // Generate a cryptographically secure random token
+            var randomBytes = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomBytes);
+            var token = Convert.ToBase64String(randomBytes);
+
+            var refreshToken = new RefreshToken
+            {
+                UserId = userId,
+                Token = token,
+                ExpiryDate = DateTime.UtcNow.AddDays(GetRefreshTokenExpirationDays()),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+
+            return refreshToken;
+        }
+
+        private async Task RevokeRefreshTokenAsync(RefreshToken token, string? ipAddress, string reason)
+        {
+            token.IsRevoked = true;
+            token.RevokedAt = DateTime.UtcNow;
+            token.RevokedByIp = ipAddress;
+
+            _context.RefreshTokens.Update(token);
+            await _context.SaveChangesAsync();
         }
 
         private string GenerateJwtToken(User user)
@@ -118,11 +231,21 @@ namespace HiringPipelineInfrastructure.Services
                 issuer: jwtIssuer,
                 audience: jwtAudience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
+                expires: DateTime.UtcNow.AddMinutes(GetAccessTokenExpirationMinutes()),
                 signingCredentials: credentials
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private int GetAccessTokenExpirationMinutes()
+        {
+            return int.Parse(_configuration["Jwt:AccessTokenExpirationMinutes"] ?? "15");
+        }
+
+        private int GetRefreshTokenExpirationDays()
+        {
+            return int.Parse(_configuration["Jwt:RefreshTokenExpirationDays"] ?? "7");
         }
     }
 }

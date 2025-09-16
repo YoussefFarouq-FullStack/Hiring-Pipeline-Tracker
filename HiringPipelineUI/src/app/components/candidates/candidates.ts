@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,11 +17,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Candidate } from '../../models/candidate.model';
 import { CandidateService } from '../../services/candidate.service';
 import { ApplicationService } from '../../services/application.service';
+import { AuditLogService } from '../../services/audit-log.service';
 import { Application } from '../../models/application.model';
 import { Requisition } from '../../models/requisition.model';
 import { CandidateDialogComponent } from './candidate-dialog/candidate-dialog';
 import { CandidateDetailComponent } from './candidate-detail/candidate-detail';
+import { ConfirmationDialogService } from '../shared/confirmation-dialog/confirmation-dialog.service';
 import { AuthService } from '../../services/auth.service';
+import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-candidates',
@@ -38,7 +42,8 @@ import { AuthService } from '../../services/auth.service';
     MatInputModule,
     MatChipsModule,
     MatSelectModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    LoadingSpinnerComponent
 ],
   templateUrl: './candidates.html',
   styleUrls: ['./candidates.scss']
@@ -66,12 +71,19 @@ export class CandidatesComponent implements OnInit {
   constructor(
     private candidateService: CandidateService, 
     private applicationService: ApplicationService,
+    private auditLogService: AuditLogService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router,
+    private confirmationDialog: ConfirmationDialogService
   ) {}
 
   ngOnInit(): void {
+    // Note: Audit logging is now handled by the middleware automatically
+    // The middleware will log "View Candidates" when the candidates page is accessed
+    // and log background data fetches as "BackgroundFetch" type
+    
     this.loadCandidates();
     this.loadApplications();
     this.loadRequisitions();
@@ -314,18 +326,25 @@ export class CandidatesComponent implements OnInit {
   }
 
   deleteCandidate(id: number): void {
-    if (confirm('Are you sure you want to delete this candidate?')) {
-      this.candidateService.deleteCandidate(id).subscribe({
-        next: () => {
-          this.loadCandidates();
-          this.showSuccess('Candidate deleted successfully!');
-        },
-        error: (error: Error) => {
-          console.error('Error deleting candidate:', error);
-          this.showError('Failed to delete candidate. Please try again.');
-        }
-      });
-    }
+    this.confirmationDialog.confirmDanger(
+      'Delete Candidate',
+      'Are you sure you want to delete this candidate? This action cannot be undone.',
+      'Delete',
+      'Cancel'
+    ).subscribe(confirmed => {
+      if (confirmed) {
+        this.candidateService.deleteCandidate(id).subscribe({
+          next: () => {
+            this.loadCandidates();
+            this.showSuccess('Candidate deleted successfully!');
+          },
+          error: (error: Error) => {
+            console.error('Error deleting candidate:', error);
+            this.showError('Failed to delete candidate. Please try again.');
+          }
+        });
+      }
+    });
   }
 
   getInitials(firstName: string, lastName: string): string {
@@ -401,10 +420,6 @@ export class CandidatesComponent implements OnInit {
     });
   }
 
-  retryLoad(): void {
-    this.loadCandidates();
-  }
-
   // Getters for statistics
   get totalCandidates(): number {
     return this.candidates.length;
@@ -457,5 +472,22 @@ export class CandidatesComponent implements OnInit {
     if (!user) return false;
     const role = user.role?.toLowerCase();
     return ['admin', 'recruiter', 'hiring manager', 'interviewer', 'read-only'].includes(role);
+  }
+
+  retryLoad(): void {
+    this.loadCandidates();
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.filterCandidates();
+  }
+
+  navigateToRequisitions(): void {
+    this.router.navigate(['/requisitions']);
   }
 }

@@ -35,17 +35,377 @@ body {
 
 /* Angular Material Dialog Enhancements */
 .mat-mdc-dialog-container {
-  border-radius: 16px !important;
+  border-radius: 24px !important;
   overflow: hidden !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  max-height: 90vh !important;
+  max-width: 90vw !important;
+  animation: dialogSlideIn 0.3s ease-out !important;
+}
+
+/* Dialog Animation Keyframes */
+@keyframes dialogSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes dialogSlideOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+}
+
+/* Confirmation Dialog Container */
+.confirmation-dialog-container .mat-mdc-dialog-container {
+  border-radius: 1.5rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  max-width: 500px !important;
+  width: 100% !important;
+  animation: dialogSlideIn 0.3s ease-out !important;
 }
 
 .mat-mdc-dialog-surface {
-  border-radius: 16px !important;
+  border-radius: 24px !important;
   padding: 0 !important;
   overflow: hidden !important;
   background: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
+  transform: scale(1) !important;
+  transition: all 0.3s ease !important;
+  animation: dialogSlideIn 0.3s ease-out !important;
+}
+
+/* Enhanced Dialog Styles - Database Page Style */
+.modern-dialog {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 90vw;
+  max-height: 90vh;
+  margin: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: scale(1);
+  transition: all 0.3s ease;
+}
+
+.modern-dialog-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-dialog-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8rem;
+  height: 8rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(4rem, -4rem);
+}
+
+.modern-dialog-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 6rem;
+  height: 6rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(-3rem, 3rem);
+}
+
+.modern-dialog-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  z-index: 10;
+}
+
+.modern-dialog-icon {
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.modern-dialog-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.modern-dialog-subtitle {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0.25rem 0 0 0;
+  font-weight: 400;
+}
+
+.modern-dialog-body {
+  flex: 1;
+  background: #f8fafc;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.modern-dialog-form-container {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.modern-dialog-footer {
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.modern-dialog-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+@media (min-width: 640px) {
+  .modern-dialog-buttons {
+    flex-direction: row;
+  }
+}
+
+/* Enhanced Form Input Styles */
+.modern-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.modern-form-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.125rem;
+}
+
+.modern-form-input {
+  width: 100%;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.modern-form-input:hover:not(:focus) {
+  border-color: #d1d5db;
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.modern-form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1), 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02);
+}
+
+.modern-form-input.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+.modern-form-input:disabled,
+.modern-form-input[readonly] {
+  background: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.modern-form-select {
+  position: relative;
+}
+
+.modern-form-select select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.modern-form-select::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #6b7280;
+  pointer-events: none;
+}
+
+.modern-form-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #ef4444;
+  font-weight: 500;
+  margin-top: 0.125rem;
+}
+
+.modern-form-help {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin-top: 0.125rem;
+}
+
+/* Enhanced Button Styles */
+.modern-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 48px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: scale(1);
+}
+
+.modern-button:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.modern-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.modern-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modern-button-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.modern-button-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
+
+.modern-button-secondary {
+  background: white;
+  color: #374151;
+  border: 2px solid #d1d5db;
+}
+
+.modern-button-secondary:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.modern-button-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.modern-button-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.modern-button-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.modern-button-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.modern-button-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.modern-button-warning:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
+/* Responsive Dialog Styles */
+@media (max-width: 768px) {
+  .modern-dialog {
+    max-width: 95vw;
+    max-height: 95vh;
+    border-radius: 16px;
+  }
+  
+  .modern-dialog-header {
+    padding: 1.5rem;
+  }
+  
+  .modern-dialog-title {
+    font-size: 1.25rem;
+  }
+  
+  .modern-dialog-body {
+    padding: 1.5rem;
+  }
+  
+  .modern-dialog-form-container {
+    padding: 1.5rem;
+  }
+  
+  .modern-dialog-footer {
+    padding: 1rem 1.5rem;
+  }
+  
+  .modern-button {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.8125rem;
+  }
 }
 
 /* Clean Dialog Styles */

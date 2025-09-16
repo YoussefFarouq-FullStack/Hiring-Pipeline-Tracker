@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,9 +11,12 @@ import { StageHistory, HIRING_STAGES } from '../../models/stage-history.model';
 import { StageHistoryService } from '../../services/stage-history.service';
 import { ApplicationService } from '../../services/application.service';
 import { CandidateService } from '../../services/candidate.service';
+import { AuditLogService } from '../../services/audit-log.service';
 import { Application } from '../../models/application.model';
 import { Candidate } from '../../models/candidate.model';
 import { StageHistoryDialogComponent } from './stage-history-dialog/stage-history-dialog';
+import { ConfirmationDialogService } from '../shared/confirmation-dialog/confirmation-dialog.service';
+import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-stage-history',
@@ -23,7 +27,8 @@ import { StageHistoryDialogComponent } from './stage-history-dialog/stage-histor
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    MatTooltipModule
+    MatTooltipModule,
+    LoadingSpinnerComponent
   ],
   templateUrl: './stage-history.html',
   styleUrls: ['./stage-history.scss']
@@ -48,16 +53,26 @@ export class StageHistoryComponent implements OnInit, OnChanges {
 
   // 🔹 Search
   searchTerm = '';
+  
+  // 🔹 Filtering
+  selectedApplicationId: number | null = null;
 
   constructor(
     private stageHistoryService: StageHistoryService,
     private applicationService: ApplicationService,
     private candidateService: CandidateService,
+    private auditLogService: AuditLogService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private router: Router,
+    private confirmationDialog: ConfirmationDialogService
   ) {}
 
   ngOnInit(): void {
+    // Note: Audit logging is now handled by the middleware automatically
+    // The middleware will log "View Stage History" when the stage history page is accessed
+    // and log background data fetches as "BackgroundFetch" type
+    
     this.loadData();
     this.loadRelatedData();
 
@@ -99,7 +114,33 @@ export class StageHistoryComponent implements OnInit, OnChanges {
 
     this.stageHistoryService.getStageHistory().subscribe({
       next: (data: StageHistory[]) => {
-        this.histories = this.sortHistories(data);
+        console.log('Raw stage history data from API:', data);
+        if (data.length > 0) {
+          console.log('First stage history object keys:', Object.keys(data[0]));
+          console.log('First stage history applicationId:', data[0].applicationId);
+          console.log('First stage history ApplicationId (PascalCase):', (data[0] as any).ApplicationId);
+        }
+        
+        // Normalize property names from PascalCase to camelCase if needed
+        const normalizedData = data.map(history => {
+          const anyHistory = history as any;
+          if (!anyHistory.applicationId && anyHistory.ApplicationId) {
+            return {
+              ...anyHistory,
+              stageHistoryId: anyHistory.StageHistoryId,
+              applicationId: anyHistory.ApplicationId,
+              fromStage: anyHistory.FromStage,
+              toStage: anyHistory.ToStage,
+              movedBy: anyHistory.MovedBy,
+              movedAt: anyHistory.MovedAt,
+              reason: anyHistory.Reason,
+              notes: anyHistory.Notes
+            } as StageHistory;
+          }
+          return history;
+        });
+        
+        this.histories = this.sortHistories(normalizedData);
         this.updatePagination();
         this.isLoading = false;
       },
@@ -151,9 +192,27 @@ export class StageHistoryComponent implements OnInit, OnChanges {
     );
   }
 
+  // 🔹 Filtering methods
+  filterByApplication(applicationId: number): void {
+    this.selectedApplicationId = applicationId;
+    this.currentPage = 1;
+    this.updatePagination();
+  }
+
+  clearApplicationFilter(): void {
+    this.selectedApplicationId = null;
+    this.currentPage = 1;
+    this.updatePagination();
+  }
+
   // 🔹 Pagination helpers
   updatePagination(): void {
     let filtered = this.histories;
+
+    // Apply application filter
+    if (this.selectedApplicationId) {
+      filtered = filtered.filter(h => h.applicationId === this.selectedApplicationId);
+    }
 
     // Apply search filter
     if (this.searchTerm.trim()) {
@@ -309,6 +368,10 @@ export class StageHistoryComponent implements OnInit, OnChanges {
 
   // 🔹 Dialog methods
   openAddDialog(): void {
+    // Temporarily disabled to prevent unwanted dialog opening
+    console.log('openAddDialog called - this should not happen when clicking on candidate names');
+    return;
+    
     const dialogRef = this.dialog.open(StageHistoryDialogComponent, {
       width: '1000px',
       maxWidth: '95vw',
@@ -327,7 +390,41 @@ export class StageHistoryComponent implements OnInit, OnChanges {
     });
   }
 
+  openViewDialog(history: StageHistory): void {
+    console.log('openViewDialog called with history:', history);
+    
+    const dialogRef = this.dialog.open(StageHistoryDialogComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: { 
+        mode: 'view',
+        history: history,
+        applicationId: history.applicationId || this.applicationId,
+        currentStage: this.currentStage 
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      // View dialog doesn't need to refresh data since it's read-only
+      console.log('View dialog closed');
+    });
+  }
+
   openEditDialog(history: StageHistory): void {
+    console.log('openEditDialog called with history:', history);
+    console.log('this.applicationId:', this.applicationId);
+    console.log('history.applicationId:', history.applicationId);
+    
+    // Use the applicationId from the history object, fallback to this.applicationId
+    const applicationId = history.applicationId || this.applicationId;
+    
+    if (!applicationId) {
+      console.error('No applicationId available for edit dialog');
+      this.showError('Cannot edit stage history: Application ID is missing.');
+      return;
+    }
+
     const dialogRef = this.dialog.open(StageHistoryDialogComponent, {
       width: '1000px',
       maxWidth: '95vw',
@@ -335,7 +432,7 @@ export class StageHistoryComponent implements OnInit, OnChanges {
       data: { 
         mode: 'edit',
         history: history,
-        applicationId: this.applicationId,
+        applicationId: applicationId,
         currentStage: this.currentStage 
       }
     });
@@ -349,17 +446,24 @@ export class StageHistoryComponent implements OnInit, OnChanges {
   }
 
   deleteHistory(history: StageHistory): void {
-    if (confirm('Are you sure you want to delete this stage history entry?')) {
-      this.stageHistoryService.deleteStageHistory(history.stageHistoryId).subscribe({
-        next: () => {
-          this.loadData();
-          this.showSuccess('Stage history deleted successfully!');
-        },
-        error: (err: Error) => {
-          this.showError('Failed to delete stage history. Please try again.');
-        }
-      });
-    }
+    this.confirmationDialog.confirmDanger(
+      'Delete Stage History',
+      'Are you sure you want to delete this stage history entry? This action cannot be undone.',
+      'Delete',
+      'Cancel'
+    ).subscribe(confirmed => {
+      if (confirmed) {
+        this.stageHistoryService.deleteStageHistory(history.stageHistoryId).subscribe({
+          next: () => {
+            this.loadData();
+            this.showSuccess('Stage history deleted successfully!');
+          },
+          error: (err: Error) => {
+            this.showError('Failed to delete stage history. Please try again.');
+          }
+        });
+      }
+    });
   }
 
   // 🔹 Utility methods
@@ -427,5 +531,23 @@ export class StageHistoryComponent implements OnInit, OnChanges {
   // 🔹 Retry method
   retryLoad(): void {
     this.loadData();
+  }
+
+  // 🔹 Empty state methods
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.onSearch({ target: { value: '' } } as any);
+  }
+
+  navigateToApplications(): void {
+    this.router.navigate(['/applications']);
+  }
+
+  navigateToCandidates(): void {
+    this.router.navigate(['/candidates']);
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
   }
 }

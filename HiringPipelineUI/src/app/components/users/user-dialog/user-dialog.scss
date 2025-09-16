@@ -1,0 +1,21 @@
+/* User Dialog Component Styles */
+/* Most styles are now handled by global modern dialog styles in styles.scss */
+
+:host {
+  display: block;
+  max-height: 85vh;
+  overflow: hidden;
+}
+
+/* Override any specific user dialog styles if needed */
+.modern-dialog-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.modern-button-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.modern-button-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}

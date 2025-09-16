@@ -439,6 +439,279 @@ public static class DbInitializer
         Console.WriteLine("Role assignments completed.");
     }
 
+    /// <summary>
+    /// Seeds the database with customizable amounts of test data
+    /// </summary>
+    /// <param name="context">The database context</param>
+    /// <param name="request">Request specifying what data to create and how much</param>
+    /// <returns>Summary of what was created</returns>
+    public static async Task<object> SeedCustomAsync(HiringPipelineDbContext context, object request)
+    {
+        var seedRequest = (dynamic)request;
+        
+        Console.WriteLine("Starting custom database seeding...");
+        var result = new
+        {
+            CandidatesCreated = 0,
+            RequisitionsCreated = 0,
+            ApplicationsCreated = 0,
+            StageHistoryCreated = 0,
+            UsersCreated = 0
+        };
+
+        // Ensure roles and permissions exist first
+        await SeedRolesAndPermissionsAsync(context);
+
+        // Create candidates if requested
+        if (seedRequest.CandidatesCount > 0)
+        {
+            Console.WriteLine($"Creating {seedRequest.CandidatesCount} candidates...");
+            var candidates = await CreateCustomCandidatesAsync(context, (int)seedRequest.CandidatesCount);
+            result = new { CandidatesCreated = candidates.Count(), RequisitionsCreated = result.RequisitionsCreated, ApplicationsCreated = result.ApplicationsCreated, StageHistoryCreated = result.StageHistoryCreated, UsersCreated = result.UsersCreated };
+        }
+
+        // Create requisitions if requested
+        if (seedRequest.RequisitionsCount > 0)
+        {
+            Console.WriteLine($"Creating {seedRequest.RequisitionsCount} requisitions...");
+            var requisitions = await CreateCustomRequisitionsAsync(context, (int)seedRequest.RequisitionsCount);
+            result = new { CandidatesCreated = result.CandidatesCreated, RequisitionsCreated = requisitions.Count(), ApplicationsCreated = result.ApplicationsCreated, StageHistoryCreated = result.StageHistoryCreated, UsersCreated = result.UsersCreated };
+        }
+
+        // Create applications if requested
+        if (seedRequest.ApplicationsCount > 0)
+        {
+            Console.WriteLine($"Creating {seedRequest.ApplicationsCount} applications...");
+            var candidates = await context.Candidates.ToListAsync();
+            var requisitions = await context.Requisitions.ToListAsync();
+            
+            if (candidates.Count == 0 || requisitions.Count == 0)
+            {
+                throw new InvalidOperationException("Cannot create applications without candidates and requisitions. Please create candidates and requisitions first.");
+            }
+
+            var applications = await CreateCustomApplicationsAsync(context, (int)seedRequest.ApplicationsCount, candidates, requisitions);
+            result = new { CandidatesCreated = result.CandidatesCreated, RequisitionsCreated = result.RequisitionsCreated, ApplicationsCreated = applications.Count(), StageHistoryCreated = result.StageHistoryCreated, UsersCreated = result.UsersCreated };
+        }
+
+        // Create stage history if requested
+        if (seedRequest.StageHistoryCount > 0)
+        {
+            Console.WriteLine($"Creating {seedRequest.StageHistoryCount} stage history entries...");
+            var applications = await context.Applications.ToListAsync();
+            
+            if (applications.Count == 0)
+            {
+                throw new InvalidOperationException("Cannot create stage history without applications. Please create applications first.");
+            }
+
+            var stageHistory = await CreateCustomStageHistoryAsync(context, (int)seedRequest.StageHistoryCount, applications);
+            result = new { CandidatesCreated = result.CandidatesCreated, RequisitionsCreated = result.RequisitionsCreated, ApplicationsCreated = result.ApplicationsCreated, StageHistoryCreated = stageHistory.Count(), UsersCreated = result.UsersCreated };
+        }
+
+        // Create additional users if requested
+        if (seedRequest.CreateUsers)
+        {
+            Console.WriteLine("Creating additional test users...");
+            var users = await CreateCustomUsersAsync(context);
+            result = new { CandidatesCreated = result.CandidatesCreated, RequisitionsCreated = result.RequisitionsCreated, ApplicationsCreated = result.ApplicationsCreated, StageHistoryCreated = result.StageHistoryCreated, UsersCreated = users.Count() };
+        }
+
+        Console.WriteLine("Custom database seeding completed successfully!");
+        return result;
+    }
+
+    private static async Task<List<Candidate>> CreateCustomCandidatesAsync(HiringPipelineDbContext context, int count)
+    {
+        var candidates = new List<Candidate>();
+        var random = new Random();
+        
+        var firstNames = new[] { "John", "Jane", "Michael", "Sarah", "David", "Emily", "Chris", "Lisa", "Alex", "Maria", "James", "Anna", "Robert", "Emma", "Daniel", "Olivia", "Mark", "Sophia", "Paul", "Isabella" };
+        var lastNames = new[] { "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin" };
+        var skills = new[] { "C#", "JavaScript", "Python", "Java", "React", "Angular", "SQL", "Azure", "AWS", "Docker", "Kubernetes", "Git", "Node.js", "TypeScript", "HTML", "CSS" };
+        var emails = new[] { "gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "company.com" };
+
+        for (int i = 0; i < count; i++)
+        {
+            var firstName = firstNames[random.Next(firstNames.Length)];
+            var lastName = lastNames[random.Next(lastNames.Length)];
+            var email = $"{firstName.ToLower()}.{lastName.ToLower()}@{emails[random.Next(emails.Length)]}";
+            
+            var candidate = new Candidate
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                Email = email,
+                Phone = $"{random.Next(100, 999)}-{random.Next(100, 999)}-{random.Next(1000, 9999)}",
+                Skills = string.Join(", ", skills.OrderBy(x => random.Next()).Take(random.Next(3, 8))),
+                // Experience property removed - not in Candidate entity
+                CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 365)),
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            candidates.Add(candidate);
+            await context.Candidates.AddAsync(candidate);
+        }
+
+        await context.SaveChangesAsync();
+        return candidates;
+    }
+
+    private static async Task<List<Requisition>> CreateCustomRequisitionsAsync(HiringPipelineDbContext context, int count)
+    {
+        var requisitions = new List<Requisition>();
+        var random = new Random();
+        
+        var positions = new[] { "Software Engineer", "Senior Software Engineer", "Frontend Developer", "Backend Developer", "Full Stack Developer", "DevOps Engineer", "QA Engineer", "Product Manager", "UX Designer", "Data Analyst", "Project Manager", "Technical Lead" };
+        var departments = new[] { "Engineering", "Product", "Design", "Data Science", "Marketing", "Sales", "Operations" };
+        var locations = new[] { "New York", "San Francisco", "Los Angeles", "Chicago", "Boston", "Seattle", "Austin", "Remote", "Hybrid" };
+
+        for (int i = 0; i < count; i++)
+        {
+            var position = positions[random.Next(positions.Length)];
+            var department = departments[random.Next(departments.Length)];
+            var location = locations[random.Next(locations.Length)];
+            
+            var requisition = new Requisition
+            {
+                Title = position,
+                Department = department,
+                Location = location,
+                Description = $"We are looking for a talented {position.ToLower()} to join our {department} team. This is a great opportunity to work on exciting projects and grow your career.",
+                RequiredSkills = "Bachelor's degree in Computer Science or related field, 3+ years of experience, strong problem-solving skills, excellent communication abilities.",
+                Status = random.Next(3) == 0 ? "Draft" : (random.Next(2) == 0 ? "Open" : "Closed"),
+                Priority = random.Next(3) switch { 0 => "High", 1 => "Medium", _ => "Low" },
+                CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 180)),
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            requisitions.Add(requisition);
+            await context.Requisitions.AddAsync(requisition);
+        }
+
+        await context.SaveChangesAsync();
+        return requisitions;
+    }
+
+    private static async Task<List<Application>> CreateCustomApplicationsAsync(HiringPipelineDbContext context, int count, List<Candidate> candidates, List<Requisition> requisitions)
+    {
+        var applications = new List<Application>();
+        var random = new Random();
+        
+        var stages = new[] { "Applied", "Phone Screen", "Technical Interview", "Onsite Interview", "Reference Check", "Offer", "Hired", "Rejected" };
+        var statuses = new[] { "Active", "In Progress", "Completed", "Withdrawn" };
+
+        for (int i = 0; i < count; i++)
+        {
+            var candidate = candidates[random.Next(candidates.Count)];
+            var requisition = requisitions[random.Next(requisitions.Count)];
+            var stage = stages[random.Next(stages.Length)];
+            var status = statuses[random.Next(statuses.Length)];
+            
+            var application = new Application
+            {
+                CandidateId = candidate.CandidateId,
+                RequisitionId = requisition.RequisitionId,
+                CurrentStage = stage,
+                Status = status,
+                // AppliedDate property removed - not in Application entity
+                CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 90)),
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            applications.Add(application);
+            await context.Applications.AddAsync(application);
+        }
+
+        await context.SaveChangesAsync();
+        return applications;
+    }
+
+    private static async Task<List<StageHistory>> CreateCustomStageHistoryAsync(HiringPipelineDbContext context, int count, List<Application> applications)
+    {
+        var stageHistory = new List<StageHistory>();
+        var random = new Random();
+        
+        var stages = new[] { "Applied", "Phone Screen", "Technical Interview", "Onsite Interview", "Reference Check", "Offer", "Hired", "Rejected" };
+        var movedByUsers = new[] { "Admin", "Recruiter", "Hiring Manager", "Interviewer", "System" };
+        var reasons = new[] { "Initial application received", "Phone interview completed", "Technical assessment passed", "Onsite interview conducted", "References verified", "Offer extended", "Candidate accepted", "Not a good fit" };
+
+        for (int i = 0; i < count; i++)
+        {
+            var application = applications[random.Next(applications.Count)];
+            var fromStage = random.Next(2) == 0 ? stages[random.Next(stages.Length)] : null;
+            var toStage = stages[random.Next(stages.Length)];
+            var movedBy = movedByUsers[random.Next(movedByUsers.Length)];
+            var reason = reasons[random.Next(reasons.Length)];
+            
+            var history = new StageHistory
+            {
+                ApplicationId = application.ApplicationId,
+                FromStage = fromStage,
+                ToStage = toStage,
+                MovedBy = movedBy,
+                MovedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30)),
+                // Reason property removed - not in StageHistory entity
+                // Notes property removed - not in StageHistory entity
+            };
+
+            stageHistory.Add(history);
+            await context.StageHistories.AddAsync(history);
+        }
+
+        await context.SaveChangesAsync();
+        return stageHistory;
+    }
+
+    private static async Task<List<User>> CreateCustomUsersAsync(HiringPipelineDbContext context)
+    {
+        var users = new List<User>();
+        var random = new Random();
+        
+        var firstNames = new[] { "Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Grace", "Henry", "Ivy", "Jack" };
+        var lastNames = new[] { "Adams", "Brown", "Clark", "Davis", "Evans", "Foster", "Green", "Hall", "Irwin", "Jones" };
+        var roles = new[] { "Recruiter", "Hiring Manager", "Interviewer", "Read-only" };
+
+        for (int i = 0; i < 5; i++) // Create 5 additional users
+        {
+            var firstName = firstNames[random.Next(firstNames.Length)];
+            var lastName = lastNames[random.Next(lastNames.Length)];
+            var email = $"{firstName.ToLower()}.{lastName.ToLower()}@company.com";
+            var role = roles[random.Next(roles.Length)];
+            
+            var user = new User
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                Email = email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!"),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30)),
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            users.Add(user);
+            await context.Users.AddAsync(user);
+            await context.SaveChangesAsync(); // Save to get the user ID
+
+            // Assign role
+            var roleEntity = await context.Roles.FirstOrDefaultAsync(r => r.Name == role);
+            if (roleEntity != null)
+            {
+                var userRole = new UserRole
+                {
+                    UserId = user.Id,
+                    RoleId = roleEntity.Id,
+                    AssignedAt = DateTime.UtcNow
+                };
+                await context.UserRoles.AddAsync(userRole);
+            }
+        }
+
+        await context.SaveChangesAsync();
+        return users;
+    }
+
     private class StageHistoryData
     {
         public string? FromStage { get; set; }

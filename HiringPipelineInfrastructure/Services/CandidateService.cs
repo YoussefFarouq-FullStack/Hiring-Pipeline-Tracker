@@ -2,6 +2,7 @@ using HiringPipelineCore.Entities;
 using HiringPipelineCore.Interfaces.Services;
 using HiringPipelineCore.Interfaces.Repositories;
 using HiringPipelineCore.Exceptions;
+using HiringPipelineCore.DTOs;
 
 namespace HiringPipelineInfrastructure.Services
 {
@@ -78,6 +79,64 @@ namespace HiringPipelineInfrastructure.Services
         public void ResetIdentitySeed()
         {
             _candidateRepository.ResetIdentitySeed();
+        }
+
+        public async Task<FileUploadResultDto> UploadResumeAsync(int id, string fileName, byte[] fileContent)
+        {
+            var candidate = await _candidateRepository.GetByIdAsync(id);
+            if (candidate == null)
+                throw new NotFoundException("Candidate", id);
+
+            // In a real implementation, you would save the file to disk or cloud storage
+            // For now, we'll just update the candidate record with file information
+            var filePath = $"uploads/resumes/{id}_{fileName}";
+            
+            candidate.ResumeFileName = fileName;
+            candidate.ResumeFilePath = filePath;
+            candidate.UpdatedAt = DateTime.UtcNow;
+            
+            await _candidateRepository.UpdateAsync(candidate);
+
+            return new FileUploadResultDto
+            {
+                FileName = fileName,
+                FileSize = fileContent.Length,
+                FilePath = filePath
+            };
+        }
+
+        public async Task AddSkillsAsync(int id, List<string> skills)
+        {
+            var candidate = await _candidateRepository.GetByIdAsync(id);
+            if (candidate == null)
+                throw new NotFoundException("Candidate", id);
+
+            // Add new skills to existing skills
+            var existingSkills = string.IsNullOrEmpty(candidate.Skills) 
+                ? new List<string>() 
+                : candidate.Skills.Split(',').Select(s => s.Trim()).ToList();
+
+            var newSkills = skills.Where(s => !existingSkills.Contains(s)).ToList();
+            existingSkills.AddRange(newSkills);
+
+            candidate.Skills = string.Join(", ", existingSkills);
+            candidate.UpdatedAt = DateTime.UtcNow;
+            
+            await _candidateRepository.UpdateAsync(candidate);
+        }
+
+        public async Task ArchiveAsync(int id)
+        {
+            var candidate = await _candidateRepository.GetByIdAsync(id);
+            if (candidate == null)
+                throw new NotFoundException("Candidate", id);
+
+            if (candidate.Status == "Archived")
+                throw new InvalidOperationException("Candidate is already archived");
+
+            candidate.Status = "Archived";
+            candidate.UpdatedAt = DateTime.UtcNow;
+            await _candidateRepository.UpdateAsync(candidate);
         }
     }
 }

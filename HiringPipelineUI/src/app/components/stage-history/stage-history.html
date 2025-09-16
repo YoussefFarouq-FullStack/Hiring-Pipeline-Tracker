@@ -7,8 +7,26 @@
     </div>
   </div>
 
-  <!-- Search -->
+  <!-- Search and Filters -->
   <div class="flex-shrink-0 bg-white rounded-xl shadow-lg mb-1 p-2 border border-gray-100">
+    <!-- Application Filter Indicator -->
+    <div *ngIf="selectedApplicationId" class="mb-2 flex items-center justify-between bg-blue-50 p-2 rounded-lg border border-blue-200">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"/>
+        </svg>
+        <span class="text-sm font-medium text-blue-800">Filtered by: {{ getCandidateName(selectedApplicationId) }}</span>
+      </div>
+      <button (click)="clearApplicationFilter()" 
+              class="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+              title="Clear filter">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Search Input -->
     <div class="relative">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -24,42 +42,131 @@
     </div>
   </div>
 
-  <!-- Loading -->
-  <div *ngIf="isLoading" class="flex-1 bg-white rounded-xl shadow-lg p-8 text-center border border-gray-100 flex items-center justify-center">
-    <div class="animate-spin h-8 w-8 border-3 border-gray-300 border-t-blue-600 rounded-full mx-auto mb-3"></div>
-    <p class="text-sm text-gray-600 font-medium">Loading stage history...</p>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex-1 bg-white rounded-xl shadow-lg border border-gray-100">
+    <app-loading-spinner 
+      title="Loading stage history..."
+      subtitle="Please wait while we fetch the latest data"
+      size="large"
+      variant="card">
+    </app-loading-spinner>
   </div>
 
-  <!-- Error -->
-  <div *ngIf="hasError" class="flex-1 bg-white rounded-xl shadow-lg p-6 text-center border border-red-100 flex items-center justify-center">
-    <div class="mx-auto mb-3 w-12 h-12 rounded-full bg-gradient-to-r from-red-100 to-red-200 flex items-center justify-center">
-      <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-              d="M12 9v2m0 4h.01M5 19h14c1 0 2-1 1-2L13 5a2 2 0 00-2 0L4 17c-1 1 0 2 1 2z"/>
-      </svg>
+  <!-- Error State -->
+  <div *ngIf="hasError" class="flex-1 bg-white rounded-xl shadow-lg border border-red-100 flex items-center justify-center">
+    <div class="text-center max-w-md mx-auto p-8">
+      <!-- Error Icon -->
+      <div class="mx-auto mb-6 w-20 h-20 rounded-full bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center shadow-lg">
+        <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                d="M12 9v2m0 4h.01M5 19h14c1 0 2-1 1-2L13 5a2 2 0 00-2 0L4 17c-1 1 0 2 1 2z"/>
+        </svg>
+      </div>
+      
+      <!-- Error Title -->
+      <h3 class="text-xl font-bold text-gray-900 mb-3">Unable to load stage history</h3>
+      
+      <!-- Error Message -->
+      <p class="text-gray-600 mb-6 leading-relaxed">
+        {{ errorMessage || 'Something went wrong while loading the data. Please check your connection and try again.' }}
+      </p>
+      
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button (click)="retryLoad()" 
+                class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Try Again
+        </button>
+        
+        <button (click)="goToDashboard()" 
+                class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+          </svg>
+          Go to Dashboard
+        </button>
+      </div>
     </div>
-    <h3 class="text-sm font-bold text-gray-900 mb-2">Unable to load stage history</h3>
-    <p class="text-xs text-gray-600 mb-3">{{ errorMessage }}</p>
-    <button (click)="retryLoad()" class="px-4 py-2 text-xs bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-lg hover:shadow-lg transition-all duration-200">
-      Try again
-    </button>
   </div>
 
   <!-- Main Content -->
   <div *ngIf="!isLoading && !hasError" class="bg-white rounded-xl shadow-lg border border-gray-100">
       <!-- Empty State -->
-  <div *ngIf="paginatedHistories.length === 0" class="text-center py-12 flex items-center justify-center">
-      <div class="mx-auto mb-4 w-16 h-16 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center">
-        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  <div *ngIf="paginatedHistories.length === 0" class="flex-1 flex items-center justify-center p-8">
+    <div class="text-center max-w-md mx-auto">
+      <!-- Icon -->
+      <div class="mx-auto mb-6 w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center shadow-lg">
+        <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
         </svg>
       </div>
-      <h3 class="text-base font-bold text-gray-900 mb-2">No stage history found</h3>
-      <p class="text-sm text-gray-500 mb-2">
-        {{ searchTerm ? 'No entries match your search.' : 'No stage history entries available.' }}
+      
+      <!-- Title -->
+      <h3 class="text-xl font-bold text-gray-900 mb-3">
+        {{ searchTerm ? 'No matching entries found' : 'No stage history yet' }}
+      </h3>
+      
+      <!-- Description -->
+      <p class="text-gray-600 mb-6 leading-relaxed">
+        {{ searchTerm ? 
+          'Try adjusting your search terms or clearing the search to see all entries.' : 
+          'Stage history will appear here as candidates move through the hiring process. Start by creating applications and moving candidates between stages.' 
+        }}
       </p>
+      
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button *ngIf="searchTerm" 
+                (click)="clearSearch()"
+                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Clear Search
+        </button>
+        
+        <button *ngIf="!searchTerm" 
+                (click)="navigateToApplications()"
+                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          View Applications
+        </button>
+        
+        <button *ngIf="!searchTerm" 
+                (click)="navigateToCandidates()"
+                class="px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+          Manage Candidates
+        </button>
+      </div>
+      
+      <!-- Additional Info -->
+      <div *ngIf="!searchTerm" class="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="text-left">
+            <h4 class="text-sm font-semibold text-blue-900 mb-1">Getting Started</h4>
+            <p class="text-xs text-blue-700 leading-relaxed">
+              To see stage history, you'll need to create applications and move candidates through different hiring stages. 
+              Each stage transition will be recorded here for tracking purposes.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
     <!-- Timeline View -->
     <div *ngIf="paginatedHistories.length > 0" class="p-4">
@@ -84,15 +191,17 @@
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center gap-4">
                 <!-- Candidate Name -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200" 
+                     (click)="filterByApplication(history.applicationId)"
+                     title="Click to filter by this candidate">
                   <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
                   </div>
                   <div>
-                    <span class="text-sm font-bold text-gray-900">{{ getCandidateName(history.applicationId) }}</span>
-                    <p class="text-xs text-gray-500">Application #{{ history.applicationId }}</p>
+                    <span class="text-sm font-bold text-blue-600 hover:text-blue-800">{{ getCandidateName(history.applicationId) }}</span>
+                    <p class="text-xs text-gray-500">Application #{{ history.applicationId }} • Click to filter</p>
                   </div>
                 </div>
 
@@ -172,6 +281,15 @@
 
             <!-- Actions -->
             <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <button (click)="openViewDialog(history)" 
+                      class="px-4 py-2 rounded-lg hover:bg-green-100 text-green-600 transition-all duration-200 hover:shadow-md flex items-center gap-2"
+                      title="View Stage History Details">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                <span class="text-sm font-medium">View</span>
+              </button>
               <button (click)="openEditDialog(history)" 
                       class="px-4 py-2 rounded-lg hover:bg-blue-100 text-blue-600 transition-all duration-200 hover:shadow-md flex items-center gap-2"
                       title="Edit Stage History">

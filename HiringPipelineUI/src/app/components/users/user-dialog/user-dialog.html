@@ -1,0 +1,226 @@
+<div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl mx-auto overflow-hidden max-h-[90vh] flex flex-col border border-gray-100 transform transition-all duration-300 scale-100">
+  <!-- Dialog Header -->
+  <div class="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 px-8 py-6 text-white relative overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+      <div class="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
+    </div>
+    
+    <div class="flex items-center gap-4 relative z-10">
+      <div class="p-3 bg-white bg-opacity-20 rounded-xl shadow-lg backdrop-blur-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-white">
+          {{ isEditMode ? 'Edit User' : 'Add New User' }}
+        </h2>
+        <p class="text-indigo-100 mt-1">
+          {{ isEditMode ? 'Update the user information below.' : 'Fill in the details to add a new user to the system.' }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Container -->
+  <div class="flex-1 bg-gray-50 overflow-y-auto">
+    <div class="px-8 py-8">
+      <div class="bg-white rounded-2xl p-8 border border-gray-200 shadow-lg">
+        <form [formGroup]="userForm" (ngSubmit)="save()" class="space-y-6">
+          <!-- User ID (Edit Mode Only) -->
+          <div *ngIf="isEditMode" class="space-y-3">
+            <label class="block text-sm font-bold text-gray-900">User ID</label>
+            <input
+              formControlName="id"
+              type="text"
+              class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl text-sm text-gray-800 font-medium transition-all duration-300 shadow-lg cursor-not-allowed"
+              readonly
+            />
+            <p class="text-xs text-gray-600 font-medium">This field cannot be modified</p>
+          </div>
+
+          <!-- Username -->
+          <div class="space-y-3">
+            <label class="block text-sm font-bold text-gray-900">
+              Username <span class="text-red-500">*</span>
+            </label>
+            <input
+              formControlName="username"
+              type="text"
+              class="w-full px-4 py-4 bg-white border-2 rounded-2xl text-sm text-gray-800 font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:border-gray-300 focus:outline-none focus:scale-105"
+              [ngClass]="{'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100': usernameError, 'border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100': !usernameError}"
+              placeholder="Enter username"
+              required
+            />
+            <div *ngIf="usernameError" class="flex items-center gap-2 text-xs text-red-600 font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              {{ usernameError }}
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="space-y-3">
+            <label class="block text-sm font-bold text-gray-900">
+              Email <span class="text-red-500">*</span>
+            </label>
+            <input
+              formControlName="email"
+              type="email"
+              class="w-full px-4 py-4 bg-white border-2 rounded-2xl text-sm text-gray-800 font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:border-gray-300 focus:outline-none focus:scale-105"
+              [ngClass]="{'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100': emailError, 'border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100': !emailError}"
+              placeholder="Enter email address"
+              required
+            />
+            <div *ngIf="emailError" class="flex items-center gap-2 text-xs text-red-600 font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              {{ emailError }}
+            </div>
+          </div>
+
+          <!-- First Name -->
+          <div class="space-y-3">
+            <label class="block text-sm font-bold text-gray-900">
+              First Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              formControlName="firstName"
+              type="text"
+              class="w-full px-4 py-4 bg-white border-2 rounded-2xl text-sm text-gray-800 font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:border-gray-300 focus:outline-none focus:scale-105"
+              [ngClass]="{'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100': firstNameError, 'border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100': !firstNameError}"
+              placeholder="Enter first name"
+              required
+            />
+            <div *ngIf="firstNameError" class="flex items-center gap-2 text-xs text-red-600 font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              {{ firstNameError }}
+            </div>
+          </div>
+
+          <!-- Last Name -->
+          <div class="space-y-3">
+            <label class="block text-sm font-bold text-gray-900">
+              Last Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              formControlName="lastName"
+              type="text"
+              class="w-full px-4 py-4 bg-white border-2 rounded-2xl text-sm text-gray-800 font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:border-gray-300 focus:outline-none focus:scale-105"
+              [ngClass]="{'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100': lastNameError, 'border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100': !lastNameError}"
+              placeholder="Enter last name"
+              required
+            />
+            <div *ngIf="lastNameError" class="flex items-center gap-2 text-xs text-red-600 font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              {{ lastNameError }}
+            </div>
+          </div>
+
+          <!-- Password (Create Mode Only) -->
+          <div *ngIf="!isEditMode" class="space-y-3">
+            <label class="block text-sm font-bold text-gray-900">
+              Password <span class="text-red-500">*</span>
+            </label>
+            <input
+              formControlName="password"
+              type="password"
+              class="w-full px-4 py-4 bg-white border-2 rounded-2xl text-sm text-gray-800 font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:border-gray-300 focus:outline-none focus:scale-105"
+              [ngClass]="{'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100': passwordError, 'border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100': !passwordError}"
+              placeholder="Enter password"
+              required
+            />
+            <div *ngIf="passwordError" class="flex items-center gap-2 text-xs text-red-600 font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              {{ passwordError }}
+            </div>
+          </div>
+
+          <!-- Roles -->
+          <div class="space-y-3">
+            <label class="block text-sm font-bold text-gray-900">
+              Roles <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <select
+                formControlName="roleId"
+                class="w-full px-4 py-4 bg-white border-2 rounded-2xl text-sm text-gray-800 font-medium transition-all duration-300 appearance-none cursor-pointer shadow-lg hover:shadow-xl hover:border-gray-300 focus:outline-none focus:scale-105"
+                [ngClass]="{'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100': roleError, 'border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100': !roleError}"
+                required
+              >
+                <option value="">Select a role</option>
+                <option *ngFor="let role of roles" [value]="role.id" class="py-3 px-4 hover:bg-indigo-50">
+                  {{ role.name }} - {{ role.description }}
+                </option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
+            <div *ngIf="roleError" class="flex items-center gap-2 text-xs text-red-600 font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              {{ roleError }}
+            </div>
+          </div>
+
+          <!-- Active Status -->
+          <div class="space-y-3">
+            <label class="flex items-center space-x-3">
+              <input
+                formControlName="isActive"
+                type="checkbox"
+                class="w-5 h-5 rounded border-2 border-gray-300 text-indigo-600 focus:ring-4 focus:ring-indigo-100"
+              />
+              <span class="text-sm font-bold text-gray-900">Active User</span>
+            </label>
+            <p class="text-xs text-gray-600 font-medium">Inactive users cannot log into the system</p>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="px-8 py-6 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 flex-shrink-0">
+      <div class="flex flex-col sm:flex-row justify-end gap-4">
+        <button
+          type="button"
+          (click)="close()"
+          [disabled]="isSubmitting"
+          class="w-full sm:w-auto px-8 py-4 text-gray-700 bg-white border-2 border-gray-300 rounded-2xl font-bold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 shadow-lg hover:shadow-xl text-sm order-2 sm:order-1 focus:outline-none focus:ring-4 focus:ring-gray-100 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          (click)="save()"
+          [disabled]="!userForm.valid || isSubmitting"
+          class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm order-1 sm:order-2 focus:outline-none focus:ring-4 focus:ring-indigo-100 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        >
+          <span class="flex items-center justify-center gap-3">
+            <svg *ngIf="!isSubmitting" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <svg *ngIf="isSubmitting" class="animate-spin w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            {{ isSubmitting ? 'Saving...' : (isEditMode ? 'Update User' : 'Add User') }}
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

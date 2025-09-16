@@ -14,5 +14,7 @@ namespace HiringPipelineAPI.Services.Interfaces
         Task<IEnumerable<ApplicationDto>> GetByRequisitionIdAsync(int requisitionId);
         Task<bool> CandidateExistsAsync(int candidateId);
         Task<bool> RequisitionExistsAsync(int requisitionId);
+        Task ChangeStatusAsync(int id, ChangeApplicationStatusDto statusDto);
+        Task MoveToStageAsync(int id, MoveToStageDto stageDto);
     }
 }

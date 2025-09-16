@@ -51,6 +51,15 @@ export class ApplicationService {
     );
   }
 
+  // Method specifically for dashboard background calls
+  getApplicationsForDashboard(): Observable<Application[]> {
+    const headers = { 'X-Dashboard-Background': 'true' };
+    return this.http.get<Application[]>(this.apiUrl, { headers }).pipe(
+      retry(1),
+      catchError(this.handleError)
+    );
+  }
+
   getApplicationsWithDetails(): Observable<Application[]> {
     return this.http.get<Application[]>(this.apiUrl).pipe(
       retry(1),

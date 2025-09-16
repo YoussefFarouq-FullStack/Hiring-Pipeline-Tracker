@@ -24,6 +24,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<ValidationExceptionFilter>();
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.WriteIndented = true;
 });
 builder.Services.AddEndpointsApiExplorer();
 
@@ -100,6 +105,8 @@ builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IDatabaseService, DatabaseService>();
 
 // Register API services
 builder.Services.AddScoped<HiringPipelineAPI.Services.Interfaces.ICandidateApiService, HiringPipelineAPI.Services.Implementations.CandidateApiService>();
@@ -141,6 +148,15 @@ builder.Services.AddCors(options =>
         });
 });
 
+// Configure forwarded headers for proper IP detection
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | 
+                               Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -149,16 +165,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 
-    // Seed the database with initial test data
-    using (var scope = app.Services.CreateScope())
-    {
-        var context = scope.ServiceProvider.GetRequiredService<HiringPipelineDbContext>();
-        await DbInitializer.SeedAsync(context, isDevelopment: true);
-    }
+    // Automatic seeding disabled - use manual seeding via API endpoint
+    // using (var scope = app.Services.CreateScope())
+    // {
+    //     var context = scope.ServiceProvider.GetRequiredService<HiringPipelineDbContext>();
+    //     await DbInitializer.SeedAsync(context, isDevelopment: true);
+    // }
 }
 
 // ✅ Global middleware
 app.UseGlobalExceptionHandling();
+
+// Use forwarded headers for proper IP detection
+app.UseForwardedHeaders();
 
 app.UseCors("AllowFrontend");
 
@@ -167,6 +186,9 @@ app.UseHttpsRedirection();
 // Enable authentication & authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Add audit middleware
+app.UseMiddleware<AuditMiddleware>();
 
 app.MapControllers();
 

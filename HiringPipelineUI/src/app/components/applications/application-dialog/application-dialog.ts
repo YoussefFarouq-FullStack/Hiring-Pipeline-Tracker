@@ -8,12 +8,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApplicationService } from '../../../services/application.service';
+import { AuditLogService } from '../../../services/audit-log.service';
 import { Application } from '../../../models/application.model';
 import { Candidate } from '../../../models/candidate.model';
 import { Requisition } from '../../../models/requisition.model';
 
 interface DialogData {
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'view';
   application?: Application;
 }
 
@@ -40,28 +41,37 @@ export class ApplicationDialogComponent implements OnInit {
   requisitions: Requisition[] = [];
   isSubmitting = false;
   isEditMode = false;
+  isViewMode = false;
 
   constructor(
     private fb: FormBuilder,
     private appService: ApplicationService,
+    private auditLogService: AuditLogService,
     private dialogRef: MatDialogRef<ApplicationDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData,
     private snackBar: MatSnackBar
   ) {
     this.isEditMode = data?.mode === 'edit';
-    if (this.isEditMode && !data?.application) {
-      console.error('Edit mode requested but no application data provided');
+    this.isViewMode = data?.mode === 'view';
+    if ((this.isEditMode || this.isViewMode) && !data?.application) {
+      console.error('Edit/View mode requested but no application data provided');
       this.dialogRef.close();
       return;
     }
     
+    const isEditOrView = this.isEditMode || this.isViewMode;
     this.applicationForm = this.fb.group({
-      applicationId: [this.isEditMode ? data?.application?.applicationId : null],
-      candidateId: [this.isEditMode ? data?.application?.candidateId : null, [Validators.required]],
-      requisitionId: [this.isEditMode ? data?.application?.requisitionId : null, [Validators.required]],
-      currentStage: [this.isEditMode ? data?.application?.currentStage || 'Applied' : 'Applied', [Validators.required]],
-      status: [this.isEditMode ? data?.application?.status || 'Active' : 'Active', [Validators.required]]
+      applicationId: [isEditOrView ? data?.application?.applicationId : null],
+      candidateId: [isEditOrView ? data?.application?.candidateId : null, [Validators.required]],
+      requisitionId: [isEditOrView ? data?.application?.requisitionId : null, [Validators.required]],
+      currentStage: [isEditOrView ? data?.application?.currentStage || 'Applied' : 'Applied', [Validators.required]],
+      status: [isEditOrView ? data?.application?.status || 'Active' : 'Active', [Validators.required]]
     });
+
+    // Disable form controls in view mode
+    if (this.isViewMode) {
+      this.applicationForm.disable();
+    }
   }
 
   ngOnInit(): void {
@@ -138,6 +148,20 @@ export class ApplicationDialogComponent implements OnInit {
         } else {
           this.appService.createApplication(formData).subscribe({
             next: (res: Application) => {
+              // Get candidate and requisition names for audit log
+              const candidate = this.candidates.find(c => c.candidateId === formData.candidateId);
+              const requisition = this.requisitions.find(r => r.requisitionId === formData.requisitionId);
+              const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : `Candidate #${formData.candidateId}`;
+              const requisitionTitle = requisition ? requisition.title : `Requisition #${formData.requisitionId}`;
+              
+              // Log application creation
+              this.auditLogService.logUserAction(
+                'Create Application',
+                'Application',
+                res.applicationId,
+                `Application #${res.applicationId} created for ${candidateName} in ${requisitionTitle}`
+              );
+              
               this.dialogRef.close(res);
             },
             error: (error: Error) => {

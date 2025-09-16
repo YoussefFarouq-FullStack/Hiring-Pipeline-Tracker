@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,8 +13,11 @@ import { take } from 'rxjs/operators';
 
 import { Requisition, EMPLOYMENT_TYPES, PRIORITIES, EXPERIENCE_LEVELS, JOB_LEVELS, STATUSES } from '../../models/requisition.model';
 import { RequisitionService } from '../../services/requisition.service';
+import { AuditLogService } from '../../services/audit-log.service';
 import { RequisitionDialogComponent } from './requisition-dialog/requisition-dialog';
 import { RequisitionDetailComponent } from './requisition-detail/requisition-detail';
+import { ConfirmationDialogService } from '../shared/confirmation-dialog/confirmation-dialog.service';
+import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-requisitions',
@@ -26,7 +30,8 @@ import { RequisitionDetailComponent } from './requisition-detail/requisition-det
     MatSnackBarModule,
     MatTooltipModule,
     MatSelectModule,
-    MatPaginatorModule
+    MatPaginatorModule,
+    LoadingSpinnerComponent
   ],
   templateUrl: './requisitions.html',
   styleUrls: ['./requisitions.scss'],
@@ -66,12 +71,19 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
 
   constructor(
     private requisitionService: RequisitionService,
+    private auditLogService: AuditLogService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router,
+    private confirmationDialog: ConfirmationDialogService
   ) {}
 
   ngOnInit(): void {
+    // Note: Audit logging is now handled by the middleware automatically
+    // The middleware will log "View Requisitions" when the requisitions page is accessed
+    // and log background data fetches as "BackgroundFetch" type
+    
     this.loadRequisitions();
   }
 
@@ -136,8 +148,18 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
       const matchesPriority = this.selectedPriority ? req.priority === this.selectedPriority : true;
       const matchesEmploymentType = this.selectedEmploymentType ? req.employmentType === this.selectedEmploymentType : true;
       const matchesExperienceLevel = this.selectedExperienceLevel ? req.experienceLevel === this.selectedExperienceLevel : true;
+      
+      // Handle special stat filters
+      let matchesStat = true;
+      if (this.selectedStat === 'draft') {
+        matchesStat = req.isDraft === true;
+      } else if (this.selectedStat === 'high-priority') {
+        matchesStat = req.priority === 'High';
+      } else if (this.selectedStat !== 'all') {
+        matchesStat = req.status === this.selectedStat;
+      }
 
-      return matchesSearch && matchesStatus && matchesDepartment && matchesPriority && matchesEmploymentType && matchesExperienceLevel;
+      return matchesSearch && matchesStatus && matchesDepartment && matchesPriority && matchesEmploymentType && matchesExperienceLevel && matchesStat;
     });
 
     this.totalItems = this.filteredRequisitions.length;
@@ -173,8 +195,27 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
       this.selectedPriority = '';
       this.selectedEmploymentType = '';
       this.selectedExperienceLevel = '';
+    } else if (stat === 'draft') {
+      // Filter for drafts only
+      this.selectedStatus = '';
+      this.selectedDepartment = '';
+      this.selectedPriority = '';
+      this.selectedEmploymentType = '';
+      this.selectedExperienceLevel = '';
+    } else if (stat === 'high-priority') {
+      // Filter for high priority only
+      this.selectedStatus = '';
+      this.selectedDepartment = '';
+      this.selectedPriority = 'High';
+      this.selectedEmploymentType = '';
+      this.selectedExperienceLevel = '';
     } else {
+      // Regular status filtering
       this.selectedStatus = stat;
+      this.selectedDepartment = '';
+      this.selectedPriority = '';
+      this.selectedEmploymentType = '';
+      this.selectedExperienceLevel = '';
     }
     
     this.applyFilters();
@@ -248,36 +289,46 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   }
 
   deleteRequisition(id: number): void {
-    if (confirm('Are you sure you want to delete this requisition?')) {
-      this.requisitionService.deleteRequisition(id)
-        .pipe(take(1))
-        .subscribe({
-          next: () => {
-            this.loadRequisitions();
-            this.showSuccess('Requisition deleted successfully!');
-          },
-          error: (error: any) => {
-            console.error('Error deleting requisition:', error);
-            this.showError('Failed to delete requisition. Please try again.');
-          }
-        });
-    }
+    this.confirmationDialog.confirmDanger(
+      'Delete Requisition',
+      'Are you sure you want to delete this requisition? This action cannot be undone.',
+      'Delete',
+      'Cancel'
+    ).subscribe(confirmed => {
+      if (confirmed) {
+        this.requisitionService.deleteRequisition(id)
+          .pipe(take(1))
+          .subscribe({
+            next: () => {
+              this.loadRequisitions();
+              this.showSuccess('Requisition deleted successfully!');
+            },
+            error: (error: any) => {
+              console.error('Error deleting requisition:', error);
+              this.showError('Failed to delete requisition. Please try again.');
+            }
+          });
+      }
+    });
   }
 
-  getStatusBadgeClass(status: string): string {
+  getStatusBadgeClass(status: string | null | undefined): string {
+    if (!status || typeof status !== 'string') return 'bg-gray-100 text-gray-800';
     return this.requisitionService.getStatusColor(status);
   }
 
-  getPriorityBadgeClass(priority: string): string {
+  getPriorityBadgeClass(priority: string | null | undefined): string {
+    if (!priority || typeof priority !== 'string') return 'bg-gray-100 text-gray-800';
     return this.requisitionService.getPriorityColor(priority);
   }
 
-  getDraftBadgeClass(isDraft: boolean): string {
+  getDraftBadgeClass(isDraft: boolean | null | undefined): string {
+    if (typeof isDraft !== 'boolean') return 'bg-gray-100 text-gray-800';
     return this.requisitionService.getDraftStatusColor(isDraft);
   }
 
-  getStatusDotClass(status: string): string {
-    if (!status) return 'bg-gray-400';
+  getStatusDotClass(status: string | null | undefined): string {
+    if (!status || typeof status !== 'string') return 'bg-gray-400';
     const statusLower = status.toLowerCase();
     if (statusLower.includes('open')) return 'bg-green-500';
     if (statusLower.includes('in progress')) return 'bg-purple-500';
@@ -294,10 +345,6 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   // TODO: Replace with actual backend application count
   getApplicationCount(requisitionId: number): number {
     return 0; // Placeholder until backend provides actual count
-  }
-
-  retryLoad(): void {
-    this.loadRequisitions();
   }
 
   exportRequisitions(): void {
@@ -417,4 +464,17 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
 
   // Make Math available in template
   readonly Math = Math;
+
+  retryLoad(): void {
+    this.loadRequisitions();
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.filterRequisitions();
+  }
 }

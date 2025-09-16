@@ -19,6 +19,8 @@ public class HiringPipelineDbContext : DbContext
     public DbSet<Candidate> Candidates { get; set; }
     public DbSet<Application> Applications { get; set; }
     public DbSet<StageHistory> StageHistories { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +76,24 @@ public class HiringPipelineDbContext : DbContext
         // Ensure unique role-permission combinations
         modelBuilder.Entity<RolePermission>()
             .HasIndex(rp => new { rp.RoleId, rp.PermissionId })
+            .IsUnique();
+
+        // Configure RefreshToken relationships
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(rt => rt.User)
+            .WithMany()
+            .HasForeignKey(rt => rt.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(rt => rt.ReplacedByToken)
+            .WithMany(rt => rt.ReplacedTokens)
+            .HasForeignKey(rt => rt.ReplacedByTokenId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Ensure unique tokens
+        modelBuilder.Entity<RefreshToken>()
+            .HasIndex(rt => rt.Token)
             .IsUnique();
     }
 }

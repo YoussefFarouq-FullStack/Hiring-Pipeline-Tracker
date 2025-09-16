@@ -74,5 +74,33 @@ namespace HiringPipelineInfrastructure.Services
         {
             _requisitionRepository.ResetIdentitySeed();
         }
+
+        public async Task PublishAsync(int id)
+        {
+            var requisition = await _requisitionRepository.GetByIdAsync(id);
+            if (requisition == null)
+                throw new NotFoundException("Requisition", id);
+
+            if (requisition.Status == "Published")
+                throw new InvalidOperationException("Requisition is already published");
+
+            requisition.Status = "Published";
+            requisition.UpdatedAt = DateTime.UtcNow;
+            await _requisitionRepository.UpdateAsync(requisition);
+        }
+
+        public async Task CloseAsync(int id)
+        {
+            var requisition = await _requisitionRepository.GetByIdAsync(id);
+            if (requisition == null)
+                throw new NotFoundException("Requisition", id);
+
+            if (requisition.Status == "Closed")
+                throw new InvalidOperationException("Requisition is already closed");
+
+            requisition.Status = "Closed";
+            requisition.UpdatedAt = DateTime.UtcNow;
+            await _requisitionRepository.UpdateAsync(requisition);
+        }
     }
 }

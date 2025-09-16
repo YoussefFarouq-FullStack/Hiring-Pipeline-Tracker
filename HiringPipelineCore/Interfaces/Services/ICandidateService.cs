@@ -1,4 +1,5 @@
 using HiringPipelineCore.Entities;
+using HiringPipelineCore.DTOs;
 
 namespace HiringPipelineCore.Interfaces.Services
 {
@@ -12,5 +13,8 @@ namespace HiringPipelineCore.Interfaces.Services
         Task<bool> AnyAsync();
         Task DeleteAllAsync();
         void ResetIdentitySeed();
+        Task<FileUploadResultDto> UploadResumeAsync(int id, string fileName, byte[] fileContent);
+        Task AddSkillsAsync(int id, List<string> skills);
+        Task ArchiveAsync(int id);
     }
 }

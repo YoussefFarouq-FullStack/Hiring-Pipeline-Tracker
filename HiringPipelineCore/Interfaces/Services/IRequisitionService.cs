@@ -12,5 +12,7 @@ namespace HiringPipelineCore.Interfaces.Services
         Task<bool> AnyAsync();
         Task DeleteAllAsync();
         void ResetIdentitySeed();
+        Task PublishAsync(int id);
+        Task CloseAsync(int id);
     }
 }

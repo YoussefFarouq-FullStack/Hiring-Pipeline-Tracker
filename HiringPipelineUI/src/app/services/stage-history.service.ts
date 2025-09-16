@@ -66,6 +66,15 @@ export class StageHistoryService {
     );
   }
 
+  // Method specifically for dashboard background calls
+  getStageHistoryForDashboard(): Observable<StageHistory[]> {
+    const headers = { 'X-Dashboard-Background': 'true' };
+    return this.http.get<StageHistory[]>(this.apiUrl, { headers }).pipe(
+      retry(1),
+      catchError(this.handleError)
+    );
+  }
+
   getStageHistoryById(id: number): Observable<StageHistory> {
     return this.http.get<StageHistory>(`${this.apiUrl}/${id}`).pipe(
       retry(1),

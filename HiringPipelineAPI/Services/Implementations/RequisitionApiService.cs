@@ -63,5 +63,15 @@ namespace HiringPipelineAPI.Services.Implementations
         {
             _requisitionService.ResetIdentitySeed();
         }
+
+        public async Task PublishAsync(int id)
+        {
+            await _requisitionService.PublishAsync(id);
+        }
+
+        public async Task CloseAsync(int id)
+        {
+            await _requisitionService.CloseAsync(id);
+        }
     }
 }

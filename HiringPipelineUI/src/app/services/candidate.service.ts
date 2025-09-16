@@ -47,6 +47,15 @@ export class CandidateService {
     );
   }
 
+  // Method specifically for dashboard background calls
+  getCandidatesForDashboard(): Observable<Candidate[]> {
+    const headers = { 'X-Dashboard-Background': 'true' };
+    return this.http.get<Candidate[]>(this.apiUrl, { headers }).pipe(
+      retry(1),
+      catchError(this.handleError)
+    );
+  }
+
   getCandidate(id: number): Observable<Candidate> {
     return this.http.get<Candidate>(`${this.apiUrl}/${id}`).pipe(
       retry(1),

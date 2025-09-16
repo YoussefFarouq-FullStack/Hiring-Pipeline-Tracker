@@ -13,5 +13,8 @@ namespace HiringPipelineAPI.Services.Interfaces
         Task<bool> AnyAsync();
         Task DeleteAllAsync();
         void ResetIdentitySeed();
+        Task<FileUploadResultDto> UploadResumeAsync(int id, string fileName, byte[] fileContent);
+        Task AddSkillsAsync(int id, List<string> skills);
+        Task ArchiveAsync(int id);
     }
 }

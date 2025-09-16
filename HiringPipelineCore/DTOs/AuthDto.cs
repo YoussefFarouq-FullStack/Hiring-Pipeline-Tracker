@@ -14,8 +14,15 @@ namespace HiringPipelineCore.DTOs
     public class AuthResponseDto
     {
         public string Token { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
         public UserDto User { get; set; } = new UserDto();
         public string ExpiresAt { get; set; } = string.Empty;
+    }
+
+    public class RefreshTokenDto
+    {
+        [Required(ErrorMessage = "Refresh token is required")]
+        public string RefreshToken { get; set; } = string.Empty;
     }
 
     public class UserDto

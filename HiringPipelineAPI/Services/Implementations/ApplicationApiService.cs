@@ -70,5 +70,15 @@ namespace HiringPipelineAPI.Services.Implementations
         {
             return await _applicationService.RequisitionExistsAsync(requisitionId);
         }
+
+        public async Task ChangeStatusAsync(int id, ChangeApplicationStatusDto statusDto)
+        {
+            await _applicationService.ChangeStatusAsync(id, statusDto);
+        }
+
+        public async Task MoveToStageAsync(int id, MoveToStageDto stageDto)
+        {
+            await _applicationService.MoveToStageAsync(id, stageDto);
+        }
     }
 }
