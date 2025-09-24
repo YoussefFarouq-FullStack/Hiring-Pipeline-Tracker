@@ -1,0 +1,183 @@
+<div class="hired-candidates-modal">
+  <!-- Header -->
+  <div class="modal-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h2 class="modal-title">Hired Candidates</h2>
+        <p class="modal-subtitle">{{ hiredCandidates.length }} successful hires</p>
+      </div>
+    </div>
+    <button class="close-button" (click)="closeModal()">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading hired candidates...</p>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!isLoading" class="modal-content">
+    <!-- Empty State -->
+    <div *ngIf="hiredCandidates.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+      </div>
+      <h3 class="empty-title">No Hired Candidates Yet</h3>
+      <p class="empty-description">Hired candidates will appear here once they complete the hiring process.</p>
+    </div>
+
+    <!-- Candidates List -->
+    <div *ngIf="hiredCandidates.length > 0" class="candidates-list">
+      <div *ngFor="let hiredData of hiredCandidates; trackBy: trackByCandidate" 
+           class="candidate-card"
+           [class.selected]="selectedCandidate === hiredData"
+           (click)="selectCandidate(hiredData)">
+        
+        <!-- Candidate Basic Info -->
+        <div class="candidate-basic">
+          <div class="candidate-avatar">
+            <span class="avatar-text">{{ getCandidateInitials(hiredData.candidate.firstName, hiredData.candidate.lastName) }}</span>
+          </div>
+          <div class="candidate-info">
+            <h3 class="candidate-name">{{ hiredData.candidate.firstName }} {{ hiredData.candidate.lastName }}</h3>
+            <p class="candidate-position">{{ hiredData.requisition.title }}</p>
+            <p class="candidate-department">{{ hiredData.requisition.department }}</p>
+          </div>
+          <div class="candidate-meta">
+            <div class="hired-badge">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>Hired</span>
+            </div>
+            <p class="hired-date">{{ getTimeAgo(hiredData.hiredDate) }}</p>
+          </div>
+        </div>
+
+        <!-- Expanded Details -->
+        <div *ngIf="selectedCandidate === hiredData" class="candidate-details">
+          <div class="details-grid">
+            <!-- Personal Information -->
+            <div class="detail-section">
+              <h4 class="section-title">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                Personal Information
+              </h4>
+              <div class="detail-items">
+                <div class="detail-item">
+                  <span class="detail-label">Email:</span>
+                  <span class="detail-value">{{ hiredData.candidate.email }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Phone:</span>
+                  <span class="detail-value">{{ hiredData.candidate.phone }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Status:</span>
+                  <span class="detail-value status-active">{{ hiredData.candidate.status }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Job Information -->
+            <div class="detail-section">
+              <h4 class="section-title">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6"/>
+                </svg>
+                Job Information
+              </h4>
+              <div class="detail-items">
+                <div class="detail-item">
+                  <span class="detail-label">Position:</span>
+                  <span class="detail-value">{{ hiredData.requisition.title }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Department:</span>
+                  <span class="detail-value">{{ hiredData.requisition.department }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Location:</span>
+                  <span class="detail-value">{{ hiredData.requisition.location }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Employment Type:</span>
+                  <span class="detail-value">{{ hiredData.requisition.employmentType }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Salary:</span>
+                  <span class="detail-value salary">{{ hiredData.requisition.salary }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Application Details -->
+            <div class="detail-section">
+              <h4 class="section-title">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Application Details
+              </h4>
+              <div class="detail-items">
+                <div class="detail-item">
+                  <span class="detail-label">Application ID:</span>
+                  <span class="detail-value">#{{ hiredData.application.applicationId }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Current Stage:</span>
+                  <span class="detail-value stage-hired">{{ hiredData.application.currentStage }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Applied:</span>
+                  <span class="detail-value">{{ getTimeAgo(hiredData.application.createdAt) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Hired:</span>
+                  <span class="detail-value">{{ getTimeAgo(hiredData.hiredDate) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Job Description -->
+            <div class="detail-section full-width">
+              <h4 class="section-title">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Job Description
+              </h4>
+              <div class="job-description">
+                <p>{{ hiredData.requisition.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="modal-footer">
+    <button class="close-btn" (click)="closeModal()">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      Close
+    </button>
+  </div>
+</div>

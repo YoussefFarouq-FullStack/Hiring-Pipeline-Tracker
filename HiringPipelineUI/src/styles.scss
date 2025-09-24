@@ -889,3 +889,17 @@ body {
     font-size: 1.25rem;
   }
 }
+
+// Hired Candidates Modal Container
+::ng-deep .hired-candidates-modal-container {
+  .mat-mdc-dialog-container {
+    padding: 0;
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+  
+  .mat-mdc-dialog-surface {
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+}

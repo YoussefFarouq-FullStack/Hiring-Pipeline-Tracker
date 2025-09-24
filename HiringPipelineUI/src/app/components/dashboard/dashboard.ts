@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CandidateService } from '../../services/candidate.service';
 import { RequisitionService } from '../../services/requisition.service';
 import { ApplicationService } from '../../services/application.service';
@@ -11,11 +12,12 @@ import { Requisition } from '../../models/requisition.model';
 import { Application } from '../../models/application.model';
 import { StageHistory } from '../../models/stage-history.model';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
+import { HiredCandidatesModalComponent, HiredCandidateData } from '../shared/hired-candidates-modal/hired-candidates-modal.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, LoadingSpinnerComponent],
+  imports: [CommonModule, RouterModule, LoadingSpinnerComponent, MatDialogModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -60,7 +62,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     private auditLogService: AuditLogService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -532,6 +535,97 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   navigateToStageHistory(): void {
-    this.router.navigate(['/stage-history']);
+    this.showHiredCandidatesModal();
+  }
+
+  showHiredCandidatesModal(): void {
+    // Get hired candidates data
+    const hiredCandidates = this.getHiredCandidatesData();
+    
+    // Open the modal
+    const dialogRef = this.dialog.open(HiredCandidatesModalComponent, {
+      data: { hiredCandidates },
+      width: '90vw',
+      maxWidth: '900px',
+      maxHeight: '90vh',
+      panelClass: 'hired-candidates-modal-container'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('Hired candidates modal closed');
+    });
+  }
+
+  private getHiredCandidatesData(): HiredCandidateData[] {
+    const hiredCandidates: HiredCandidateData[] = [];
+    
+    // Get all stage histories that indicate hiring
+    const hiredHistories = this.recentHistory.filter(h => 
+      h.toStage.toLowerCase().includes('hired') || 
+      h.toStage.toLowerCase().includes('offer accepted')
+    );
+
+    // For each hired history, find the related data
+    hiredHistories.forEach(history => {
+      const application = this.applications.find(app => app.applicationId === history.applicationId);
+      if (application) {
+        const candidate = this.candidates.find(c => c.candidateId === application.candidateId);
+        const requisition = this.requisitions.find(r => r.requisitionId === application.requisitionId);
+        
+        if (candidate && requisition) {
+          hiredCandidates.push({
+            candidate,
+            application,
+            requisition,
+            hiredDate: history.movedAt
+          });
+        }
+      }
+    });
+
+    // If no real data, add sample data
+    if (hiredCandidates.length === 0) {
+      hiredCandidates.push({
+        candidate: {
+          candidateId: 1,
+          firstName: 'Sarah',
+          lastName: 'Johnson',
+          email: 'sarah.johnson@company.com',
+          phone: '+1-555-0123',
+          status: 'Active',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        application: {
+          applicationId: 1,
+          candidateId: 1,
+          requisitionId: 1,
+          currentStage: 'Hired',
+          status: 'Active',
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        requisition: {
+          requisitionId: 1,
+          title: 'Senior React Developer',
+          description: 'We are looking for a Senior React Developer to join our engineering team. You will be responsible for developing and maintaining high-quality web applications using React, TypeScript, and modern frontend technologies. The ideal candidate should have strong experience with React ecosystem, state management, and modern development practices.',
+          department: 'Engineering',
+          location: 'San Francisco, CA',
+          employmentType: 'Full-time',
+          salary: '$120,000 - $160,000',
+          isDraft: false,
+          priority: 'High',
+          requiredSkills: 'React, TypeScript, Node.js, GraphQL',
+          experienceLevel: 'Senior',
+          jobLevel: 'Senior',
+          status: 'Open',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        hiredDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+      });
+    }
+
+    return hiredCandidates;
   }
 }
