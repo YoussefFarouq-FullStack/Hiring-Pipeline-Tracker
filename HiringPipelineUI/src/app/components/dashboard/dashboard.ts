@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { CandidateService } from '../../services/candidate.service';
 import { RequisitionService } from '../../services/requisition.service';
 import { ApplicationService } from '../../services/application.service';
@@ -59,7 +59,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     private stageHistoryService: StageHistoryService,
     private auditLogService: AuditLogService,
     private cdr: ChangeDetectorRef,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -166,7 +167,20 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       this.requisitionService.getRequisitionsForDashboard().subscribe({
         next: (requisitions: Requisition[]) => {
           console.log('📊 Requisitions received:', requisitions.length);
-          this.activeRequisitions = requisitions.filter(r => r.status === 'Active').length;
+          console.log('📊 Requisition statuses:', requisitions.map(r => ({ id: r.requisitionId, status: r.status })));
+          
+          // Count active requisitions - check for various active statuses
+          this.activeRequisitions = requisitions.filter(r => 
+            r.status === 'Active' || 
+            r.status === 'Open' || 
+            r.status === 'Published' ||
+            r.status === 'active' ||
+            r.status === 'open' ||
+            r.status === 'published'
+          ).length;
+          
+          console.log('📈 Active requisitions count:', this.activeRequisitions);
+          
           this.requisitions = requisitions;
           // Get recent requisitions (last 5 created)
           this.recentRequisitions = requisitions
@@ -502,5 +516,22 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   trackByRequisition(index: number, item: Requisition): number {
     return item.requisitionId;
+  }
+
+  // Navigation methods for metric cards
+  navigateToCandidates(): void {
+    this.router.navigate(['/candidates']);
+  }
+
+  navigateToRequisitions(): void {
+    this.router.navigate(['/requisitions']);
+  }
+
+  navigateToApplications(): void {
+    this.router.navigate(['/applications']);
+  }
+
+  navigateToStageHistory(): void {
+    this.router.navigate(['/stage-history']);
   }
 }
