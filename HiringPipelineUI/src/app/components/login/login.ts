@@ -28,6 +28,7 @@ export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   isLoading = false;
   hidePassword = true;
+  showAdminInfo = false;
 
   constructor(
     private fb: FormBuilder,
@@ -116,5 +117,22 @@ export class LoginComponent implements OnInit {
   isFieldInvalid(fieldName: string): boolean {
     const control = this.loginForm.get(fieldName);
     return !!(control && control.invalid && control.touched);
+  }
+
+  toggleAdminInfo(): void {
+    this.showAdminInfo = !this.showAdminInfo;
+  }
+
+  fillCredentials(username: string, password: string): void {
+    this.loginForm.patchValue({
+      username: username,
+      password: password
+    });
+    
+    // Show a brief success message
+    this.snackBar.open(`Credentials filled: ${username}`, 'Close', {
+      duration: 2000,
+      panelClass: ['info-snackbar']
+    });
   }
 }
