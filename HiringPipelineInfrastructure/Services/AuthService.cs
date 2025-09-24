@@ -91,18 +91,32 @@ namespace HiringPipelineInfrastructure.Services
                                 .ThenInclude(rp => rp.Permission)
                 .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
 
-            if (token == null || !token.IsActive || token.User == null || !token.User.IsActive)
+            if (token == null || token.User == null)
+                return null;
+
+            // Token reuse check
+            if (token.IsRevoked)
             {
+                // Optionally revoke all tokens for this user to block attackers
+                await RevokeAllRefreshTokensForUserAsync(token.UserId, ipAddress);
                 return null;
             }
 
-            // Revoke the old refresh token
-            await RevokeRefreshTokenAsync(token, ipAddress, "Replaced by new refresh token");
+            if (token.IsRevoked || token.ExpiryDate <= DateTime.UtcNow || !token.User.IsActive)
+                return null;
 
-            // Generate new tokens
-            var newAccessToken = GenerateJwtToken(token.User);
+            // Revoke the old refresh token and mark it as replaced
             var newRefreshToken = await GenerateRefreshTokenAsync(token.UserId);
+            token.IsRevoked = true;
+            token.RevokedAt = DateTime.UtcNow;
+            token.RevokedByIp = ipAddress;
+            token.ReplacedByTokenId = newRefreshToken.Id;
 
+            _context.RefreshTokens.Update(token);
+            await _context.SaveChangesAsync();
+
+            // Generate new access token
+            var newAccessToken = GenerateJwtToken(token.User);
             var accessTokenExpiration = DateTime.UtcNow.AddMinutes(GetAccessTokenExpirationMinutes());
 
             return new AuthResponseDto
@@ -129,12 +143,13 @@ namespace HiringPipelineInfrastructure.Services
             };
         }
 
+
         public async Task<bool> RevokeRefreshTokenAsync(string refreshToken, string? ipAddress = null)
         {
             var token = await _context.RefreshTokens
                 .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
 
-            if (token == null || !token.IsActive)
+            if (token == null || token.IsRevoked || token.ExpiryDate <= DateTime.UtcNow)
             {
                 return false;
             }
@@ -146,7 +161,7 @@ namespace HiringPipelineInfrastructure.Services
         public async Task<bool> RevokeAllRefreshTokensForUserAsync(int userId, string? ipAddress = null)
         {
             var tokens = await _context.RefreshTokens
-                .Where(rt => rt.UserId == userId && rt.IsActive)
+                .Where(rt => rt.UserId == userId && !rt.IsRevoked && rt.ExpiryDate > DateTime.UtcNow)
                 .ToListAsync();
 
             foreach (var token in tokens)
@@ -159,18 +174,30 @@ namespace HiringPipelineInfrastructure.Services
 
         private async Task<RefreshToken> GenerateRefreshTokenAsync(int userId)
         {
-            // Generate a cryptographically secure random token
+            // Revoke all existing active tokens for this user
+            var oldTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && !rt.IsRevoked && rt.ExpiryDate > DateTime.UtcNow)
+                .ToListAsync();
+
+            foreach (var token in oldTokens)
+            {
+                token.IsRevoked = true;
+                token.RevokedAt = DateTime.UtcNow;
+                token.RevokedByIp = "system"; // or pass ipAddress if available
+            }
+
+            // Generate new cryptographically secure random token
             var randomBytes = new byte[64];
             using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(randomBytes);
-            var token = Convert.ToBase64String(randomBytes);
 
             var refreshToken = new RefreshToken
             {
                 UserId = userId,
-                Token = token,
+                Token = Convert.ToBase64String(randomBytes),
                 ExpiryDate = DateTime.UtcNow.AddDays(GetRefreshTokenExpirationDays()),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                IsRevoked = false
             };
 
             _context.RefreshTokens.Add(refreshToken);
@@ -178,6 +205,7 @@ namespace HiringPipelineInfrastructure.Services
 
             return refreshToken;
         }
+
 
         private async Task RevokeRefreshTokenAsync(RefreshToken token, string? ipAddress, string reason)
         {
