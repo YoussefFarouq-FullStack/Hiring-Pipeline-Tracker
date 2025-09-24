@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using HiringPipelineAPI.Services.Interfaces;
-using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
 using HiringPipelineCore.Interfaces.Services;
 using HiringPipelineCore.Entities;
@@ -39,6 +38,33 @@ public class ApplicationsController : ControllerBase
     {
         var applications = await _applicationService.GetAllAsync();
         return Ok(applications);
+    }
+
+    /// <summary>
+    /// Searches applications with filtering and pagination
+    /// </summary>
+    /// <param name="searchTerm">Search term for candidate name, position, or stage</param>
+    /// <param name="status">Filter by application status</param>
+    /// <param name="stage">Filter by current stage</param>
+    /// <param name="department">Filter by department</param>
+    /// <param name="skip">Number of records to skip</param>
+    /// <param name="take">Number of records to take</param>
+    /// <returns>Paginated search results</returns>
+    /// <response code="200">Returns the search results</response>
+    /// <response code="500">If there was an internal server error</response>
+    [HttpGet("search")]
+    [Authorize(Roles = "Admin,Recruiter,Hiring Manager,Interviewer,Read-only")]
+    [ProducesResponseType(typeof(SearchResponseDto<ApplicationDto>), 200)]
+    public async Task<ActionResult<SearchResponseDto<ApplicationDto>>> SearchApplications(
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] string? status = null,
+        [FromQuery] string? stage = null,
+        [FromQuery] string? department = null,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 50)
+    {
+        var result = await _applicationService.SearchAsync(searchTerm, status, stage, department, skip, take);
+        return Ok(result);
     }
 
     /// <summary>

@@ -90,4 +90,36 @@ export class CandidateService {
       catchError(this.handleError)
     );
   }
+
+  // Search candidates with server-side filtering and pagination
+  searchCandidates(params: {
+    searchTerm?: string;
+    status?: string;
+    requisitionId?: number;
+    skip?: number;
+    take?: number;
+  }): Observable<SearchResponse<Candidate>> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.searchTerm) queryParams.append('searchTerm', params.searchTerm);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.requisitionId) queryParams.append('requisitionId', params.requisitionId.toString());
+    if (params.skip !== undefined) queryParams.append('skip', params.skip.toString());
+    if (params.take !== undefined) queryParams.append('take', params.take.toString());
+
+    const url = `${this.apiUrl}/search?${queryParams.toString()}`;
+    return this.http.get<SearchResponse<Candidate>>(url).pipe(
+      retry(1),
+      catchError(this.handleError)
+    );
+  }
+}
+
+// Search response interface
+export interface SearchResponse<T> {
+  items: T[];
+  totalCount: number;
+  skip: number;
+  take: number;
+  hasMore: boolean;
 }

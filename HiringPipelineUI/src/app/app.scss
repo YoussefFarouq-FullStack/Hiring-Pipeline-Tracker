@@ -5,44 +5,21 @@
 
 /* Global font size reduction */
 html {
-  font-size: 14px; /* Reduced from default 16px */
+  font-size: 14px;
 }
 
 body {
-  font-size: 0.875rem; /* 14px equivalent */
+  font-size: 0.875rem;
   line-height: 1.4;
 }
 
-/* Additional font size adjustments */
-.text-xs {
-  font-size: 0.75rem !important; /* 12px */
-  line-height: 1rem !important;
-}
-
-.text-sm {
-  font-size: 0.875rem !important; /* 14px */
-  line-height: 1.25rem !important;
-}
-
-.text-base {
-  font-size: 0.875rem !important; /* 14px */
-  line-height: 1.5rem !important;
-}
-
-.text-lg {
-  font-size: 1rem !important; /* 16px */
-  line-height: 1.75rem !important;
-}
-
-.text-xl {
-  font-size: 1.125rem !important; /* 18px */
-  line-height: 1.75rem !important;
-}
-
-.text-2xl {
-  font-size: 1.25rem !important; /* 20px */
-  line-height: 2rem !important;
-}
+/* Font size utilities */
+.text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
+.text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+.text-base { font-size: 0.875rem !important; line-height: 1.5rem !important; }
+.text-lg { font-size: 1rem !important; line-height: 1.75rem !important; }
+.text-xl { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+.text-2xl { font-size: 1.25rem !important; line-height: 2rem !important; }
 
 /* Main App Container */
 .app-container {

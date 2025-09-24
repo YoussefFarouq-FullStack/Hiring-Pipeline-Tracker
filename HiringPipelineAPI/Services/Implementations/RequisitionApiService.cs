@@ -1,5 +1,4 @@
 using AutoMapper;
-using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
 using HiringPipelineCore.Entities;
 using HiringPipelineCore.Interfaces.Services;
@@ -72,6 +71,22 @@ namespace HiringPipelineAPI.Services.Implementations
         public async Task CloseAsync(int id)
         {
             await _requisitionService.CloseAsync(id);
+        }
+
+        public async Task<SearchResponseDto<RequisitionDto>> SearchAsync(string? searchTerm, string? status, string? department, string? priority, string? employmentType, string? experienceLevel, bool? isDraft, int skip = 0, int take = 50)
+        {
+            var requisitions = await _requisitionService.SearchAsync(searchTerm, status, department, priority, employmentType, experienceLevel, isDraft, skip, take);
+            var totalCount = await _requisitionService.GetSearchCountAsync(searchTerm, status, department, priority, employmentType, experienceLevel, isDraft);
+            
+            var requisitionDtos = _mapper.Map<IEnumerable<RequisitionDto>>(requisitions);
+            
+            return new SearchResponseDto<RequisitionDto>
+            {
+                Items = requisitionDtos,
+                TotalCount = totalCount,
+                Skip = skip,
+                Take = take
+            };
         }
     }
 }

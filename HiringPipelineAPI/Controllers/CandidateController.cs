@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using HiringPipelineAPI.Services.Interfaces;
-using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
 
 namespace HiringPipelineAPI.Controllers;
@@ -35,6 +34,31 @@ public class CandidatesController : ControllerBase
     {
         var candidates = await _candidateService.GetAllAsync();
         return Ok(candidates);
+    }
+
+    /// <summary>
+    /// Searches candidates with filtering and pagination
+    /// </summary>
+    /// <param name="searchTerm">Search term for name, email, or skills</param>
+    /// <param name="status">Filter by candidate status</param>
+    /// <param name="requisitionId">Filter by requisition ID</param>
+    /// <param name="skip">Number of records to skip</param>
+    /// <param name="take">Number of records to take</param>
+    /// <returns>Paginated search results</returns>
+    /// <response code="200">Returns the search results</response>
+    /// <response code="500">If there was an internal server error</response>
+    [HttpGet("search")]
+    [Authorize(Roles = "Admin,Recruiter,Hiring Manager,Interviewer,Read-only")]
+    [ProducesResponseType(typeof(SearchResponseDto<CandidateDto>), 200)]
+    public async Task<ActionResult<SearchResponseDto<CandidateDto>>> SearchCandidates(
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] string? status = null,
+        [FromQuery] int? requisitionId = null,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 50)
+    {
+        var result = await _candidateService.SearchAsync(searchTerm, status, requisitionId, skip, take);
+        return Ok(result);
     }
 
     /// <summary>

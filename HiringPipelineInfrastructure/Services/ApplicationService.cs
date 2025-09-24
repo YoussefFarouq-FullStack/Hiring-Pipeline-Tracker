@@ -149,5 +149,15 @@ namespace HiringPipelineInfrastructure.Services
             application.UpdatedAt = DateTime.UtcNow;
             await _applicationRepository.UpdateAsync(application);
         }
+
+        public async Task<IEnumerable<Application>> SearchAsync(string? searchTerm, string? status, string? stage, string? department, int skip = 0, int take = 50)
+        {
+            return await _applicationRepository.SearchAsync(searchTerm, status, stage, department, skip, take);
+        }
+
+        public async Task<int> GetSearchCountAsync(string? searchTerm, string? status, string? stage, string? department)
+        {
+            return await _applicationRepository.GetSearchCountAsync(searchTerm, status, stage, department);
+        }
     }
 }

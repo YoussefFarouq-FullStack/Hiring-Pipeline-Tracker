@@ -1,4 +1,3 @@
-using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
 
 namespace HiringPipelineAPI.Services.Interfaces
@@ -16,5 +15,8 @@ namespace HiringPipelineAPI.Services.Interfaces
         Task<bool> RequisitionExistsAsync(int requisitionId);
         Task ChangeStatusAsync(int id, ChangeApplicationStatusDto statusDto);
         Task MoveToStageAsync(int id, MoveToStageDto stageDto);
+        
+        // Search methods
+        Task<SearchResponseDto<ApplicationDto>> SearchAsync(string? searchTerm, string? status, string? stage, string? department, int skip = 0, int take = 50);
     }
 }

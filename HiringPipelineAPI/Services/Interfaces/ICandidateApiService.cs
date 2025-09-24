@@ -1,4 +1,3 @@
-using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
 
 namespace HiringPipelineAPI.Services.Interfaces
@@ -16,5 +15,8 @@ namespace HiringPipelineAPI.Services.Interfaces
         Task<FileUploadResultDto> UploadResumeAsync(int id, string fileName, byte[] fileContent);
         Task AddSkillsAsync(int id, List<string> skills);
         Task ArchiveAsync(int id);
+        
+        // Search methods
+        Task<SearchResponseDto<CandidateDto>> SearchAsync(string? searchTerm, string? status, int? requisitionId, int skip = 0, int take = 50);
     }
 }

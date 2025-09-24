@@ -1,61 +1,45 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using HiringPipelineCore.DTOs;
-using HiringPipelineCore.Interfaces.Services;
 using Microsoft.EntityFrameworkCore;
-using HiringPipelineInfrastructure.Data;
 using System.Security.Claims;
+using HiringPipelineCore.DTOs;
 using HiringPipelineCore.Entities;
+using HiringPipelineCore.Interfaces.Services;
+using HiringPipelineInfrastructure.Data;
 
 namespace HiringPipelineAPI.Controllers
 {
-    /// <summary>
-    /// Authentication endpoints for user login, token refresh, and logout
-    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly HiringPipelineDbContext _context;
         private readonly IAuditService _auditService;
+        private readonly HiringPipelineDbContext _context;
 
-        public AuthController(IAuthService authService, HiringPipelineDbContext context, IAuditService auditService)
+        public AuthController(IAuthService authService, IAuditService auditService, HiringPipelineDbContext context)
         {
             _authService = authService;
-            _context = context;
             _auditService = auditService;
+            _context = context;
         }
 
-        /// <summary>
-        /// Authenticates a user and returns JWT access token and refresh token
-        /// </summary>
-        /// <param name="loginDto">User credentials</param>
-        /// <returns>JWT access token, refresh token, and user information</returns>
-        /// <response code="200">Login successful</response>
-        /// <response code="401">Invalid credentials</response>
-        /// <response code="400">Invalid request data</response>
+        // User login -> issues JWT + refresh token
         [HttpPost("login")]
         [ProducesResponseType(typeof(AuthResponseDto), 200)]
         [ProducesResponseType(401)]
-        [ProducesResponseType(400)]
-        public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginDto loginDto)
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var ipAddress = GetClientIpAddress();
-            var result = await _authService.LoginAsync(loginDto);
+            var ip = GetClientIp();
+            var result = await _authService.LoginAsync(dto);
 
             if (result == null)
-            {
                 return Unauthorized(new { message = "Invalid username or password" });
-            }
 
-            // Log successful login
+            // Audit log
             await _auditService.LogAsync(
                 result.User.Id,
                 result.User.Username,
@@ -64,8 +48,8 @@ namespace HiringPipelineAPI.Controllers
                 "Authentication",
                 null,
                 null,
-                $"User logged in from IP: {ipAddress}",
-                ipAddress,
+                $"User logged in from IP: {ip}",
+                ip,
                 Request.Headers["User-Agent"].FirstOrDefault(),
                 AuditLogType.Authentication
             );
@@ -73,71 +57,67 @@ namespace HiringPipelineAPI.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// Refreshes the access token using a valid refresh token
-        /// </summary>
-        /// <param name="refreshTokenDto">Refresh token</param>
-        /// <returns>New JWT access token and refresh token</returns>
-        /// <response code="200">Token refreshed successfully</response>
-        /// <response code="401">Invalid or expired refresh token</response>
-        /// <response code="400">Invalid request data</response>
+        // Refresh access token using refresh token (with rotation)
         [HttpPost("refresh")]
         [ProducesResponseType(typeof(AuthResponseDto), 200)]
         [ProducesResponseType(401)]
-        [ProducesResponseType(400)]
-        public async Task<ActionResult<AuthResponseDto>> RefreshToken([FromBody] RefreshTokenDto refreshTokenDto)
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var ipAddress = GetClientIpAddress();
-            var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken, ipAddress);
+            var ip = GetClientIp();
+
+            var result = await _authService.RefreshTokenAsync(dto.RefreshToken, ip);
 
             if (result == null)
-            {
                 return Unauthorized(new { message = "Invalid or expired refresh token" });
-            }
 
             return Ok(result);
         }
 
-        /// <summary>
-        /// Logs out the user and revokes all refresh tokens
-        /// </summary>
-        /// <returns>Success message</returns>
-        /// <response code="200">Logout successful</response>
-        /// <response code="401">User not authenticated</response>
+        // Revoke a specific refresh token
+        [HttpPost("revoke")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> Revoke([FromBody] RefreshTokenDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var ip = GetClientIp();
+            var success = await _authService.RevokeRefreshTokenAsync(dto.RefreshToken, ip);
+
+            if (!success)
+                return NotFound(new { message = "Token not found or already revoked" });
+
+            return Ok(new { message = "Token revoked successfully" });
+        }
+
+        // Logout -> revoke ALL refresh tokens for this user
         [HttpPost("logout")]
         [Authorize]
-        [ProducesResponseType(200)]
-        [ProducesResponseType(401)]
-        public async Task<ActionResult> Logout()
+        public async Task<IActionResult> Logout()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
-            {
                 return Unauthorized(new { message = "Invalid user token" });
-            }
 
-            var ipAddress = GetClientIpAddress();
-            await _authService.RevokeAllRefreshTokensForUserAsync(userId, ipAddress);
+            var ip = GetClientIp();
+            await _authService.RevokeAllRefreshTokensForUserAsync(userId, ip);
 
-            // Log logout
             var username = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "Unknown";
-            
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "Unknown";
+
+            // Audit log
             await _auditService.LogAsync(
                 userId,
                 username,
-                userRole,
+                role,
                 "Logout",
                 "Authentication",
                 null,
                 null,
-                $"User logged out from IP: {ipAddress}",
-                ipAddress,
+                $"User logged out from IP: {ip}",
+                ip,
                 Request.Headers["User-Agent"].FirstOrDefault(),
                 AuditLogType.Authentication
             );
@@ -145,77 +125,42 @@ namespace HiringPipelineAPI.Controllers
             return Ok(new { message = "Logout successful" });
         }
 
-        /// <summary>
-        /// Revokes a specific refresh token
-        /// </summary>
-        /// <param name="refreshTokenDto">Refresh token to revoke</param>
-        /// <returns>Success message</returns>
-        /// <response code="200">Token revoked successfully</response>
-        /// <response code="400">Invalid request data</response>
-        /// <response code="404">Token not found</response>
-        [HttpPost("revoke")]
-        [ProducesResponseType(200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        public async Task<ActionResult> RevokeToken([FromBody] RefreshTokenDto refreshTokenDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var ipAddress = GetClientIpAddress();
-            var success = await _authService.RevokeRefreshTokenAsync(refreshTokenDto.RefreshToken, ipAddress);
-
-            if (!success)
-            {
-                return NotFound(new { message = "Token not found or already revoked" });
-            }
-
-            return Ok(new { message = "Token revoked successfully" });
-        }
-
-        /// <summary>
-        /// Debug endpoint to check if users exist in database (temporary)
-        /// </summary>
+        // Debug -> list users in DB
         [HttpGet("debug/users")]
-        public async Task<ActionResult> GetUsers()
+        public async Task<IActionResult> GetUsers()
         {
-            // This is a temporary debug endpoint - remove in production
             var users = await _context.Users
                 .Include(u => u.UserRoles)
-                    .ThenInclude(ur => ur.Role)
-                .Select(u => new { 
-                    u.Id, 
-                    u.Username, 
+                .ThenInclude(ur => ur.Role)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.Username,
                     u.Email,
                     Roles = u.UserRoles.Select(ur => ur.Role.Name).ToList(),
                     PasswordHashLength = u.PasswordHash.Length,
-                    u.CreatedAt 
-                }).ToListAsync();
-            
-            return Ok(new { 
+                    u.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
                 message = "Debug endpoint - users in database",
                 userCount = users.Count,
-                users = users
+                users
             });
         }
 
-        private string? GetClientIpAddress()
+        private string? GetClientIp()
         {
-            var forwardedFor = Request.Headers["X-Forwarded-For"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(forwardedFor))
-            {
-                return forwardedFor.Split(',')[0].Trim();
-            }
+            var fwd = Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(fwd))
+                return fwd.Split(',')[0].Trim();
 
             var realIp = Request.Headers["X-Real-IP"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(realIp))
-            {
-                return realIp;
-            }
-
-            return Request.HttpContext.Connection.RemoteIpAddress?.ToString();
+            return !string.IsNullOrEmpty(realIp)
+                ? realIp
+                : Request.HttpContext.Connection.RemoteIpAddress?.ToString();
         }
     }
 }

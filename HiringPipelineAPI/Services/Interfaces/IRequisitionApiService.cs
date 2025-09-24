@@ -1,4 +1,3 @@
-using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
 
 namespace HiringPipelineAPI.Services.Interfaces
@@ -15,5 +14,8 @@ namespace HiringPipelineAPI.Services.Interfaces
         void ResetIdentitySeed();
         Task PublishAsync(int id);
         Task CloseAsync(int id);
+        
+        // Search methods
+        Task<SearchResponseDto<RequisitionDto>> SearchAsync(string? searchTerm, string? status, string? department, string? priority, string? employmentType, string? experienceLevel, bool? isDraft, int skip = 0, int take = 50);
     }
 }

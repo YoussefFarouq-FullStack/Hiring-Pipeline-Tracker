@@ -7,7 +7,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Application } from '../../models/application.model';
 import { Candidate } from '../../models/candidate.model';
 import { Requisition } from '../../models/requisition.model';
-import { ApplicationService } from '../../services/application.service';
+import { ApplicationService, SearchResponse } from '../../services/application.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { ApplicationDialogComponent } from './application-dialog/application-dialog';
 import { StageHistoryDialogComponent } from '../stage-history/stage-history-dialog/stage-history-dialog';
@@ -52,9 +52,14 @@ export class ApplicationsComponent implements OnInit {
   currentPage = 1;
   pageSize = 6;
   totalPages = 1;
+  totalItemsCount = 0;
 
   private candidatesLoaded = false;
   private requisitionsLoaded = false;
+  
+  // Search state
+  useServerSideSearch = true;
+  searchTimeout: any;
 
   constructor(
     private appService: ApplicationService,
@@ -74,6 +79,14 @@ export class ApplicationsComponent implements OnInit {
   }
 
   loadApplications(): void {
+    if (this.useServerSideSearch) {
+      this.performSearch();
+    } else {
+      this.loadAllApplications();
+    }
+  }
+
+  private loadAllApplications(): void {
     this.isLoading = true;
     this.hasError = false;
     this.errorMessage = '';
@@ -113,6 +126,59 @@ export class ApplicationsComponent implements OnInit {
       error: () => {
         this.hasError = true;
         this.errorMessage = 'Unable to load applications. Please try again later.';
+        this.isLoading = false;
+        this.showError(this.errorMessage);
+      }
+    });
+  }
+
+  private performSearch(): void {
+    this.isLoading = true;
+    this.hasError = false;
+    this.errorMessage = '';
+
+    const searchParams = {
+      searchTerm: this.searchTerm || undefined,
+      status: this.selectedStat !== 'all' ? this.selectedStat : undefined,
+      stage: this.selectedStage || undefined,
+      department: this.selectedDepartment || undefined,
+      skip: (this.currentPage - 1) * this.pageSize,
+      take: this.pageSize
+    };
+
+    this.appService.searchApplications(searchParams).subscribe({
+      next: (response: SearchResponse<Application>) => {
+        console.log('Search response:', response);
+        
+        // Normalize data if needed
+        const normalizedData = response.items.map(app => {
+          const anyApp = app as any;
+          if (!anyApp.applicationId && anyApp.ApplicationId) {
+            return {
+              ...anyApp,
+              applicationId: anyApp.ApplicationId,
+              candidateId: anyApp.CandidateId,
+              requisitionId: anyApp.RequisitionId,
+              currentStage: anyApp.CurrentStage,
+              status: anyApp.Status,
+              createdAt: anyApp.CreatedAt,
+              updatedAt: anyApp.UpdatedAt
+            } as Application;
+          }
+          return app;
+        });
+        
+        this.applications = normalizedData;
+        this.filteredApplications = normalizedData;
+        this.totalItemsCount = response.totalCount;
+        this.totalPages = Math.ceil(response.totalCount / this.pageSize);
+        this.isLoading = false;
+        this.loadRelatedData();
+      },
+      error: (error: Error) => {
+        console.error('Error searching applications:', error);
+        this.hasError = true;
+        this.errorMessage = error.message || 'Failed to search applications';
         this.isLoading = false;
         this.showError(this.errorMessage);
       }
@@ -171,6 +237,29 @@ export class ApplicationsComponent implements OnInit {
   }
 
   filterApplications(): void {
+    if (this.useServerSideSearch) {
+      this.currentPage = 1; // Reset to first page when filtering
+      // If search term is empty or very short, search immediately
+      if (!this.searchTerm || this.searchTerm.length <= 1) {
+        this.performSearch();
+      } else {
+        this.debouncedSearch();
+      }
+    } else {
+      this.applyClientSideFilters();
+    }
+  }
+
+  private debouncedSearch(): void {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+    this.searchTimeout = setTimeout(() => {
+      this.performSearch();
+    }, 150); // Reduced to 150ms for faster response
+  }
+
+  private applyClientSideFilters(): void {
     let filtered = [...this.applications];
 
     // Filter by selected stat
@@ -372,17 +461,34 @@ export class ApplicationsComponent implements OnInit {
 
   // Pagination helpers
   updatePagination(): void {
-    this.totalPages = Math.max(1, Math.ceil(this.filteredApplications.length / this.pageSize));
-    if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
+    if (this.useServerSideSearch) {
+      // For server-side search, pagination is handled by the search response
+      this.totalPages = Math.max(1, Math.ceil(this.totalItemsCount / this.pageSize));
+      if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
+    } else {
+      // For client-side pagination
+      this.totalPages = Math.max(1, Math.ceil(this.filteredApplications.length / this.pageSize));
+      if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
+    }
   }
 
   get paginatedApplications(): Application[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredApplications.slice(start, start + this.pageSize);
+    if (this.useServerSideSearch) {
+      // For server-side search, data is already paginated
+      return this.applications;
+    } else {
+      // For client-side pagination
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.filteredApplications.slice(start, start + this.pageSize);
+    }
   }
 
   get totalItems(): number {
-    return this.filteredApplications.length;
+    if (this.useServerSideSearch) {
+      return this.totalItemsCount || this.applications.length;
+    } else {
+      return this.filteredApplications.length;
+    }
   }
 
   getTotalPages(): number {
@@ -409,18 +515,27 @@ export class ApplicationsComponent implements OnInit {
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
+      if (this.useServerSideSearch) {
+        this.performSearch();
+      }
     }
   }
 
   nextPage(): void {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
+      if (this.useServerSideSearch) {
+        this.performSearch();
+      }
     }
   }
 
   previousPage(): void {
     if (this.currentPage > 1) {
       this.currentPage--;
+      if (this.useServerSideSearch) {
+        this.performSearch();
+      }
     }
   }
 
@@ -575,6 +690,10 @@ export class ApplicationsComponent implements OnInit {
   // 🔹 Empty state methods
   clearSearch(): void {
     this.searchTerm = '';
+    this.selectedStat = 'all';
+    this.selectedStage = '';
+    this.selectedDepartment = '';
+    this.currentPage = 1;
     this.filterApplications();
   }
 

@@ -14,5 +14,9 @@ namespace HiringPipelineCore.Interfaces.Services
         void ResetIdentitySeed();
         Task PublishAsync(int id);
         Task CloseAsync(int id);
+        
+        // Search methods
+        Task<IEnumerable<Requisition>> SearchAsync(string? searchTerm, string? status, string? department, string? priority, string? employmentType, string? experienceLevel, bool? isDraft, int skip = 0, int take = 50);
+        Task<int> GetSearchCountAsync(string? searchTerm, string? status, string? department, string? priority, string? employmentType, string? experienceLevel, bool? isDraft);
     }
 }

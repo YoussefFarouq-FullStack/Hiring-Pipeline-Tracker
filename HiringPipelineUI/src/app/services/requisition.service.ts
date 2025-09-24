@@ -122,4 +122,44 @@ export class RequisitionService {
       default: return 'text-gray-600 bg-gray-100';
     }
   }
+
+  // Search requisitions with server-side filtering and pagination
+  searchRequisitions(params: {
+    searchTerm?: string;
+    status?: string;
+    department?: string;
+    priority?: string;
+    employmentType?: string;
+    experienceLevel?: string;
+    isDraft?: boolean;
+    skip?: number;
+    take?: number;
+  }): Observable<SearchResponse<Requisition>> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.searchTerm) queryParams.append('searchTerm', params.searchTerm);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.department) queryParams.append('department', params.department);
+    if (params.priority) queryParams.append('priority', params.priority);
+    if (params.employmentType) queryParams.append('employmentType', params.employmentType);
+    if (params.experienceLevel) queryParams.append('experienceLevel', params.experienceLevel);
+    if (params.isDraft !== undefined) queryParams.append('isDraft', params.isDraft.toString());
+    if (params.skip !== undefined) queryParams.append('skip', params.skip.toString());
+    if (params.take !== undefined) queryParams.append('take', params.take.toString());
+
+    const url = `${this.apiUrl}/search?${queryParams.toString()}`;
+    return this.http.get<SearchResponse<Requisition>>(url).pipe(
+      retry(1),
+      catchError(this.handleError)
+    );
+  }
+}
+
+// Search response interface
+export interface SearchResponse<T> {
+  items: T[];
+  totalCount: number;
+  skip: number;
+  take: number;
+  hasMore: boolean;
 }

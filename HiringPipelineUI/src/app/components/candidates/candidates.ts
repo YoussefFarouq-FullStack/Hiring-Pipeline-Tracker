@@ -15,7 +15,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Candidate } from '../../models/candidate.model';
-import { CandidateService } from '../../services/candidate.service';
+import { CandidateService, SearchResponse } from '../../services/candidate.service';
 import { ApplicationService } from '../../services/application.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { Application } from '../../models/application.model';
@@ -67,6 +67,10 @@ export class CandidatesComponent implements OnInit {
   pageSize = 6;
   currentPage = 0;
   totalItems = 0;
+  
+  // Search state
+  useServerSideSearch = true;
+  searchTimeout: any;
 
   constructor(
     private candidateService: CandidateService, 
@@ -90,13 +94,21 @@ export class CandidatesComponent implements OnInit {
   }
 
   loadCandidates(): void {
+    if (this.useServerSideSearch) {
+      this.performSearch();
+    } else {
+      this.loadAllCandidates();
+    }
+  }
+
+  private loadAllCandidates(): void {
     this.isLoading = true;
     this.hasError = false;
     this.errorMessage = '';
     
     this.candidateService.getCandidates().subscribe({
       next: (data: Candidate[]) => {
-          this.candidates = data;
+        this.candidates = data;
         this.applyFilters();
         this.isLoading = false;
       },
@@ -104,6 +116,37 @@ export class CandidatesComponent implements OnInit {
         console.error('Error loading candidates:', error);
         this.hasError = true;
         this.errorMessage = error.message || 'Failed to load candidates';
+        this.isLoading = false;
+        this.showError(this.errorMessage);
+      }
+    });
+  }
+
+  private performSearch(): void {
+    this.isLoading = true;
+    this.hasError = false;
+    this.errorMessage = '';
+
+    const searchParams = {
+      searchTerm: this.searchTerm || undefined,
+      status: this.selectedStatus || undefined,
+      requisitionId: this.selectedRequisition ? parseInt(this.selectedRequisition) : undefined,
+      skip: this.currentPage * this.pageSize,
+      take: this.pageSize
+    };
+
+    this.candidateService.searchCandidates(searchParams).subscribe({
+      next: (response: SearchResponse<Candidate>) => {
+        this.candidates = response.items;
+        this.filteredCandidates = response.items;
+        this.totalItems = response.totalCount;
+        this.pagedCandidates = response.items;
+        this.isLoading = false;
+      },
+      error: (error: Error) => {
+        console.error('Error searching candidates:', error);
+        this.hasError = true;
+        this.errorMessage = error.message || 'Failed to search candidates';
         this.isLoading = false;
         this.showError(this.errorMessage);
       }
@@ -157,7 +200,26 @@ export class CandidatesComponent implements OnInit {
   }
 
   filterCandidates(): void {
-    this.applyFilters();
+    if (this.useServerSideSearch) {
+      this.currentPage = 0; // Reset to first page when filtering
+      // If search term is empty or very short, search immediately
+      if (!this.searchTerm || this.searchTerm.length <= 1) {
+        this.performSearch();
+      } else {
+        this.debouncedSearch();
+      }
+    } else {
+      this.applyFilters();
+    }
+  }
+
+  private debouncedSearch(): void {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+    this.searchTimeout = setTimeout(() => {
+      this.performSearch();
+    }, 150); // Reduced to 150ms for faster response
   }
 
   filterByStat(stat: string): void {
@@ -171,18 +233,24 @@ export class CandidatesComponent implements OnInit {
       this.selectedStatus = stat;
     }
     
-    this.applyFilters();
+    this.filterCandidates();
   }
 
   filterByStatus(status: string): void {
     this.selectedStatus = this.selectedStatus === status ? '' : status;
-    this.applyFilters();
+    this.filterCandidates();
   }
 
   updatePagination(): void {
-    const startIndex = this.currentPage * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    this.pagedCandidates = this.filteredCandidates.slice(startIndex, endIndex);
+    if (this.useServerSideSearch) {
+      // For server-side search, data is already paginated
+      this.pagedCandidates = this.candidates;
+    } else {
+      // For client-side pagination
+      const startIndex = this.currentPage * this.pageSize;
+      const endIndex = startIndex + this.pageSize;
+      this.pagedCandidates = this.filteredCandidates.slice(startIndex, endIndex);
+    }
   }
 
   // Pagination methods
@@ -209,21 +277,33 @@ export class CandidatesComponent implements OnInit {
   previousPage(): void {
     if (this.currentPage > 0) {
       this.currentPage--;
-      this.updatePagination();
+      if (this.useServerSideSearch) {
+        this.performSearch();
+      } else {
+        this.updatePagination();
+      }
     }
   }
 
   nextPage(): void {
     if (this.currentPage < this.getTotalPages() - 1) {
       this.currentPage++;
-      this.updatePagination();
+      if (this.useServerSideSearch) {
+        this.performSearch();
+      } else {
+        this.updatePagination();
+      }
     }
   }
 
   goToPage(page: number): void {
     if (page >= 0 && page < this.getTotalPages()) {
       this.currentPage = page;
-      this.updatePagination();
+      if (this.useServerSideSearch) {
+        this.performSearch();
+      } else {
+        this.updatePagination();
+      }
     }
   }
 
@@ -484,6 +564,10 @@ export class CandidatesComponent implements OnInit {
 
   clearSearch(): void {
     this.searchTerm = '';
+    this.selectedStatus = '';
+    this.selectedRequisition = '';
+    this.selectedStat = 'all';
+    this.currentPage = 0;
     this.filterCandidates();
   }
 

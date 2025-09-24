@@ -14,5 +14,9 @@ namespace HiringPipelineCore.Interfaces.Repositories
         Task<bool> AnyAsync();
         Task DeleteAllAsync();
         void ResetIdentitySeed();
+        
+        // Search methods
+        Task<IEnumerable<Candidate>> SearchAsync(string? searchTerm, string? status, int? requisitionId, int skip = 0, int take = 50);
+        Task<int> GetSearchCountAsync(string? searchTerm, string? status, int? requisitionId);
     }
 }

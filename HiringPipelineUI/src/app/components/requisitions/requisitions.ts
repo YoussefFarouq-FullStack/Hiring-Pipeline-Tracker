@@ -12,7 +12,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { take } from 'rxjs/operators';
 
 import { Requisition, EMPLOYMENT_TYPES, PRIORITIES, EXPERIENCE_LEVELS, JOB_LEVELS, STATUSES } from '../../models/requisition.model';
-import { RequisitionService } from '../../services/requisition.service';
+import { RequisitionService, SearchResponse } from '../../services/requisition.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { RequisitionDialogComponent } from './requisition-dialog/requisition-dialog';
 import { RequisitionDetailComponent } from './requisition-detail/requisition-detail';
@@ -68,6 +68,10 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   pageSize = 6;
   currentPage = 0;
   totalItems = 0;
+  
+  // Search state
+  useServerSideSearch = true;
+  searchTimeout: any;
 
   constructor(
     private requisitionService: RequisitionService,
@@ -93,6 +97,14 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   }
 
   loadRequisitions(): void {
+    if (this.useServerSideSearch) {
+      this.performSearch();
+    } else {
+      this.loadAllRequisitions();
+    }
+  }
+
+  private loadAllRequisitions(): void {
     this.isLoading = true;
     this.hasError = false;
     this.errorMessage = '';
@@ -112,6 +124,48 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
           console.error('Error loading requisitions:', error);
           this.hasError = true;
           this.errorMessage = error?.message || 'Unexpected error occurred while loading requisitions';
+          this.isLoading = false;
+          this.showError(this.errorMessage);
+          // Trigger change detection after error
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  private performSearch(): void {
+    this.isLoading = true;
+    this.hasError = false;
+    this.errorMessage = '';
+
+    const searchParams = {
+      searchTerm: this.searchTerm || undefined,
+      status: this.selectedStatus || undefined,
+      department: this.selectedDepartment || undefined,
+      priority: this.selectedPriority || undefined,
+      employmentType: this.selectedEmploymentType || undefined,
+      experienceLevel: this.selectedExperienceLevel || undefined,
+      isDraft: this.selectedStat === 'draft' ? true : this.selectedStat === 'all' ? undefined : false,
+      skip: this.currentPage * this.pageSize,
+      take: this.pageSize
+    };
+
+    this.requisitionService.searchRequisitions(searchParams)
+      .pipe(take(1))
+      .subscribe({
+        next: (response: SearchResponse<Requisition>) => {
+          this.requisitions = response.items;
+          this.filteredRequisitions = response.items;
+          this.totalItems = response.totalCount;
+          this.paginatedRequisitions = response.items;
+          this.extractDepartments();
+          this.isLoading = false;
+          // Trigger change detection after data is loaded
+          this.cdr.detectChanges();
+        },
+        error: (error: any) => {
+          console.error('Error searching requisitions:', error);
+          this.hasError = true;
+          this.errorMessage = error?.message || 'Failed to search requisitions';
           this.isLoading = false;
           this.showError(this.errorMessage);
           // Trigger change detection after error
@@ -171,7 +225,26 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   }
 
   filterRequisitions(): void {
-    this.applyFilters();
+    if (this.useServerSideSearch) {
+      this.currentPage = 0; // Reset to first page when filtering
+      // If search term is empty or very short, search immediately
+      if (!this.searchTerm || this.searchTerm.length <= 1) {
+        this.performSearch();
+      } else {
+        this.debouncedSearch();
+      }
+    } else {
+      this.applyFilters();
+    }
+  }
+
+  private debouncedSearch(): void {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+    this.searchTimeout = setTimeout(() => {
+      this.performSearch();
+    }, 150); // Reduced to 150ms for faster response
   }
 
   clearFilters(): void {
@@ -182,7 +255,8 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
     this.selectedEmploymentType = '';
     this.selectedExperienceLevel = '';
     this.selectedStat = 'all';
-    this.applyFilters();
+    this.currentPage = 0;
+    this.filterRequisitions();
   }
 
   filterByStat(stat: string): void {
@@ -222,15 +296,25 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   }
 
   updatePagination(): void {
-    const startIndex = this.currentPage * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    this.paginatedRequisitions = this.filteredRequisitions.slice(startIndex, endIndex);
+    if (this.useServerSideSearch) {
+      // For server-side search, data is already paginated
+      this.paginatedRequisitions = this.requisitions;
+    } else {
+      // For client-side pagination
+      const startIndex = this.currentPage * this.pageSize;
+      const endIndex = startIndex + this.pageSize;
+      this.paginatedRequisitions = this.filteredRequisitions.slice(startIndex, endIndex);
+    }
   }
 
   onPageChange(event: PageEvent): void {
     this.pageSize = event.pageSize;
     this.currentPage = event.pageIndex;
-    this.updatePagination();
+    if (this.useServerSideSearch) {
+      this.performSearch();
+    } else {
+      this.updatePagination();
+    }
   }
 
   openDialog(requisition?: Requisition): void {
@@ -444,21 +528,33 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
   previousPage(): void {
     if (this.currentPage > 0) {
       this.currentPage--;
-      this.updatePagination();
+      if (this.useServerSideSearch) {
+        this.performSearch();
+      } else {
+        this.updatePagination();
+      }
     }
   }
 
   nextPage(): void {
     if (this.currentPage < this.getTotalPages() - 1) {
       this.currentPage++;
-      this.updatePagination();
+      if (this.useServerSideSearch) {
+        this.performSearch();
+      } else {
+        this.updatePagination();
+      }
     }
   }
 
   goToPage(page: number): void {
     if (page >= 0 && page < this.getTotalPages()) {
       this.currentPage = page;
-      this.updatePagination();
+      if (this.useServerSideSearch) {
+        this.performSearch();
+      } else {
+        this.updatePagination();
+      }
     }
   }
 
@@ -475,6 +571,13 @@ export class RequisitionsComponent implements OnInit, AfterViewInit {
 
   clearSearch(): void {
     this.searchTerm = '';
+    this.selectedDepartment = '';
+    this.selectedStatus = '';
+    this.selectedPriority = '';
+    this.selectedEmploymentType = '';
+    this.selectedExperienceLevel = '';
+    this.selectedStat = 'all';
+    this.currentPage = 0;
     this.filterRequisitions();
   }
 }

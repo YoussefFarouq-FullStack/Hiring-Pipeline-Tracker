@@ -104,4 +104,38 @@ export class ApplicationService {
       catchError(this.handleError)
     );
   }
+
+  // Search applications with server-side filtering and pagination
+  searchApplications(params: {
+    searchTerm?: string;
+    status?: string;
+    stage?: string;
+    department?: string;
+    skip?: number;
+    take?: number;
+  }): Observable<SearchResponse<Application>> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.searchTerm) queryParams.append('searchTerm', params.searchTerm);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.stage) queryParams.append('stage', params.stage);
+    if (params.department) queryParams.append('department', params.department);
+    if (params.skip !== undefined) queryParams.append('skip', params.skip.toString());
+    if (params.take !== undefined) queryParams.append('take', params.take.toString());
+
+    const url = `${this.apiUrl}/search?${queryParams.toString()}`;
+    return this.http.get<SearchResponse<Application>>(url).pipe(
+      retry(1),
+      catchError(this.handleError)
+    );
+  }
+}
+
+// Search response interface
+export interface SearchResponse<T> {
+  items: T[];
+  totalCount: number;
+  skip: number;
+  take: number;
+  hasMore: boolean;
 }

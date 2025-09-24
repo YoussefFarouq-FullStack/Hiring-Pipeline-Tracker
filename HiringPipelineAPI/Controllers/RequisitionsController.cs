@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using HiringPipelineAPI.Services.Interfaces;
-using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
 
 namespace HiringPipelineAPI.Controllers;
@@ -35,6 +34,39 @@ public class RequisitionsController : ControllerBase
     {
         var requisitions = await _requisitionService.GetAllAsync();
         return Ok(requisitions);
+    }
+
+    /// <summary>
+    /// Searches requisitions with filtering and pagination
+    /// </summary>
+    /// <param name="searchTerm">Search term for title, description, department, location, or skills</param>
+    /// <param name="status">Filter by requisition status</param>
+    /// <param name="department">Filter by department</param>
+    /// <param name="priority">Filter by priority</param>
+    /// <param name="employmentType">Filter by employment type</param>
+    /// <param name="experienceLevel">Filter by experience level</param>
+    /// <param name="isDraft">Filter by draft status</param>
+    /// <param name="skip">Number of records to skip</param>
+    /// <param name="take">Number of records to take</param>
+    /// <returns>Paginated search results</returns>
+    /// <response code="200">Returns the search results</response>
+    /// <response code="500">If there was an internal server error</response>
+    [HttpGet("search")]
+    [Authorize(Roles = "Admin,Recruiter,Hiring Manager,Interviewer,Read-only")]
+    [ProducesResponseType(typeof(SearchResponseDto<RequisitionDto>), 200)]
+    public async Task<ActionResult<SearchResponseDto<RequisitionDto>>> SearchRequisitions(
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] string? status = null,
+        [FromQuery] string? department = null,
+        [FromQuery] string? priority = null,
+        [FromQuery] string? employmentType = null,
+        [FromQuery] string? experienceLevel = null,
+        [FromQuery] bool? isDraft = null,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 50)
+    {
+        var result = await _requisitionService.SearchAsync(searchTerm, status, department, priority, employmentType, experienceLevel, isDraft, skip, take);
+        return Ok(result);
     }
 
     /// <summary>

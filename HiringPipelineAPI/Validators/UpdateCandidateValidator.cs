@@ -1,5 +1,5 @@
 using FluentValidation;
-using HiringPipelineAPI.DTOs;
+using HiringPipelineCore.DTOs;
 
 namespace HiringPipelineAPI.Validators;
 

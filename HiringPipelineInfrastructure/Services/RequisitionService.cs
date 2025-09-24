@@ -102,5 +102,15 @@ namespace HiringPipelineInfrastructure.Services
             requisition.UpdatedAt = DateTime.UtcNow;
             await _requisitionRepository.UpdateAsync(requisition);
         }
+
+        public async Task<IEnumerable<Requisition>> SearchAsync(string? searchTerm, string? status, string? department, string? priority, string? employmentType, string? experienceLevel, bool? isDraft, int skip = 0, int take = 50)
+        {
+            return await _requisitionRepository.SearchAsync(searchTerm, status, department, priority, employmentType, experienceLevel, isDraft, skip, take);
+        }
+
+        public async Task<int> GetSearchCountAsync(string? searchTerm, string? status, string? department, string? priority, string? employmentType, string? experienceLevel, bool? isDraft)
+        {
+            return await _requisitionRepository.GetSearchCountAsync(searchTerm, status, department, priority, employmentType, experienceLevel, isDraft);
+        }
     }
 }

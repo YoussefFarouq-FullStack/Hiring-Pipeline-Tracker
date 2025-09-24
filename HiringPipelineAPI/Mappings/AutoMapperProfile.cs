@@ -1,5 +1,4 @@
 using AutoMapper;
-using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
 using HiringPipelineCore.Entities;
 

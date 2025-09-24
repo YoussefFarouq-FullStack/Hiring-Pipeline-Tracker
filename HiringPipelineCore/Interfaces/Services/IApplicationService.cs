@@ -17,5 +17,9 @@ namespace HiringPipelineCore.Interfaces.Services
         Task ChangeStatusAsync(int id, ChangeApplicationStatusDto statusDto);
         Task MoveToStageAsync(int id, MoveToStageDto stageDto);
         Task UpdateCurrentStageAsync(int id, string newStage);
+        
+        // Search methods
+        Task<IEnumerable<Application>> SearchAsync(string? searchTerm, string? status, string? stage, string? department, int skip = 0, int take = 50);
+        Task<int> GetSearchCountAsync(string? searchTerm, string? status, string? stage, string? department);
     }
 }

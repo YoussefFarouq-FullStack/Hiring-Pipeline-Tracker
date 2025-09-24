@@ -1,5 +1,4 @@
 using AutoMapper;
-using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
 using HiringPipelineCore.Entities;
 using HiringPipelineCore.Interfaces.Services;
@@ -79,6 +78,22 @@ namespace HiringPipelineAPI.Services.Implementations
         public async Task MoveToStageAsync(int id, MoveToStageDto stageDto)
         {
             await _applicationService.MoveToStageAsync(id, stageDto);
+        }
+
+        public async Task<SearchResponseDto<ApplicationDto>> SearchAsync(string? searchTerm, string? status, string? stage, string? department, int skip = 0, int take = 50)
+        {
+            var applications = await _applicationService.SearchAsync(searchTerm, status, stage, department, skip, take);
+            var totalCount = await _applicationService.GetSearchCountAsync(searchTerm, status, stage, department);
+            
+            var applicationDtos = _mapper.Map<IEnumerable<ApplicationDto>>(applications);
+            
+            return new SearchResponseDto<ApplicationDto>
+            {
+                Items = applicationDtos,
+                TotalCount = totalCount,
+                Skip = skip,
+                Take = take
+            };
         }
     }
 }

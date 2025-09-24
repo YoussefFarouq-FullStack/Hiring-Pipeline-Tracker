@@ -7,7 +7,6 @@ using HiringPipelineInfrastructure.Repositories;
 using HiringPipelineAPI.Mappings;
 using HiringPipelineAPI.Validators;
 using HiringPipelineAPI.Filters;
-using HiringPipelineAPI.DTOs;
 using HiringPipelineCore.DTOs;
 using HiringPipelineAPI.Middleware;
 using FluentValidation.AspNetCore;
