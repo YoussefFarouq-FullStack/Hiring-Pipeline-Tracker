@@ -59,7 +59,7 @@ Hiring Pipeline Tracker/
    ```
    
    The API will be available at: `http://localhost:5192`
-   API Documentation: `http://localhost:5192/api-docs`
+   API Documentation: `http://localhost:5192/swagger`
 
 ### Frontend Setup
 
@@ -167,6 +167,34 @@ Hiring Pipeline Tracker/
 2. Deploy the `dist` folder to your web server
 
 ## 🔄 Recent Updates
+
+### 🗄️ Database Backup, Restore, and Schema
+- **Location**: Local development uses SQL Server LocalDB via the connection string in `HiringPipelineAPI/appsettings.Development.json`.
+- **Backup (.bak)**:
+  - In SSMS: right-click database → Tasks → Back Up… → Full → save `.bak` under `Database/` (not committed).
+  - Restore on another machine: Databases → Restore Database… → From device → select `.bak`.
+- **Portable export (.bacpac)**:
+  - In SSMS/Azure Data Studio: Tasks → Export Data-tier Application… → produce `.bacpac` (store outside git or via Git LFS).
+- **Schema script (`Database/schema.sql`)**:
+  - Generate with: Tasks → Generate Scripts… → Advanced → Types of data to script = Schema (or Schema and data if needed).
+  - Apply by opening in SSMS and executing against an empty database.
+- **Detach/Attach (.mdf/.ldf)**:
+  - Only when needed: Tasks → Detach… → copy `.mdf/.ldf` → Attach… (avoid committing these files).
+- **Pointing to a fresh DB**:
+  - Change `Database=...` in `appsettings.json` (e.g., `HiringPipelineDB_New2`) and apply EF migrations.
+
+### 📦 Git Guidance for Database Artifacts
+- Commit `Database/schema.sql`.
+- Ignore backups and database binaries. Example `.gitignore` entries:
+  
+  ```gitignore
+  # Database artifacts
+  Database/*.bak
+  *.bak
+  *.mdf
+  *.ldf
+  *.ndf
+  ```
 
 ### 🎨 UI/UX Enhancements
 - **✅ Modern Dialog Styling**: Consistent gradient headers, rounded corners, and shadow effects across all dialogs
